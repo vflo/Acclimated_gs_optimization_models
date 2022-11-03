@@ -281,6 +281,8 @@ error_fun_no_accl = function(x, data, data_template, plot=F,
 
   cat(x, "|", y, "\n")
 
+  y
+  
 }
 
 
@@ -386,6 +388,8 @@ error_fun = function(x, data, data_template,  plot=F, dpsi_calib=T,
 
     cat(x, "|", y, "\n")
 
+    y
+    
 }
 
 

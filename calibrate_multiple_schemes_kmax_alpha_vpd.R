@@ -244,45 +244,6 @@ error_fun_kmax_alpha = function(x, data, data_template,  plot=F, inst=TRUE,
     psi_max + day_num/ndays * (psi_min-psi_max)
   }
 
-  # if (inst == F){
-  #   cat("Acc resp\n")
-  #   ndays = 120
-  #   actual_day = ndays * (data$LWP-psi_max)/(psi_min-psi_max)
-  #   lwp_week = rollmean(x = lwp_day(c(120:0, rep(0,k-1))), k = k, align = "right")
-  #   spl = splinefun(x = 120:0, y=lwp_week)
-  #   # lwp = seq(min(data$LWP), 0, length.out=20)
-  #   dat_acc = tibble(var = spl(actual_day)) %>%
-  #     mutate(var = case_when(var>0~0,
-  #                            TRUE~var),
-  #            p = purrr::map(var,
-  #                           ~model_numerical(tc = mean(data$T,na.rm = TRUE),
-  #                                            ppfd = mean(data$Iabs_growth,na.rm = TRUE),
-  #                                            vpd = mean(data$D*101325,na.rm = TRUE),
-  #                                            co2 = mean(data$ca,na.rm = TRUE), elv = 0,
-  #                                            fapar = .99, kphio = 0.087, psi_soil = .,
-  #                                            rdark = 0.02, par_plant=par_plant_now,
-  #                                            par_cost = par_cost_now,
-  #                                            stomatal_model = stomatal_model))) %>%
-  #     unnest_wider(p)
-  #   lwp = data$LWP
-  #   dat1 = tibble(var = lwp, jmax_a=dat_acc$jmax, vcmax_a=dat_acc$vcmax) %>% 
-  #     cbind(data %>% select(t=T,Iabs_used, D,ca)) %>% 
-  #     mutate(var = case_when(var>0~0,
-  #                            TRUE~var),
-  #            p = purrr::pmap(list(var, jmax_a, vcmax_a,t,Iabs_used,D,ca), 
-  #                            ~model_numerical_instantaneous(tc = ..4, 
-  #                                                           ppfd = ..5, 
-  #                                                           vpd = ..6*101325, 
-  #                                                           co2 = ..7, elv = 0, 
-  #                                                           fapar = .99, kphio = 0.087, 
-  #                                                           psi_soil = ..1, rdark = 0.02, 
-  #                                                           par_plant=par_plant_now, 
-  #                                                           par_cost = par_cost_now, 
-  #                                                           jmax = ..2, vcmax = ..3, 
-  #                                                           stomatal_model = stomatal_model)) ) %>% 
-  #     unnest_wider(p)
-  # }else{
-    cat("inst resp\n")
     lwp_week = rollmean(x = lwp_day(c(max(day):0, rep(0,k-1))), k = k, align = "right")
     spl = splinefun(x = max(day):0, y=lwp_week)
       dat_acc = tibble(var = spl(actual_day)) %>% 

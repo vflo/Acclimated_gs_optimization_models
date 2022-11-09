@@ -15,7 +15,7 @@ fn_profit <- function(par, psi_soil, par_cost, e_crit, p_crit, par_photosynth,
   a_j = calc_assim_light_limited(gs, jmax, par_photosynth) # Aj in umol/m2ground/s
   a = a_j$a
   ci = a_j$ci
-  # vcmax = calc_vcmax_coordinated_numerical(a, ci, par_photosynth) # vcmax based on coordination theory
+  vcmax = calc_vcmax_coordinated_numerical(a, ci, par_photosynth) # vcmax based on coordination theory
 
   ## PHYDRO
   if(stomatal_model == "PHYDRO"){
@@ -179,7 +179,7 @@ fn_profit_schemes_cost_calc <- function(par, psi_soil, par_cost, e_crit, p_crit,
   a_j = calc_assim_light_limited(gs, jmax, par_photosynth) # Aj in umol/m2ground/s
   a = a_j$a
   ci = a_j$ci
-  # vcmax = calc_vcmax_coordinated_numerical(a, ci, par_photosynth) # vcmax based on coordination theory
+  vcmax = calc_vcmax_coordinated_numerical(a, ci, par_photosynth) # vcmax based on coordination theory
   
   ## phydro
   if(stomatal_model == "PHYDRO"){
@@ -216,7 +216,7 @@ fn_profit_schemes_cost_calc <- function(par, psi_soil, par_cost, e_crit, p_crit,
     ks = K *(1/2)^((psi_soil/par_plant$psi50)^par_plant$b)
     kl = K *(1/2)^((psi_leaf/par_plant$psi50)^par_plant$b)
     k_crit = 0
-    out = tibble(jmax_cost = par_cost$alpha * jmax, h_cost = amax*(1-kl/ks)k)
+    out = tibble(jmax_cost = par_cost$alpha * jmax, h_cost = amax*(1-kl/ks))
   }
 
   ## SOX
@@ -249,27 +249,27 @@ optimise_stomata_phydro_schemes <- function(fn_profit, psi_soil, par_cost, e_cri
   ## the optimr algorithm can not find the initial gradient. We use 
   ## evolutionary global optimization via the Differential Evolution algorithm
   ## This algorithm is really slow... But performs better
-  if(!stomatal_model %in% c('SOX','CMAX','CGAIN')){ 
-    out_optim <- optimr::optimr(
-      par       = c(jmax_ini, dpsi_ini),
-      lower     = lower,
-      upper     = c(jmax_lim, 20),
-      fn             = fn_profit,
-      psi_soil       = psi_soil,
-      e_crit         = e_crit,
-      p_crit         = p_crit,
-      par_cost       = par_cost,
-      par_photosynth = par_photosynth,
-      par_plant      = par_plant,
-      par_env        = par_env,
-      do_optim       = do_optim, 
-      stomatal_model = stomatal_model,
-      method         = "L-BFGS-B",
-      control        = list(maxit = 500, maximize = TRUE, fnscale = 1e10,
-                            REPORT=0, trace=0)
-    )
-    out_optim$value <- -out_optim$value
-  }else{
+  # if(!stomatal_model %in% c('SOX','CMAX','CGAIN')){ 
+  #   out_optim <- optimr::optimr(
+  #     par       = c(jmax_ini, dpsi_ini),
+  #     lower     = lower,
+  #     upper     = c(jmax_lim, 20),
+  #     fn             = fn_profit,
+  #     psi_soil       = psi_soil,
+  #     e_crit         = e_crit,
+  #     p_crit         = p_crit,
+  #     par_cost       = par_cost,
+  #     par_photosynth = par_photosynth,
+  #     par_plant      = par_plant,
+  #     par_env        = par_env,
+  #     do_optim       = do_optim, 
+  #     stomatal_model = stomatal_model,
+  #     method         = "L-BFGS-B",
+  #     control        = list(maxit = 500, maximize = TRUE, fnscale = 1e10,
+  #                           REPORT=0, trace=0)
+  #   )
+  #   out_optim$value <- -out_optim$value
+  # }else{
     out_optim <- DEoptim::DEoptim(
       lower     = lower,
       upper     = c(jmax_lim, 20),
@@ -285,17 +285,17 @@ optimise_stomata_phydro_schemes <- function(fn_profit, psi_soil, par_cost, e_cri
       stomatal_model = stomatal_model,
       control = DEoptim.control(NP = 30,trace = FALSE,itermax = 200)
     )
-    }
+    # }
 
   
   if (return_all){
     out_optim
   } else {
-    if(!stomatal_model %in% c('SOX','CMAX','CGAIN')){
-      return(out_optim$par)
-    }else{
+    # if(!stomatal_model %in% c('SOX','CMAX','CGAIN')){
+    #   return(out_optim$par)
+    # }else{
       return(out_optim$optim$bestmem)
-    }
+    # }
   }
 }
 
@@ -313,28 +313,28 @@ optimise_shortterm_schemes <- function(fn_profit_inst, jmax, vcmax, psi_soil, e_
   ## the optimr algorithm can not find the initial gradient. We use 
   ## evolutionary global optimization via the Differential Evolution algorithm
   ## This algorithm is really slow... But performs better
-  if(!stomatal_model %in% c('SOX','CMAX','CGAIN')){
-    out_optim <- optimr::optimr(
-      par       = dpsi_ini,
-      lower     = c(-10),
-      upper     = c(20),
-      fn        = fn_profit_inst,
-      psi_soil  = psi_soil,
-      jmax      = jmax,
-      vcmax     = vcmax,
-      e_crit    = e_crit,
-      p_crit    = p_crit,
-      par_cost  = par_cost,
-      par_photosynth = par_photosynth,
-      par_plant = par_plant,
-      par_env   = par_env,
-      do_optim  = do_optim, 
-      stomatal_model = stomatal_model,
-      method    = "L-BFGS-B",
-      control   = list(maxit = 500, maximize = TRUE, fnscale = 1e1000)
-    )
-    out_optim$value <- -out_optim$value
-  }else{
+  # if(!stomatal_model %in% c('SOX','CMAX','CGAIN')){
+  #   out_optim <- optimr::optimr(
+  #     par       = dpsi_ini,
+  #     lower     = c(-10),
+  #     upper     = c(20),
+  #     fn        = fn_profit_inst,
+  #     psi_soil  = psi_soil,
+  #     jmax      = jmax,
+  #     vcmax     = vcmax,
+  #     e_crit    = e_crit,
+  #     p_crit    = p_crit,
+  #     par_cost  = par_cost,
+  #     par_photosynth = par_photosynth,
+  #     par_plant = par_plant,
+  #     par_env   = par_env,
+  #     do_optim  = do_optim, 
+  #     stomatal_model = stomatal_model,
+  #     method    = "L-BFGS-B",
+  #     control   = list(maxit = 500, maximize = TRUE, fnscale = 1e1000)
+  #   )
+  #   out_optim$value <- -out_optim$value
+  # }else{
     out_optim <- DEoptim::DEoptim(
       lower     = c(-10),
       upper     = c(20),
@@ -352,16 +352,16 @@ optimise_shortterm_schemes <- function(fn_profit_inst, jmax, vcmax, psi_soil, e_
       stomatal_model = stomatal_model,
       control = DEoptim.control(NP = 15,trace = FALSE,itermax = 100)
     )
-  }
+  # }
   
   if (return_all){
     out_optim
   } else {
-    if(!stomatal_model %in% c('SOX','CMAX','CGAIN')){
-      return(out_optim$par)
-    }else{
+    # if(!stomatal_model %in% c('SOX','CMAX','CGAIN')){
+    #   return(out_optim$par)
+    # }else{
         return(out_optim$optim$bestmem)
-      }
+      # }
   }
 }
 

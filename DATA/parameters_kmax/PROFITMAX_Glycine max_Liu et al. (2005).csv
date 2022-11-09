@@ -1,0 +1,3 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,Height.max..m.,P88..MPa.,P50..MPa.,Huber.value,KL..kg.m.1.MPa.1.s.1.,Slope,SLA..cm2.g.1.,P12..MPa.,Ks..kg.m.1.MPa.1.s.1.,Height.actual..m.,Latitude,Longitude,Altitude..m.,MATbest,PPTbest,P50,b,acclimation,K.scale,alpha,gamma
+Glycine max,PROFITMAX,FALSE,TRUE,Liu et al. (2005),Glycine,max,NA,32,-2.5,-0.4,1.66667e-4,2.26e-4,18.0952381,79.59516801476101,-0.2,2.73,NA,NA,NA,NA,NA,NA,-0.4165443407967019,1.0000000126347988,TRUE,12.29582134670345,0.1,NA
+Glycine max,PROFITMAX,FALSE,TRUE,Liu et al. (2005),Glycine,max,NA,32,-2.5,-0.4,1.66667e-4,2.26e-4,18.0952381,79.59516801476101,-0.2,2.73,NA,NA,NA,NA,NA,NA,-0.4165443407967019,1.0000000126347988,FALSE,14.999951500705452,NA,NA

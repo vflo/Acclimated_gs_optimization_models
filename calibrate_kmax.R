@@ -10,7 +10,7 @@ library(gridExtra)
 library(scales)
 library(zoo)
 library(stringr)
-library(rPHYDRO)
+library(rphydro)
 library(DEoptim)
 # library(furrr)
 # plan('multisession', workers = 6)
@@ -61,8 +61,8 @@ dat <- dat %>% filter(!is.na(D),!is.na(LWP),!is.na(T),!is.na(ca),!is.na(Iabs_use
 
 dpsi_df <-  read.csv(file = "DATA/drying_experiments_dpsi_extended.csv")
 
-traits <- read.csv(file="DATA/imputation_result_plus_subsps.csv")
-traits <- traits %>% separate(taxon,c("genus","species", "subsp"),sep="_")
+traits <- read.csv(file="DATA/imputation_df.csv") %>% rename(species = 'Species', genus = 'Genus',Species = "Binomial")
+# traits <- traits %>% separate(taxon,c("genus","species", "subsp"),sep="_")
 
 template <-  read.csv("DATA/fitted_params_template.csv")
 template <- template %>% 
@@ -208,7 +208,8 @@ pmodel_wang17 = function(tc, ppfd, vpd, co2, elv, fapar, kphio, ...){
 
 ################################################################################
 
-error_fun_no_accl = function(x, data, data_template, plot=F,
+error_fun_no_accl = function(x, data, data_template, plot=F, 
+                             dpsi_data = dpsi_data,
                              stomatal_model = stomatal_model_now,
                              vcmax = vcmax,
                              jmax = jmax, 
@@ -288,7 +289,7 @@ error_fun_no_accl = function(x, data, data_template, plot=F,
 
 ################################################################################
 
-error_fun = function(x, data, data_template,  plot=F, dpsi_calib=T, 
+error_fun = function(x, data, data_template,  plot=F, dpsi_data = dpsi_data,
                      k=7, stomatal_model = stomatal_model_now,
                      K_PROFITMAX = K_PROFITMAX_acclimate){
   
@@ -400,22 +401,28 @@ par_scheme_no_alpha <- list("PROFITMAX2","SOX","PROFITMAX")
 get_parameters <- function(x){
     species = x$Species %>% unique()
     stomatal_model_now = x$scheme %>% unique()
-    dpsi_calib_now = x$dpsi %>% unique()
     inst = x$inst
     data_template_now = x
+    
     data1 = filter(dat, Species==species, Source == unique(x$source))
+    
+    if(species %in% dpsi_df$Species){
+      dpsi_data = dpsi_df %>% filter(Species == species)
+    }else{
+        dpsi_data = NULL
+        }
+    
+
     if(!is.null(K_PROFITMAX)){
     K_PROFITMAX_no_acclimate = K_PROFITMAX %>% 
       filter(Species == species,
              acclimation == FALSE,
-             dpsi == dpsi_calib_now,
              source == x$source) %>% 
       select(K_PROFITMAX) %>% 
       unique()
     K_PROFITMAX_acclimate = K_PROFITMAX %>% 
       filter(Species == species,
              acclimation == TRUE,
-             dpsi == dpsi_calib_now,
              source == x$source) %>% 
       select(K_PROFITMAX) %>% 
       unique()
@@ -470,7 +477,7 @@ get_parameters <- function(x){
                interval = c(0,parameter_max),
                data=data1,
                data_template = data_template_now,
-               dpsi_calib = dpsi_calib_now,
+               dpsi_data = dpsi_data,
                stomatal_model = stomatal_model_now,
                vcmax = vcmax,
                jmax = jmax, 
@@ -479,8 +486,8 @@ get_parameters <- function(x){
       x_no_accl <- opt_no_accl$minimum
     
     error_fun_no_accl(x_no_accl, data1, 
-                      data_template = data_template_now, plot=T, 
-                      dpsi_calib = dpsi_calib_now,
+                      data_template = data_template_now, plot=T,
+                      dpsi_data = dpsi_data,
                       stomatal_model = stomatal_model_now, ,
                       vcmax = vcmax,
                       jmax = jmax,
@@ -542,14 +549,17 @@ get_parameters <- function(x){
                interval = c(0,parameter_max),
                data=data1,
                data_template = data_template_now,
-               dpsi_calib = dpsi_calib_now,
+               dpsi_data = dpsi_data,
                stomatal_model = stomatal_model_now, 
                K_PROFITMAX = K_PROFITMAX_acclimate
       ) -> opt_accl
       x_accl <- opt_accl$minimum
 
-    error_fun(x_accl, data1, data_template = data_template_now,
-              plot=T, dpsi_calib = dpsi_calib_now,
+    error_fun(x_accl, 
+              data = data1, 
+              data_template = data_template_now,
+              plot=T, 
+              dpsi_data = dpsi_data,
               stomatal_model = stomatal_model_now,
               K_PROFITMAX = K_PROFITMAX_acclimate)
     
@@ -570,7 +580,7 @@ get_parameters <- function(x){
 
   df <- bind_rows(res_accl,res_no_accl)
   
-  readr::write_csv(df,file=paste0("DATA/parameter_kmax_vpd/",stomatal_model_now,"_",species,"_",dpsi_calib_now,"_",x$source,".csv"))
+  readr::write_csv(df,file=paste0("DATA/parameters_kmax/",stomatal_model_now,"_",species,"_",x$source,".csv"))
   
   return(bind_rows(res_accl,res_no_accl))
 
@@ -579,7 +589,7 @@ get_parameters <- function(x){
 ##### COMPUTE PARAMETERS #####
 #First compute PROFITMAX model to obtain Kmax for CMAX. CGAIN, WUE and PHYDRO models
 K_PROFITMAX <- NULL
-template %>% filter(scheme == "PROFITMAX",dpsi == FALSE
+template %>% filter(scheme == "PROFITMAX"
                     # Species %in% c("Rosa cymosa",
                     #                "Broussonetia papyrifera",
                     #                "Cinnamomum bodinieri",
@@ -600,8 +610,7 @@ K_PROFITMAX <- res %>%
 
 #Compute the rest of the models
 template %>% 
-  filter(!scheme %in% c("PROFITMAX"),#scheme %in% c("PHYDRO"),
-         dpsi == FALSE#, Species == "Malva subovata"
+  filter(!scheme %in% c("PROFITMAX")
          # Species %in% c(
          #                # "Rosa cymosa",
          #                # "Broussonetia papyrifera",

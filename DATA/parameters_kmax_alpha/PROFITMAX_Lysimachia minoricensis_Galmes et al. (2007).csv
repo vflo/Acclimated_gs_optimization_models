@@ -1,0 +1,2 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID,Height.actual..m.,Latitude,Longitude,Altitude..m.,MATbest,PPTbest,taxon,Height.max..m.,P50..MPa.,P12..MPa.,P88..MPa.,Slope,P50,b,acclimation,K.scale,alpha,gamma
+Lysimachia minoricensis,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Lysimachia,minoricensis,NA,1633,NA,39.4666666666667,2.51666666666667,100,17.75,562.21,Lysimachia_minoricensis,0.8,-1.88726121735569,-0.60018008992711,-2.99528895559328,30.3659704938348,-1.8872612095235044,2.420479261688195,TRUE,1.1728080000091516,0.10895225998467716,NA

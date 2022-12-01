@@ -1,0 +1,3 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID,Height.actual..m.,Latitude,Longitude,Altitude..m.,MATbest,PPTbest,taxon,Height.max..m.,P50..MPa.,P12..MPa.,P88..MPa.,Slope,P50,b,acclimation,K.scale,alpha,gamma
+Betula pendula,CMAX,FALSE,TRUE,Salmon et al. (2020),Betula,pendula,NA,1610,0.55,60.23,25.02,20,5.6,603,Betula_pendula,24.2392283333333,-2.01,-1.7,-2.53646818829587,111.285298515555,-2.0100000000964426,4.805980606947665,TRUE,0.28794598605213184,0.1,49.99992964158013
+Betula pendula,CMAX,FALSE,TRUE,Salmon et al. (2020),Betula,pendula,NA,1610,0.55,60.23,25.02,20,5.6,603,Betula_pendula,24.2392283333333,-2.01,-1.7,-2.53646818829587,111.285298515555,-2.0100000000964426,4.805980606947665,FALSE,0.4332217418907386,NA,0.6235138668876548

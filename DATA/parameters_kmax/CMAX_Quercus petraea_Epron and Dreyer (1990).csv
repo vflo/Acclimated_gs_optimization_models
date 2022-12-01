@@ -1,0 +1,3 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID,Height.actual..m.,Latitude,Longitude,Altitude..m.,MATbest,PPTbest,taxon,Height.max..m.,P50..MPa.,P12..MPa.,P88..MPa.,Slope,P50,b,acclimation,K.scale,alpha,gamma
+Quercus petraea,CMAX,FALSE,TRUE,Epron and Dreyer (1990),Quercus,petraea,NA,1612,NA,48.77,6.33,240,10.28,723.34,Quercus_petraea,37.1288640952381,-3.3,-2.5,-4.33673432476469,27.1,-3.3000000085289902,4.092448162917984,TRUE,0.0610852953715531,0.1,0.45205073286756536
+Quercus petraea,CMAX,FALSE,TRUE,Epron and Dreyer (1990),Quercus,petraea,NA,1612,NA,48.77,6.33,240,10.28,723.34,Quercus_petraea,37.1288640952381,-3.3,-2.5,-4.33673432476469,27.1,-3.3000000085289902,4.092448162917984,FALSE,0.0708749603554314,NA,0.37859444165987144

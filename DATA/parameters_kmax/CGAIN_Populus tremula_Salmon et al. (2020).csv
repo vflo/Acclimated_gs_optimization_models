@@ -1,0 +1,3 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID,Height.actual..m.,Latitude,Longitude,Altitude..m.,MATbest,PPTbest,taxon,Height.max..m.,P50..MPa.,P12..MPa.,P88..MPa.,Slope,P50,b,acclimation,K.scale,alpha,gamma
+Populus tremula,CGAIN,FALSE,TRUE,Salmon et al. (2020),Populus,tremula,NA,1611,0.98,60.23,25.02,20,5.6,603,Populus_tremula,24.1776216666667,-2.6,-1.77,-3.43384809460439,60,-2.599999995556309,4.019315415892246,TRUE,0.4313254119750965,0.1,13.326226398981943
+Populus tremula,CGAIN,FALSE,TRUE,Salmon et al. (2020),Populus,tremula,NA,1611,0.98,60.23,25.02,20,5.6,603,Populus_tremula,24.1776216666667,-2.6,-1.77,-3.43384809460439,60,-2.599999995556309,4.019315415892246,FALSE,0.6277325945779118,NA,2.1610658765875517

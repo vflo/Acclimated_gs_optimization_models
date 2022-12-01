@@ -386,7 +386,7 @@ get_parameters_kmax_alpha <- function(x){
 ##### COMPUTE PARAMETERS #####
 #First compute PROFITMAX model to obtain Kmax for CMAX. CGAIN, WUE and PHYDRO models
 K_PROFITMAX <- NULL
-template %>% filter(scheme == "PROFITMAX",dpsi == FALSE, Species =="Quercus petraea") %>%
+template %>% filter(scheme == "PROFITMAX") %>%
   group_split(scheme, dpsi, Species,source) %>%
   purrr::map_df(get_parameters_kmax_alpha)->res
 
@@ -401,7 +401,7 @@ K_PROFITMAX <- res %>%
 
 #Compute the other models
 template %>% 
-  filter(!scheme %in% c("PROFITMAX"),
+  filter(!scheme %in% c("PROFITMAX","PHYDRO","PROFITMAX2","CMAX","CGAIN"),
          dpsi == FALSE#,
          # Species %in% c(
          #   # "Rosa cymosa",

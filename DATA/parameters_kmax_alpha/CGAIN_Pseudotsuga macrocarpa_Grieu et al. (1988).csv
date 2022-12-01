@@ -1,0 +1,2 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID,Height.actual..m.,Latitude,Longitude,Altitude..m.,MATbest,PPTbest,taxon,Height.max..m.,P50..MPa.,P12..MPa.,P88..MPa.,Slope,P50,b,acclimation,K.scale,alpha,gamma
+Pseudotsuga macrocarpa,CGAIN,FALSE,TRUE,Grieu et al. (1988),Pseudotsuga,macrocarpa,NA,1601,0.25,34.3333333333333,-116.166666666667,1315,20.65,76.5,Pseudotsuga_macrocarpa,75.8399118218648,-3.69111687258618,-2.78586457886533,-5.23615054255914,44.0775458448652,-3.691116911061619,3.197567024349043,TRUE,0.07127407450093415,0.12923530078779763,2.2039617789517365

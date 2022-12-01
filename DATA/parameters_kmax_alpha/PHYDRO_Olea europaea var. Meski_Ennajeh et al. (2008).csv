@@ -1,0 +1,2 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID,Height.actual..m.,Latitude,Longitude,Altitude..m.,MATbest,PPTbest,taxon,Height.max..m.,P50..MPa.,P12..MPa.,P88..MPa.,Slope,P50,b,acclimation,K.scale,alpha,gamma
+Olea europaea var. Meski,PHYDRO,FALSE,TRUE,Ennajeh et al. (2008),Olea,europaea,Meski,1634,1.35,33.891835,10.101385,30,19.5,218,Olea_europaea,15,-7.2,-3.8,-11.36666667,9.12,-7.199999940409177,2.4486275106428517,TRUE,0.36468253113259064,0.1094385984774942,0.22590001928840797

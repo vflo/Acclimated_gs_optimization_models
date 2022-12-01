@@ -1,0 +1,2 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID,Height.actual..m.,Latitude,Longitude,Altitude..m.,MATbest,PPTbest,taxon,Height.max..m.,P50..MPa.,P12..MPa.,P88..MPa.,Slope,P50,b,acclimation,K.scale,alpha,gamma
+Pteroceltis tatarinowii,PROFITMAX,FALSE,FALSE,Liu et al. (2010),Pteroceltis,tatarinowii,NA,1618,NA,26.4333333333333,106.683333333333,1147,15.605,1081.44,Pteroceltis_tatarinowii,20,-0.926065038985084,-0.358271427620806,-1.68434081164453,52.3287140534892,-0.9260650262097276,1.8690758355833075,TRUE,8.496807573932838,0.10603515613049486,NA

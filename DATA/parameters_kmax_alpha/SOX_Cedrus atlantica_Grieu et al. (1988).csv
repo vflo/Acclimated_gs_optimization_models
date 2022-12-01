@@ -1,0 +1,2 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID,Height.actual..m.,Latitude,Longitude,Altitude..m.,MATbest,PPTbest,taxon,Height.max..m.,P50..MPa.,P12..MPa.,P88..MPa.,Slope,P50,b,acclimation,K.scale,alpha,gamma
+Cedrus atlantica,SOX,FALSE,TRUE,Grieu et al. (1988),Cedrus,atlantica,NA,1599,0.25,44.0833333333333,3.03333333333333,650,12.15,736.2,Cedrus_atlantica,43.1526443506494,-4.98,-4.11,-6.22481532643349,28.8,-4.979999983869815,5.011132919806804,TRUE,0.05082366245187586,0.11632963825086336,NA

@@ -1,0 +1,3 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID,Height.actual..m.,Latitude,Longitude,Altitude..m.,MATbest,PPTbest,taxon,Height.max..m.,P50..MPa.,P12..MPa.,P88..MPa.,Slope,P50,b,acclimation,K.scale,alpha,gamma
+Quercus pubescens,CGAIN,FALSE,TRUE,Epron and Dreyer (1990),Quercus,pubescens,NA,1613,NA,44.18,5.25,1200,6.476,1104.6,Quercus_pubescens,21.0515266190476,-4.81,-4.08,-6.00255341069667,82.4,-4.809999987969411,5.04792140385297,TRUE,0.05294527525308629,0.1,5.126569491064944
+Quercus pubescens,CGAIN,FALSE,TRUE,Epron and Dreyer (1990),Quercus,pubescens,NA,1613,NA,44.18,5.25,1200,6.476,1104.6,Quercus_pubescens,21.0515266190476,-4.81,-4.08,-6.00255341069667,82.4,-4.809999987969411,5.04792140385297,FALSE,0.06332201055625583,NA,2.676719390756346

@@ -1,0 +1,2 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID,Height.actual..m.,Latitude,Longitude,Altitude..m.,MATbest,PPTbest,taxon,Height.max..m.,P50..MPa.,P12..MPa.,P88..MPa.,Slope,P50,b,acclimation,K.scale,alpha,gamma
+Pyracantha fortuneana,SOX,FALSE,FALSE,Liu et al. (2010),Pyracantha,fortuneana,NA,1619,NA,26.4333333333333,106.683333333333,1147,15.605,1081.44,Pyracantha_fortuneana,3,-6.30999917696285,-4.71114192909155,-7.39019122474662,30.3893109247346,-6.309999158249857,7.075477494906919,TRUE,0.20515274233798664,0.1101315424746042,NA

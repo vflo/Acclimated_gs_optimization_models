@@ -38,7 +38,7 @@ dpsi_df = read.csv(file = "DATA/drying_experiments_dpsi_extended.csv")
 
 # template = read.csv("DATA/fitted_params_template.csv")
 # path_par <- "DATA/parameters/"
-path_par <- "DATA/parameter_kmax_vpd/"
+path_par <- "DATA/parameters_kmax/"
 par_data <- list.files(path_par) %>% 
   purrr::map_df(function(x){
     readr::read_csv(paste0(path_par,x))

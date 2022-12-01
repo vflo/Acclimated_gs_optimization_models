@@ -1,0 +1,2 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID,Height.actual..m.,Latitude,Longitude,Altitude..m.,MATbest,PPTbest,taxon,Height.max..m.,P50..MPa.,P12..MPa.,P88..MPa.,Slope,P50,b,acclimation,K.scale,alpha,gamma
+Cinnamomum bodinieri,CGAIN,FALSE,FALSE,Liu et al. (2010),Cinnamomum,bodinieri,NA,1616,NA,26.4333333333333,106.683333333333,1147,15.605,1081.44,Cinnamomum_bodinieri,16,-1.44701204547495,-0.804975031321829,-2.26236152137308,64.1326263694901,-1.447012049137077,2.5017504309420255,TRUE,2.1521190799116994,0.1072451136049358,7.498213530951261

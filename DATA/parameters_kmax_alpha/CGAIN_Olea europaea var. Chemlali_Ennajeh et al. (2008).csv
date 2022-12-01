@@ -1,0 +1,2 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID,Height.actual..m.,Latitude,Longitude,Altitude..m.,MATbest,PPTbest,taxon,Height.max..m.,P50..MPa.,P12..MPa.,P88..MPa.,Slope,P50,b,acclimation,K.scale,alpha,gamma
+Olea europaea var. Chemlali,CGAIN,FALSE,TRUE,Ennajeh et al. (2008),Olea,europaea,Chemlali,1635,1.35,33.891835,10.101385,30,19.5,218,Olea_europaea,15,-7,-2.58,-12,7.6,-7.00000003020531,2.074324103202459,TRUE,0.3553981971577258,0.06828601621578514,27.95537824199789

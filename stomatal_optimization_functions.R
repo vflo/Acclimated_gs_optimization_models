@@ -130,7 +130,7 @@ fn_profit_inst_schemes <- function(par, jmax, vcmax, psi_soil, e_crit, p_crit, p
   ## CMAX
   if(stomatal_model == "CMAX"){
     bb = 1
-    profit = (A - par_cost$gamma*si_leaf^2 - bb*si_leaf)
+    profit = (A - par_cost$gamma*psi_leaf^2 - bb*psi_leaf)
   }
   
   ## PROFITMAX

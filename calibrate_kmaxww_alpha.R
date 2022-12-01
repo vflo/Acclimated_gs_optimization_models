@@ -554,9 +554,9 @@ template %>% filter(scheme == "PROFITMAX") %>%
   group_split(scheme, dpsi, Species,source) %>%
   purrr::map_df(get_parameters_kmaxww_alpha)->res
 
-save(res,file = "DATA/Kmax_PROFITMAX_kmax_alpha.RData")
+save(res,file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
 
-load(file = "DATA/Kmax_PROFITMAX_kmax_alpha.RData")
+load(file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
 
 K_PROFITMAX <- res %>% 
   select(Species,K_PROFITMAX = K.scale,dpsi,acclimation,source) %>% 

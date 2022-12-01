@@ -1,0 +1,2 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID,Height.actual..m.,Latitude,Longitude,Altitude..m.,MATbest,PPTbest,taxon,Height.max..m.,P50..MPa.,P12..MPa.,P88..MPa.,Slope,P50,b,acclimation,K.scale,alpha,gamma
+Quercus ilex,CGAIN,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,ilex,NA,1606,NA,40.3166666666667,-2.25,950,11.85,812.18,Quercus_ilex,16.0487380606061,-6.88,-4.3,-8.09434551329292,20.4,-6.88000000720162,6.878335040427226,TRUE,0.21919784713099943,0.11180114502537264,16.481109655934162

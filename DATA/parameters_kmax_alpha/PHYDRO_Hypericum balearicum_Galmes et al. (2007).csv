@@ -1,0 +1,2 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID,Height.actual..m.,Latitude,Longitude,Altitude..m.,MATbest,PPTbest,taxon,Height.max..m.,P50..MPa.,P12..MPa.,P88..MPa.,Slope,P50,b,acclimation,K.scale,alpha,gamma
+Hypericum balearicum,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Hypericum,balearicum,NA,1627,NA,39.4666666666667,2.51666666666667,100,17.75,562.21,Hypericum_balearicum,2,-2.36762344724208,-0.732631652852093,-4.3505548297602,21.8745832371586,-2.3676234386417114,1.8376440261539488,TRUE,1.1117051162655116,0.11853530351681911,2.458602164179865

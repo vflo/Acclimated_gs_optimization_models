@@ -1,0 +1,3 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID,Height.actual..m.,Latitude,Longitude,Altitude..m.,MATbest,PPTbest,taxon,Height.max..m.,P50..MPa.,P12..MPa.,P88..MPa.,Slope,P50,b,acclimation,K.scale,alpha,gamma
+Helianthus annuus,SOX,FALSE,TRUE,Tezara et al. (2008),Helianthus,annuus,NA,1622,NA,NA,NA,NA,NA,NA,Helianthus_annuus,2,-3.05,-1.87,-4.33688000815018,42.25,-3.049999998201522,3.1761650031481286,TRUE,2.1035675534876765,0.1,NA
+Helianthus annuus,SOX,FALSE,TRUE,Tezara et al. (2008),Helianthus,annuus,NA,1622,NA,NA,NA,NA,NA,NA,Helianthus_annuus,2,-3.05,-1.87,-4.33688000815018,42.25,-3.049999998201522,3.1761650031481286,FALSE,2.468722669756834,NA,NA

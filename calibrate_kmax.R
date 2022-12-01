@@ -467,11 +467,11 @@ get_parameters <- function(x){
                                         
     print(stomatal_model_now)
     print(species)
-    parameter_max <- 15
-    if(stomatal_model_now %in% c("CGAIN")){
-      parameter_max <- 50}
-    if(stomatal_model_now %in% c("CMAX")){
-      parameter_max <- 6}
+    parameter_max <- 50
+    # if(stomatal_model_now %in% c("CGAIN")){
+    #   parameter_max <- 50}
+    # if(stomatal_model_now %in% c("CMAX")){
+    #   parameter_max <- 6}
 
       optimise(error_fun_no_accl,
                interval = c(0,parameter_max),
@@ -512,36 +512,36 @@ get_parameters <- function(x){
     print(stomatal_model_now)
     print(species)
 
-    parameter_max <- 20
-    if(stomatal_model_now %in% c("PHYDRO")){
-      if(species == "Broussonetia papyrifera"){
-        parameter_max <- 1000
-      }else{
-        parameter_max <- 30
-      }
-    }
-    if(stomatal_model_now %in% c("CMAX")){
-      if(species %in% c("Broussonetia papyrifera","Cinnamomum bodinieri")){
-        parameter_max <- 1 #B papyrifera = 10
-      }else{
-        parameter_max <- 6
-      }
-    }
-    if(stomatal_model_now %in% c("SOX")){
-      if(species %in% c("Broussonetia papyrifera","Platycarya longipes",
-                        "Cinnamomum bodinieri","Pteroceltis tatarinowii")){
-        parameter_max <- 30000
-      }else{
-        parameter_max <- 6
-      }
-    }
-    if(stomatal_model_now %in% c("CGAIN")){
-      if(species != "Broussonetia papyrifera"){
-        parameter_max <- 50
-      }else{
-        parameter_max <- 40
-        }
-      }
+    parameter_max <- 50
+    # if(stomatal_model_now %in% c("PHYDRO")){
+    #   if(species == "Broussonetia papyrifera"){
+    #     parameter_max <- 1000
+    #   }else{
+    #     parameter_max <- 30
+    #   }
+    # }
+    # if(stomatal_model_now %in% c("CMAX")){
+    #   if(species %in% c("Broussonetia papyrifera","Cinnamomum bodinieri")){
+    #     parameter_max <- 1 #B papyrifera = 10
+    #   }else{
+    #     parameter_max <- 6
+    #   }
+    # }
+    # if(stomatal_model_now %in% c("SOX")){
+    #   if(species %in% c("Broussonetia papyrifera","Platycarya longipes",
+    #                     "Cinnamomum bodinieri","Pteroceltis tatarinowii")){
+    #     parameter_max <- 30000
+    #   }else{
+    #     parameter_max <- 6
+    #   }
+    # }
+    # if(stomatal_model_now %in% c("CGAIN")){
+    #   if(species != "Broussonetia papyrifera"){
+    #     parameter_max <- 50
+    #   }else{
+    #     parameter_max <- 40
+    #     }
+    #   }
     # if(stomatal_model_now %in% c("CMAX")){
     #   parameter_max <- 6}
     
@@ -610,7 +610,7 @@ K_PROFITMAX <- res %>%
 
 #Compute the rest of the models
 template %>% 
-  filter(!scheme %in% c("PROFITMAX")
+  filter(!scheme %in% c("PROFITMAX","CGAIN")
          # Species %in% c(
          #                # "Rosa cymosa",
          #                # "Broussonetia papyrifera",

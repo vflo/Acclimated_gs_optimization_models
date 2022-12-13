@@ -589,7 +589,7 @@ get_parameters <- function(x){
 ##### COMPUTE PARAMETERS #####
 #First compute PROFITMAX model to obtain Kmax for CMAX. CGAIN, WUE and PHYDRO models
 K_PROFITMAX <- NULL
-template %>% filter(scheme == "PROFITMAX"
+template %>% filter(scheme == "PROFITMAX",Species == "Ficus tikoua"
                     # Species %in% c("Rosa cymosa",
                     #                "Broussonetia papyrifera",
                     #                "Cinnamomum bodinieri",

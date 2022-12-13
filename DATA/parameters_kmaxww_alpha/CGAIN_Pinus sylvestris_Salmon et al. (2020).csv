@@ -1,0 +1,3 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID,Height.actual..m.,Latitude,Longitude,Altitude..m.,MATbest,PPTbest,taxon,Height.max..m.,P50..MPa.,P12..MPa.,P88..MPa.,Slope,P50,b,acclimation,K.scale,alpha,gamma
+Pinus sylvestris,CGAIN,FALSE,TRUE,Salmon et al. (2020),Pinus,sylvestris,NA,1608,0.75,60.23,25.02,20,5.6,603,Pinus_sylvestris,35.6228813598322,-3.09,-2.62,-3.73524174153769,69.3,-3.0900000241385355,5.895616826266089,TRUE,0.2611075480289942,0.17192275381905894,2.9132151778609954
+Pinus sylvestris,CGAIN,FALSE,TRUE,Salmon et al. (2020),Pinus,sylvestris,NA,1608,0.75,60.23,25.02,20,5.6,603,Pinus_sylvestris,35.6228813598322,-3.09,-2.62,-3.73524174153769,69.3,-3.0900000241385355,5.895616826266089,FALSE,0.2611075480289942,NA,2.9132151778609954

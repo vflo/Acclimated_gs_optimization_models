@@ -1,0 +1,3 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID,Height.actual..m.,Latitude,Longitude,Altitude..m.,MATbest,PPTbest,taxon,Height.max..m.,P50..MPa.,P12..MPa.,P88..MPa.,Slope,P50,b,acclimation,K.scale,alpha,gamma
+Picea abies,PHYDRO,FALSE,TRUE,Salmon et al. (2020),Picea,abies,NA,1609,0.57,60.23,25.02,20,5.6,603,Picea_abies,50.0928431147938,-3.61,-2.8,-4.46407332026241,46.6,-3.6099999974866623,5.265047587308542,TRUE,0.06923600242190513,0.15626154127494654,0.0307801474702255
+Picea abies,PHYDRO,FALSE,TRUE,Salmon et al. (2020),Picea,abies,NA,1609,0.57,60.23,25.02,20,5.6,603,Picea_abies,50.0928431147938,-3.61,-2.8,-4.46407332026241,46.6,-3.6099999974866623,5.265047587308542,FALSE,0.06923600242190513,NA,0.0307801474702255

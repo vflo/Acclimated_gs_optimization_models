@@ -252,8 +252,23 @@ error_fun_no_accl = function(x, data, data_template, plot=F,
   dp88S = f1(psi88S)
   psiL88S = psi88S-dp88S
   
-  y = mean((dat1$gs - data$gC)^2,na.rm  = TRUE)/mean(data$gC,na.rm  = TRUE)^2
+  data_f <- data #%>% filter(LWP >= psi88S) #use only values over Psi88S
+  y2 = mean((dat1$gs - data_f$gC)^2,na.rm  = TRUE)/mean(data_f$gC,na.rm  = TRUE)^2
+  y1 = mean((dat1$a - data_f$A)^2,na.rm  = TRUE)/mean(data_f$A,na.rm  = TRUE)^2
+  y4 = mean((dat1$chi - (data_f$Ciest/data_f$ca))^2,na.rm  = TRUE)/mean((data_f$Ciest/data_f$ca),na.rm  = TRUE)^2
   
+  if (!is.null(dpsi_data)){
+    d_spl = splinefun(lwp, y=dat1$dpsi)
+    dpsi_data_f <- dpsi_data #%>% filter(SWP >= psi88S) #use only values over Psi88S
+    y3 = mean((d_spl(dpsi_data_f$SWP) - dpsi_data_f$Dpsi)^2,na.rm  = TRUE)/mean(dpsi_data_f$Dpsi,na.rm  = TRUE)^2 #*40
+    cat("d_spl:", d_spl(dpsi_data_f$SWP), "\n")
+  }else{
+    y3=0
+  }
+  
+  y=y2+y1+y4
+  
+  cat(x, "|", y2, " / ", y1, " / ", y4, " / ",y, "\n")
   cat(x, "|", y, "\n")
   
   y
@@ -266,14 +281,14 @@ error_fun_kmax_alpha = function(x, data, data_template,  plot=F,
                                 k=7, stomatal_model = stomatal_model_now, 
                                 dpsi_data = dpsi_data, Species_now = species,
                                 res_ww =res_ww, K_PROFITMAX = K_PROFITMAX_acclimate){
-  parameter_max <- c(0.2)
-
-  if(x[1]<=0 | x[1]>parameter_max[1] ){over <- TRUE}else{over <- FALSE} #set boundaries
-  
-  if(over){
-    print(paste("Over-limits"))
-    return(1e6)
-  }else{
+  # parameter_max <- c(0.2)
+  # 
+  # if(x[1]<=0 | x[1]>parameter_max[1] ){over <- TRUE}else{over <- FALSE} #set boundaries
+  # 
+  # if(over){
+  #   print(paste("Over-limits"))
+  #   return(1e6)
+  # }else{
 
   data$Ciest = data$ca-data$A/data$gC
   if(stomatal_model %in% par_scheme){
@@ -377,7 +392,7 @@ error_fun_kmax_alpha = function(x, data, data_template,  plot=F,
       cat(x, "|", y, "\n")
       
       y
-  }
+  # }
 }
 
 
@@ -448,6 +463,7 @@ get_parameters_kmaxww_alpha <- function(x){
                                        kphio = 0.087
     )
     
+    ##### PARAMETERIZATION WITHOUT ACCLIMATION #####
     print(stomatal_model_now)
     print(species)
     parameter_max <- 15
@@ -475,9 +491,6 @@ get_parameters_kmaxww_alpha <- function(x){
       res_ww <- tibble(K.scale=x_no_accl[1],
                        gamma=NA)
     }
-    
-    
-    ##### PARAMETERIZATION WITHOUT ACCLIMATION #####
 
     error_fun_no_accl(x_no_accl, data1, 
                       data_template = data_template_now, plot=T,
@@ -504,20 +517,21 @@ get_parameters_kmaxww_alpha <- function(x){
     ##### PARAMETERIZATION WITH ACCLIMATION #####
     print(stomatal_model_now)
     print(species)
-    parameter_ini <- c(0.1) #hydraulic parameter and alpha
-      optimr::optimr(fn = error_fun_kmax_alpha,
-                     par = parameter_ini,
-                     data=data1,
+    # parameter_ini <- c(0.1) #hydraulic parameter and alpha
+    optimise(error_fun_kmax_alpha,
+                     interval = c(0.000001,0.2),
+                     data = data1,
                      data_template = data_template_now,
                      dpsi_data = dpsi_data,
                      stomatal_model = stomatal_model_now,
                      Species_now = species,
                      K_PROFITMAX = K_PROFITMAX_acclimate,
-                     res_ww =res_ww,
-                     control = list(maxit = 500, maximize = TRUE,
-                                    REPORT=0, trace=0, reltol=1e-4)
+                     res_ww = res_ww#,
+                     # control = list(maxit = 500, maximize = TRUE,
+                     #                REPORT=0, trace=0, reltol=1e-4)
                      ) -> opt_accl
-      x_accl <- opt_accl$par
+      # x_accl <- opt_accl$par
+      x_accl <- opt_accl$minimum
     
     error_fun_kmax_alpha(x_accl, data1, data_template = data_template_now,
                          dpsi_data = dpsi_data, plot=T, 
@@ -528,15 +542,15 @@ get_parameters_kmaxww_alpha <- function(x){
     if(stomatal_model_now %in% par_scheme){
       res_accl <- tibble(x,
                          acclimation = TRUE,
-                         K.scale=K_PROFITMAX_acclimate$K_PROFITMAX,
-                         alpha=x_accl[2],
-                         gamma=x_accl[1])
+                         K.scale=res_ww$K.scale,
+                         alpha=x_accl[1],
+                         gamma=res_ww$gamma)
     }else{
       res_accl <- tibble(x,
                          acclimation = TRUE,
-                         K.scale=x_accl[1],
-                         alpha=x_accl[2],
-                         gamma=NA)
+                         K.scale=res_ww$K.scale,
+                         alpha=x_accl[1],
+                         gamma=res_ww$gamma)
     }
     
   df <- bind_rows(res_accl,res_no_accl)
@@ -549,12 +563,12 @@ get_parameters_kmaxww_alpha <- function(x){
 
 ##### COMPUTE PARAMETERS #####
 #First compute PROFITMAX model to obtain Kmax for CMAX. CGAIN, WUE and PHYDRO models
-K_PROFITMAX <- NULL
-template %>% filter(scheme == "PROFITMAX") %>%
-  group_split(scheme, dpsi, Species,source) %>%
-  purrr::map_df(get_parameters_kmaxww_alpha)->res
-
-save(res,file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
+# K_PROFITMAX <- NULL
+# template %>% filter(scheme == "PROFITMAX") %>%
+#   group_split(scheme, dpsi, Species,source) %>%
+#   purrr::map_df(get_parameters_kmaxww_alpha)->res
+# 
+# save(res,file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
 
 load(file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
 
@@ -565,7 +579,7 @@ K_PROFITMAX <- res %>%
 
 #Compute the other models
 template %>% 
-  filter(!scheme %in% c("PROFITMAX")#,
+  filter(!scheme %in% c("PROFITMAX","CGAIN","CMAX","PHYDRO")#,
          # Species %in% c(
          #   # "Rosa cymosa",
          #   # "Broussonetia papyrifera",

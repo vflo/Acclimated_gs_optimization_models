@@ -1,0 +1,3 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID,Height.actual..m.,Latitude,Longitude,Altitude..m.,MATbest,PPTbest,taxon,Height.max..m.,P50..MPa.,P12..MPa.,P88..MPa.,Slope,P50,b,acclimation,K.scale,alpha,gamma
+Quercus suber,SOX,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,suber,NA,1607,NA,39.55,-4.73333333333333,600,12.757,785.5,Quercus_suber,20.3406300396825,-5.2,-3.7,-5.97556930832509,63.3,-5.200000001285543,8.04234833118246,TRUE,0.5440439454109427,0.11233346040882751,NA
+Quercus suber,SOX,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,suber,NA,1607,NA,39.55,-4.73333333333333,600,12.757,785.5,Quercus_suber,20.3406300396825,-5.2,-3.7,-5.97556930832509,63.3,-5.200000001285543,8.04234833118246,FALSE,0.5440439454109427,NA,NA

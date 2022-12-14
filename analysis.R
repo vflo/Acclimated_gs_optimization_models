@@ -23,6 +23,8 @@ source('hydraulic_functions.R')
 source('photosynthetic_functions.R')
 source("QUADP.R")
 
+
+# PLOTTING THEMES --------------------------------------------------------------
 makeTransparent = function(col, alpha=0.7){
   rgb(t(col2rgb(col)/255), alpha = alpha)
 }
@@ -56,6 +58,12 @@ mytheme3 = function(){
   
 }
 
+col_df <- tibble(scheme = factor(c('CMAX','CGAIN','PHYDRO','PROFITMAX2','SOX','PROFITMAX')),
+                 col = brewer_pal(palette = "Dark2")(6)
+)
+
+
+# WORK FUNCTIONS ---------------------------------------------------------------
 get_vcmax_jmax_ww <- function(x){
   data_ww <- x %>% 
   filter(!is.na(gC)) %>% 
@@ -83,68 +91,224 @@ jmax <- calc_jmax_no_acclimated_ww(A = data_ww$A,
 return(tibble(vcmax_ww = vcmax,jmax_ww = jmax,LWP_ww = data_ww$LWP))
 }
 
-col_df <- tibble(scheme = factor(c('CMAX','CGAIN','PHYDRO','PROFITMAX2','SOX','PROFITMAX')),
-  col = brewer_pal(palette = "Dark2")(6)
-)
+get_no_acclimated_response <- function(x,tc_now,ppfd_now,vpd_now,co2_now){
+  stomatal_model = x$stomatal_model
+  par_plant_now = list(
+    conductivity = x$K.scale*1e-16,
+    psi50 = x$P50%>% unique(),
+    b = x$b%>% unique()
+  )
+  par_cost_now = list(
+    alpha = 0.1,
+    gamma = x$gamma
+  )
+  ndays = 30
+  psi_max = 0
+  psi_min = -6
+  lwp = seq(psi_min, 0, length.out=50)
+  
+  dat_a <- rpmodel::rpmodel(tc =tc_now, ppfd = ppfd_now, 
+                            vpd = vpd_now, co2 = co2_now, 
+                            elv = 0, fapar = .99)
+  
+  dat1 = tibble(var = lwp, jmax_a=dat_a$jmax, vcmax_a=dat_a$vcmax) %>%
+    mutate(p = purrr::pmap(list(var, jmax_a, vcmax_a), 
+                           ~model_numerical_instantaneous(tc =tc_now, ppfd = ppfd_now, 
+                                                          vpd = vpd_now, co2 = co2_now, 
+                                                          elv = 0, fapar = .99, 
+                                                          kphio = 0.087, 
+                                                          psi_soil = ..1, rdark = 0.02, 
+                                                          par_plant=par_plant_now, 
+                                                          par_cost = par_cost_now, 
+                                                          jmax = ..2, vcmax = ..3, 
+                                                          stomatal_model = stomatal_model)) ) %>% 
+    unnest_wider(p)
+  dat2 <- dat1 %>% filter(gs>=1e-40)
+  gx = log(dat2$gs)
+  gy = dat2$var
+  fpsi = splinefun(x = gx, y=gy, method = "natural")
+  gs0 = dat2$gs[which(dat2$var==0)]
+  psi88S = fpsi(log(gs0*0.12))
+  dpx = dat2$var
+  dpy = dat2$dpsi
+  f1 = splinefun(dpy~dpx)
+  dp88S = f1(psi88S)
+  psiL88S = psi88S-dp88S
+  return(dat1 %>% cbind(scheme = x$scheme, Species = x$Species, psi88S=psi88S,psiL88S=psiL88S,gs0 = gs0))
+  
+}
 
+
+
+get_acclimated_response <- function(x,tc_now,ppfd_now,vpd_now,co2_now){
+  stomatal_model = x$stomatal_model
+  par_plant_now = list(
+    conductivity = x$K.scale*1e-16,
+    psi50 = x$P50 %>% unique(),
+    b = x$b %>% unique()
+  )
+  par_cost_now = list(
+    alpha = x$alpha,
+    gamma = x$gamma
+  )
+  ndays = 30
+  psi_max = 0
+  psi_min = -7
+  lwp = seq(psi_min, 0, length.out=100)
+  day = ndays * (lwp-psi_max)/(psi_min-psi_max)
+  
+  lwp_day = function(day_num){
+    psi_max + day_num/ndays * (psi_min-psi_max)
+  }
+  
+  k = 7
+  lwp_week = rollmean(x = lwp_day(c(max(day):0, rep(0,k-1))), k = k, align = "right")
+  
+  spl = splinefun(x = max(day):0, y=lwp_week)
+  
+  dat_acc = tibble(var = spl(day)) %>% 
+    mutate(var = case_when(var>0~0,
+                           TRUE~var),
+           pmod = map(var, ~model_numerical(tc =tc_now, ppfd = ppfd_now, 
+                                            vpd = vpd_now, co2 = co2_now, 
+                                            elv = 0, fapar = .99, kphio = 0.087, 
+                                            psi_soil = ., rdark = 0.02, par_plant=par_plant_now, 
+                                            par_cost = par_cost_now, stomatal_model = stomatal_model))) %>% 
+    unnest_wider(pmod)
+  dat1 = tibble(var = lwp, jmax_a=dat_acc$jmax, vcmax_a=dat_acc$vcmax) %>%
+    mutate(p = purrr::pmap(list(var, jmax_a, vcmax_a), 
+                           ~model_numerical_instantaneous(tc =tc_now, ppfd = ppfd_now, 
+                                                          vpd = vpd_now, co2 = co2_now, 
+                                                          elv = 0, fapar = .99, 
+                                                          kphio = 0.087, 
+                                                          psi_soil = ..1, rdark = 0.02, 
+                                                          par_plant=par_plant_now, 
+                                                          par_cost = par_cost_now, 
+                                                          jmax = ..2, vcmax = ..3, 
+                                                          stomatal_model = stomatal_model)) ) %>% 
+    unnest_wider(p)
+  dat2 <- dat1 %>% filter(gs>=1e-40)
+  gx = log(dat2$gs)
+  gy = dat2$var
+  fpsi = splinefun(x = gx, y=gy, method = "natural")
+  gs0 = dat2$gs[which(dat2$var==0)]
+  psi88S = fpsi(log(gs0*0.12))
+  dpx = dat2$var
+  dpy = dat2$dpsi
+  f1 = splinefun(dpy~dpx)
+  dp88S = f1(psi88S)
+  psiL88S = psi88S-dp88S
+  return(dat1 %>% cbind(scheme = x$scheme, Species = x$Species, psi88S=psi88S,psiL88S=psiL88S,gs0 = gs0))
+  
+}
+
+
+get_cost <- function(x,tc_now,ppfd_now,vpd_now,co2_now){
+  stomatal_model = x$stomatal_model
+  par_plant_now = list(
+    conductivity = x$K.scale*1e-16,
+    psi50 = x$P50%>% unique(),
+    b = x$b%>% unique()
+  )
+  par_cost_now = list(
+    alpha = x$alpha,
+    gamma = x$gamma
+  )
+  ndays = x$Drydown.days
+  psi_max = 0
+  psi_min = -7
+  lwp = seq(psi_min, 0, length.out=20)
+  day = ndays * (lwp-psi_max)/(psi_min-psi_max)
+  
+  lwp_day = function(day_num){
+    psi_max + day_num/ndays * (psi_min-psi_max)
+  }
+  
+  k = 7
+  lwp_week = rollmean(x = lwp_day(c(max(day):0, rep(0,k-1))), k = k, align = "right")
+  
+  spl = splinefun(x = max(day):0, y=lwp_week)
+  
+  dat_acc = tibble(var = spl(day)) %>% 
+    mutate(var = case_when(var>0~0,
+                           TRUE~var),
+           pmod = map(var, ~model_numerical(tc =tc_now, ppfd = ppfd_now, 
+                                            vpd = vpd_now, co2 = co2_now, 
+                                            elv = 0, fapar = .99, kphio = 0.087, 
+                                            psi_soil = ., rdark = 0.02, par_plant=par_plant_now, 
+                                            par_cost = par_cost_now, stomatal_model = stomatal_model))) %>% 
+    unnest_wider(pmod)
+  
+  
+  return(dat_acc %>% cbind(scheme = x$scheme, Species = x$Species, source = x$source))
+  
+}
+
+
+# LOAD DATA --------------------------------------------------------------------
+
+#### TRAITS DATA ####
 traits <- read.csv(file="DATA/imputation_df.csv") %>% rename(species = 'Species', genus = 'Genus',Species = "Binomial")
 
+
+
+
+#### SIMULATIONS ALPHA = 0.1 ####
 load(file = "DATA/simulations_kmax_vpd.RData")
-
-
-#### SIMULATIONS RESULTS ####
-
-df <- df %>% 
-  filter(dpsi == FALSE) %>%
+df_a_fix <- df %>% 
   mutate(chi = Ciest/ca,
          acclimation = factor(acclimation, 
                               levels = c('TRUE','FALSE'),
-                              labels = c("Acclimated", "No acclimated"))
-  )#%>%
-  # filter(
-  #   !(scheme %in% c('SOX') & Species %in% c('Pteroceltis tatarinowii','Platycarya longipes')),
-  #   !Species %in% c('Broussonetia papyrifera'))
-df_n <- df %>% 
+                              labels = c("Acclimated", "Not acclimated")))
+
+df_a_fix_n <- df_a_fix %>% 
   group_by(scheme,acclimation,Species,source) %>% 
   filter(!is.na(A)) %>% 
   summarise(n_dist = n())
 
 
-#### PARAMETERS DATA ####
+## PARAMETERS DATA
 path_par <- "DATA/parameters_kmax/"
 par_data <- list.files(path_par) %>% 
   purrr::map_df(function(x){
     readr::read_csv(paste0(path_par,x))
   })
 
-df_param <- par_data %>% 
-  filter(dpsi == FALSE) %>%
+df_a_fix_param <- par_data %>% 
   mutate(acclimation = factor(acclimation, 
                               levels = c('TRUE','FALSE'),
-                              labels = c("Acclimated", "No acclimated"))
-  )#%>% 
-  # filter( !(scheme %in% c('SOX') & Species %in% c('Pteroceltis tatarinowii','Platycarya longipes')) ,
-  #   !Species %in% c('Broussonetia papyrifera'))
+                              labels = c("Acclimated", "Not acclimated"))
+  )
 
-# df_param[which(df_param$Species %in% 
-#                  c("Olea europaea var. Chemlali","Olea europaea var. Meski")),
-#          "Huber.value"] <- olea_hv$Huber.value
-# df_param[which(df_param$Species %in% 
-#                  c("Olea europaea var. Chemlali","Olea europaea var. Meski")),
-#          "KL..kg.m.1.MPa.1.s.1."] <- olea_kl$KL..kg.m.1.MPa.1.s.1.
-
-
-
-
-
-#### CALCULATE WW JMAX AND VCMAX ####
-vcmax_jmax_ww <- df %>% 
+## CALCULATE WW JMAX AND VCMAX
+vcmax_jmax_ww <- df_a_fix %>% 
   group_by(scheme,source,Species) %>% 
   do(get_vcmax_jmax_ww(.))
 
 
+#### SIMULATIONS KMAXWW ALPHA ####
+load(file = "DATA/simulations_kmaxww_alpha.RData")
+df_kmaxww_a <- df %>% 
+  mutate(chi = Ciest/ca,
+         acclimation = factor(acclimation, 
+                              levels = c('TRUE','FALSE'),
+                              labels = c("Acclimated", "Not acclimated")))
 
-#### PREPARE KMAX ALPHA DATASET ####
+## PARAMETERS DATA
+path_par <- "DATA/parameters_kmaxww_alpha/"
+par_data <- list.files(path_par) %>% 
+  purrr::map_df(function(x){
+    readr::read_csv(paste0(path_par,x))
+  })
+
+df_kmaxww_a_param <- par_data %>% 
+  mutate(acclimation = factor(acclimation, 
+                              levels = c('TRUE','FALSE'),
+                              labels = c("Acclimated", "Not acclimated"))
+  )
+
+
+#### KMAX ALPHA DATASET ####
 
 path_par_kmax_alpha <- "DATA/parameters_kmax_alpha/"
 par_data_kmax_alpha <- list.files(path_par_kmax_alpha) %>% 
@@ -153,11 +317,10 @@ par_data_kmax_alpha <- list.files(path_par_kmax_alpha) %>%
   })
 
 df_param_kmax_alpha <- par_data_kmax_alpha %>% 
-  filter(dpsi == FALSE) %>%
   mutate(stomatal_model = scheme,
          acclimation = factor(acclimation, 
                               levels = c('TRUE','FALSE'),
-                              labels = c("Acclimated", "No acclimated"))
+                              labels = c("Acclimated", "Not acclimated"))
          )%>% 
   # filter(
   #   !Species %in% c('Broussonetia papyrifera'))%>%
@@ -171,12 +334,12 @@ df_param_kmax_alpha <- par_data_kmax_alpha %>%
 #          "KL..kg.m.1.MPa.1.s.1."] <- olea_kl$KL..kg.m.1.MPa.1.s.1.
 
 df_param_kmax_alpha <- df_param_kmax_alpha %>% 
-  left_join(df %>% 
+  left_join(df_a_fix %>% 
               dplyr::select(scheme,source,Species,Iabs_growth,D,T,ca) %>%
               group_by(scheme,source,Species) %>%  
               summarise_all(mean,na.rm=TRUE)
             ) %>% 
-  left_join(df_n) %>% 
+  left_join(df_a_fix_n) %>% 
   mutate(var = 0,
          psi0 = purrr::pmap(list(var, T,Iabs_growth,D,ca,K.scale,P50,b,alpha,gamma,stomatal_model), 
                             ~model_numerical(tc =..2, ppfd = ..3, 
@@ -747,7 +910,7 @@ fviz_pca_var(res.pca,
 ################################################################################
 #### A
 ################################################################################
-df_a <- df %>% 
+df_a <- df_a_fix %>% 
   group_by(scheme,acclimation,Species,source) %>% 
   filter(!is.na(A)) %>% 
   mutate(diff_a = A - a_pred) %>% 
@@ -910,113 +1073,113 @@ ggarrange(#p1,
                                ),
           common.legend = T,ncol=2, nrow = 1)
 
-
-
-df %>% 
-  filter(scheme == "PROFITMAX") %>% 
-  ggplot(aes(a_pred,A,color = acclimation))+
-  geom_point()+
-  geom_abline(intercept = 0,slope = 1, color = "grey20")+
-  geom_smooth(method = "lm", se = FALSE)+
-  facet_wrap(~Species)+
-  mytheme2()+
-  theme(legend.title = element_blank(),
-        legend.position="top",
-        plot.title = element_text(vjust = -10))+
-  scale_color_manual(values = c("#A6611A","#018571"))+
-  xlab(expression(textstyle("Predicted A")))+
-  ylab(expression(textstyle("Observed A")))+
-  ggtitle(expression(atop("PROFITMAX Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
-
-df %>% 
-  filter(scheme == "PROFITMAX2") %>% 
-  ggplot(aes(a_pred,A,color = acclimation))+
-  geom_point()+
-  geom_abline(intercept = 0,slope = 1, color = "grey20")+
-  geom_smooth(method = "lm", se = FALSE)+
-  facet_wrap(~Species)+
-  mytheme2()+
-  theme(legend.title = element_blank(),
-        legend.position="top",
-        plot.title = element_text(vjust = -10))+
-  scale_color_manual(values = c("#A6611A","#018571"))+
-  xlab(expression(textstyle("Predicted A")))+
-  ylab(expression(textstyle("Observed A")))+
-  ggtitle(expression(atop("PROFITMAX2 Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
-
-df %>% 
-  filter(scheme == "SOX") %>% 
-  ggplot(aes(a_pred,A,color = acclimation))+
-  geom_point()+
-  geom_abline(intercept = 0,slope = 1, color = "grey20")+
-  geom_smooth(method = "lm", se = FALSE)+
-  facet_wrap(~Species)+
-  mytheme2()+
-  theme(legend.title = element_blank(),
-        legend.position="top",
-        plot.title = element_text(vjust = -10))+
-  scale_color_manual(values = c("#A6611A","#018571"))+
-  xlab(expression(textstyle("Predicted A")))+
-  ylab(expression(textstyle("Observed A")))+
-  ggtitle(expression(atop("SOX Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
-
-df %>% 
-  filter(scheme == "PHYDRO") %>% 
-  ggplot(aes(a_pred,A,color = acclimation))+
-  geom_point()+
-  geom_abline(intercept = 0,slope = 1, color = "grey20")+
-  geom_smooth(method = "lm", se = FALSE)+
-  facet_wrap(~Species)+
-  mytheme2()+
-  theme(legend.title = element_blank(),
-        legend.position="top",
-        plot.title = element_text(vjust = -10))+
-  scale_color_manual(values = c("#A6611A","#018571"))+
-  xlab(expression(textstyle("Predicted A")))+
-  ylab(expression(textstyle("Observed A")))+
-  ggtitle(expression(atop("PHYDRO Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
-
-
-df %>% 
-  filter(scheme == "CMAX") %>% 
-  ggplot(aes(a_pred,A,color = acclimation))+
-  geom_point()+
-  geom_abline(intercept = 0,slope = 1, color = "grey20")+
-  geom_smooth(method = "lm", se = FALSE)+
-  facet_wrap(~Species)+
-  mytheme2()+
-  theme(legend.title = element_blank(),
-        legend.position="top",
-        plot.title = element_text(vjust = -10))+
-  scale_color_manual(values = c("#A6611A","#018571"))+
-  xlab(expression(textstyle("Predicted A")))+
-  ylab(expression(textstyle("Observed A")))+
-  ggtitle(expression(atop("CMAX Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
-
-
-df %>% 
-  filter(scheme == "CGAIN") %>% 
-  ggplot(aes(a_pred,A,color = acclimation))+
-  geom_point()+
-  geom_abline(intercept = 0,slope = 1, color = "grey20")+
-  geom_smooth(method = "lm", se = FALSE)+
-  facet_wrap(~Species)+
-  mytheme2()+
-  theme(legend.title = element_blank(),
-        legend.position="top",
-        plot.title = element_text(vjust = -10))+
-  scale_color_manual(values = c("#A6611A","#018571"))+
-  xlab(expression(textstyle("Predicted A")))+
-  ylab(expression(textstyle("Observed A")))+
-  ggtitle(expression(atop("CMAX Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
-
+# 
+# 
+# df_a_fix %>% 
+#   filter(scheme == "PROFITMAX") %>% 
+#   ggplot(aes(a_pred,A,color = acclimation))+
+#   geom_point()+
+#   geom_abline(intercept = 0,slope = 1, color = "grey20")+
+#   geom_smooth(method = "lm", se = FALSE)+
+#   facet_wrap(~Species)+
+#   mytheme2()+
+#   theme(legend.title = element_blank(),
+#         legend.position="top",
+#         plot.title = element_text(vjust = -10))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   xlab(expression(textstyle("Predicted A")))+
+#   ylab(expression(textstyle("Observed A")))+
+#   ggtitle(expression(atop("PROFITMAX Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
+# 
+# df_a_fix %>% 
+#   filter(scheme == "PROFITMAX2") %>% 
+#   ggplot(aes(a_pred,A,color = acclimation))+
+#   geom_point()+
+#   geom_abline(intercept = 0,slope = 1, color = "grey20")+
+#   geom_smooth(method = "lm", se = FALSE)+
+#   facet_wrap(~Species)+
+#   mytheme2()+
+#   theme(legend.title = element_blank(),
+#         legend.position="top",
+#         plot.title = element_text(vjust = -10))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   xlab(expression(textstyle("Predicted A")))+
+#   ylab(expression(textstyle("Observed A")))+
+#   ggtitle(expression(atop("PROFITMAX2 Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
+# 
+# df_a_fix %>% 
+#   filter(scheme == "SOX") %>% 
+#   ggplot(aes(a_pred,A,color = acclimation))+
+#   geom_point()+
+#   geom_abline(intercept = 0,slope = 1, color = "grey20")+
+#   geom_smooth(method = "lm", se = FALSE)+
+#   facet_wrap(~Species)+
+#   mytheme2()+
+#   theme(legend.title = element_blank(),
+#         legend.position="top",
+#         plot.title = element_text(vjust = -10))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   xlab(expression(textstyle("Predicted A")))+
+#   ylab(expression(textstyle("Observed A")))+
+#   ggtitle(expression(atop("SOX Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
+# 
+# df_a_fix %>% 
+#   filter(scheme == "PHYDRO") %>% 
+#   ggplot(aes(a_pred,A,color = acclimation))+
+#   geom_point()+
+#   geom_abline(intercept = 0,slope = 1, color = "grey20")+
+#   geom_smooth(method = "lm", se = FALSE)+
+#   facet_wrap(~Species)+
+#   mytheme2()+
+#   theme(legend.title = element_blank(),
+#         legend.position="top",
+#         plot.title = element_text(vjust = -10))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   xlab(expression(textstyle("Predicted A")))+
+#   ylab(expression(textstyle("Observed A")))+
+#   ggtitle(expression(atop("PHYDRO Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
+# 
+# 
+# df_a_fix %>% 
+#   filter(scheme == "CMAX") %>% 
+#   ggplot(aes(a_pred,A,color = acclimation))+
+#   geom_point()+
+#   geom_abline(intercept = 0,slope = 1, color = "grey20")+
+#   geom_smooth(method = "lm", se = FALSE)+
+#   facet_wrap(~Species)+
+#   mytheme2()+
+#   theme(legend.title = element_blank(),
+#         legend.position="top",
+#         plot.title = element_text(vjust = -10))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   xlab(expression(textstyle("Predicted A")))+
+#   ylab(expression(textstyle("Observed A")))+
+#   ggtitle(expression(atop("CMAX Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
+# 
+# 
+# df_a_fix %>% 
+#   filter(scheme == "CGAIN") %>% 
+#   ggplot(aes(a_pred,A,color = acclimation))+
+#   geom_point()+
+#   geom_abline(intercept = 0,slope = 1, color = "grey20")+
+#   geom_smooth(method = "lm", se = FALSE)+
+#   facet_wrap(~Species)+
+#   mytheme2()+
+#   theme(legend.title = element_blank(),
+#         legend.position="top",
+#         plot.title = element_text(vjust = -10))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   xlab(expression(textstyle("Predicted A")))+
+#   ylab(expression(textstyle("Observed A")))+
+#   ggtitle(expression(atop("CMAX Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
+# 
 
 
 
 ################################################################################
 #### G
 ################################################################################
-df_g <- df %>% 
+df_g <- df_a_fix %>% 
   group_by(scheme,acclimation,Species,source) %>% 
   filter(!is.na(gC)) %>% 
   mutate(diff_g = gC - g_pred) %>% 
@@ -1165,7 +1328,7 @@ ggarrange(p1,p2,p3,p4,
 
 
 
-df %>% 
+df_a_fix %>% 
   filter(scheme == "PROFITMAX") %>% 
   ggplot(aes(g_pred,gC,color = acclimation))+
   geom_point()+
@@ -1181,7 +1344,7 @@ df %>%
   ylab(expression("Observed g"[s]))+
   ggtitle(expression(atop("Stomatal conductance,","g"[s]~"(mol m"^-2~"s"^-1*")")))
 
-df %>% 
+df_a_fix %>% 
   filter(scheme == "PROFITMAX2") %>% 
   ggplot(aes(g_pred,gC,color = acclimation))+
   geom_point()+
@@ -1197,7 +1360,7 @@ df %>%
   ylab(expression("Observed g"[s]))+
   ggtitle(expression(atop(" PROFITMAX2 Stomatal conductance,","g"[s]~"(mol m"^-2~"s"^-1*")")))
 
-df %>% 
+df_a_fix %>% 
   filter(scheme == "SOX") %>% 
   ggplot(aes(g_pred,gC,color = acclimation))+
   geom_point()+
@@ -1213,7 +1376,7 @@ df %>%
   ylab(expression("Observed g"[s]))+
   ggtitle(expression(atop("SOX Stomatal conductance,","g"[s]~"(mol m"^-2~"s"^-1*")")))
 
-df %>% 
+df_a_fix %>% 
   filter(scheme == "PHYDRO") %>% 
   ggplot(aes(g_pred,gC,color = acclimation))+
   geom_point()+
@@ -1230,7 +1393,7 @@ df %>%
   ggtitle(expression(atop("PHYDRO Stomatal conductance,","g"[s]~"(mol m"^-2~"s"^-1*")")))
 
 
-df %>% 
+df_a_fix %>% 
   filter(scheme == "CGAIN") %>% 
   ggplot(aes(g_pred,gC,color = acclimation))+
   geom_point()+
@@ -1246,7 +1409,7 @@ df %>%
   ylab(expression("Observed g"[s]))+
   ggtitle(expression(atop("CGAIN Stomatal conductance,","g"[s]~"(mol m"^-2~"s"^-1*")")))
 
-df %>% 
+df_a_fix %>% 
   filter(scheme == "CMAX") %>% 
   ggplot(aes(g_pred,gC,color = acclimation))+
   geom_point()+
@@ -1269,7 +1432,7 @@ df %>%
 ################################################################################
 #### CHI
 ################################################################################
-df_c <- df %>% 
+df_c <- df_a_fix %>% 
   group_by(scheme,acclimation,Species,source) %>% 
   filter(!is.na(chi)) %>% 
   mutate(diff_c = chi - c_pred) %>% 
@@ -1418,7 +1581,7 @@ ggarrange(p1,p2,p3,p4,
 
 
 
-df %>% 
+df_a_fix %>% 
   filter(scheme == "PROFITMAX") %>% 
   ggplot(aes(c_pred,chi,color = acclimation))+
   geom_point()+
@@ -1434,7 +1597,7 @@ df %>%
   ylab(expression("Observed "~chi))+
   ggtitle(expression(atop("PROFITMAX Leaf internal-to-ambient CO"[2]~"ratio")))
 
-df %>% 
+df_a_fix %>% 
   filter(scheme == "PROFITMAX2") %>% 
   ggplot(aes(c_pred,chi,color = acclimation))+
   geom_point()+
@@ -1450,7 +1613,7 @@ df %>%
   ylab(expression("Observed "~chi))+
   ggtitle(expression(atop("PROFITMAX2 Leaf internal-to-ambient CO"[2]~"ratio")))
 
-df %>% 
+df_a_fix %>% 
   filter(scheme == "SOX") %>% 
   ggplot(aes(c_pred,chi,color = acclimation))+
   geom_point()+
@@ -1466,7 +1629,7 @@ df %>%
   ylab(expression("Observed "~chi))+
   ggtitle(expression(atop("SOX Leaf internal-to-ambient CO"[2]~"ratio")))
 
-df %>% 
+df_a_fix %>% 
   filter(scheme == "PHYDRO") %>% 
   ggplot(aes(c_pred,chi,color = acclimation))+
   geom_point()+
@@ -1488,7 +1651,7 @@ df %>%
 ################################################################################
 #### DPSI
 ################################################################################
-df_d <- df %>% 
+df_d <- df_a_fix %>% 
   group_by(scheme,acclimation,Species,source) %>% 
   filter(!is.na(Dpsi)) %>% select(Dpsi,d_pred)%>% 
   mutate(diff_d = Dpsi - d_pred) %>% 
@@ -1637,7 +1800,7 @@ ggarrange(p1,p2,p3,p4,
 
 
 
-df %>% 
+df_a_fix %>% 
   filter(scheme == "PROFITMAX") %>% 
   ggplot(aes(d_pred,Dpsi,color = acclimation))+
   geom_point()+
@@ -1653,7 +1816,7 @@ df %>%
   ylab(expression("Observed "~Delta*psi))+
   ggtitle(expression(atop("PROFITMAX Soil-leaf water-potential","difference,"~italic(Delta*psi)~"(MPa)")))
 
-df %>% 
+df_a_fix %>% 
   filter(scheme == "PROFITMAX2") %>% 
   ggplot(aes(d_pred,Dpsi,color = acclimation))+
   geom_point()+
@@ -1669,7 +1832,7 @@ df %>%
   ylab(expression("Observed "~Delta*psi))+
   ggtitle(expression(atop("PROFITMAX2 Soil-leaf water-potential","difference,"~italic(Delta*psi)~"(MPa)")))
 
-df %>% 
+df_a_fix %>% 
   filter(scheme == "SOX") %>% 
   ggplot(aes(d_pred,Dpsi,color = acclimation))+
   geom_point()+
@@ -1685,7 +1848,7 @@ df %>%
   ylab(expression("Observed "~Delta*psi))+
   ggtitle(expression(atop("SOX Soil-leaf water-potential","difference,"~italic(Delta*psi)~"(MPa)")))
 
-df %>% 
+df_a_fix %>% 
   filter(scheme == "PHYDRO") %>% 
   ggplot(aes(d_pred,Dpsi,color = acclimation))+
   geom_point()+
@@ -1704,411 +1867,356 @@ df %>%
 
 
 
+# STOMATAL NON-STOMATAL PARTITION ----------------------------------------------
+get_partition <- function(x){
+  mod_not <- lmer(A~a_pred + (1|Species),data = x %>% filter(acclimation == "Not acclimated"))
+  r2_not <- MuMIn::r.squaredGLMM(mod_not)
+  mod <- lmer(A~a_pred + (1|Species),data = x %>% filter(acclimation == "Acclimated"))
+  r2 <- MuMIn::r.squaredGLMM(mod)
+  
+  return(tibble(stomatal_r2 = r2_not[1],
+             non_stomatal_r2 = r2[1]-r2_not[1],
+             species_r2 = r2[2]-r2[1],
+             Residuals = 1-r2[2]))
+}
+
+partition_full <- df_kmaxww_a %>% 
+  rename(`Stomatal model`=scheme) %>%
+  group_by(`Stomatal model`) %>% 
+  do(get_partition(.)) %>% 
+  pivot_longer(2:5) %>% 
+  mutate(Partition = factor(name,
+                            levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+                            labels = c("Residuals","Species", "Non-stomatal","Stomatal"))) %>%
+  ggplot()+
+  geom_col(aes(x = `Stomatal model`,y=value,fill=Partition))+
+  ylab(expression(R^2))+
+  mytheme()+
+  ylim(0,1)+
+  scale_fill_manual(values = c("#d2d2d2","#ffae49","#44b7c2","#024b7a"))+
+  theme(legend.title = element_blank())
+
+partition_dry <- df_kmaxww_a %>% 
+  group_by(scheme,acclimation,Species,source) %>% 
+  mutate(LWP_q50 = quantile(LWP, 0.5,na.rm = TRUE)) %>%
+  filter(!is.na(A),LWP<=LWP_q50) %>% 
+  ungroup() %>% 
+  rename(`Stomatal model`=scheme) %>%
+  group_by(`Stomatal model`) %>% 
+  do(get_partition(.)) %>% 
+  pivot_longer(2:5) %>% 
+  mutate(Partition = factor(name,
+                            levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+                            labels = c("Residuals","Species", "Non-stomatal","Stomatal"))) %>%
+  ggplot()+
+  geom_col(aes(x = `Stomatal model`,y=value,fill=Partition))+
+  ylab(expression(R^2~"DRY CONDITIONS"))+
+  mytheme()+
+  ylim(0,1)+
+  scale_fill_manual(values = c("#d2d2d2","#ffae49","#44b7c2","#024b7a"))+
+  theme(legend.title = element_blank())
+
+ggarrange(partition_full, partition_dry,
+          align='hv', labels=c('a', 'b'),
+          common.legend = T,ncol=2, nrow = 1)
+
 ################################################################################
 #### SIMULATION + PARAMETERS ANALYSIS
 ################################################################################
-df_a_diff <- df %>% 
-  group_by(scheme,acclimation,Species,source) %>% 
-  filter(!is.na(A)) %>% 
-  dplyr::select(-c(dpsi,genus,species,subsp,P88..MPa.,P50..MPa.,P12..MPa.,
-             SLA..cm2.g.1.,Height.max..m.,Ks..kg.m.1.MPa.1.s.1.,Huber.value,
-             KL..kg.m.1.MPa.1.s.1.)) %>% 
-  mutate(diff_a = A - a_pred) %>% 
-  summarise(n_dist = n(),
-            r = cor(A, a_pred, use = "pairwise.complete.obs"),
-            bias = mean(diff_a,na.rm = TRUE)/mean(A,na.rm = TRUE),
-            rmse = Metrics::rmse(A,a_pred),
-            beta = lm(A~a_pred)$coefficients[2]) %>%
-  left_join(df_param%>%
-              dplyr::select(- c(dpsi, inst,genus,species,subsp,P88..MPa.,P50..MPa.,P12..MPa.,
-                         SLA..cm2.g.1.,Height.max..m.,Ks..kg.m.1.MPa.1.s.1.,Huber.value,
-                         KL..kg.m.1.MPa.1.s.1.))) %>%
-  ungroup() %>% 
-  pivot_wider(names_from = acclimation, values_from = c(6:14)) %>% 
-  mutate(r_diff = r_Acclimated - `r_No acclimated`,
-         bias_diff = bias_Acclimated - `bias_No acclimated`,
-         rmse_diff = rmse_Acclimated - `rmse_No acclimated`,
-         beta_diff = beta_Acclimated - `beta_No acclimated`,
-         K.scale_diff = K.scale_Acclimated - `K.scale_No acclimated`,
-         psi50_diff = P50_Acclimated - `P50_No acclimated`,
-         b_diff = b_Acclimated - `b_No acclimated`,
-         gamma_diff = gamma_Acclimated - `gamma_No acclimated`
-  ) 
-
-# A - r Pearson's
-p1 <- df_a_diff %>% 
-  # filter(scheme %in% c("PROFITMAX","PROFITMAX2","SOX")) %>%
-  mutate(r_diff = case_when(scheme %in% c("PROFITMAX","PROFITMAX2","SOX")~r_diff,
-                            TRUE~NA_real_)) %>% 
-  ggplot(aes(K.scale_diff, r_diff, color = scheme, group = scheme))+
-  geom_hline(yintercept = 0, color = "grey20", linetype = 3)+
-  geom_vline(xintercept = 0, color = "grey20", linetype = 3)+
-  # geom_encircle()+
-  geom_convexhull(alpha=0, fill = "transparent", size = 1.3, show.legend = FALSE)+
-  geom_point()+
-  # geom_density_2d()+
-  mytheme2()+
-  theme(legend.title = element_blank())+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  # scale_color_manual(values = brewer_pal(palette = "RdYlGn")(4))+
-  # ylab(expression("(Acclimated - No acclimated) A rate r Pearson's correlation"))+
-  ylab("")+
-  xlab(expression(Delta*"K"))
-
-p2 <- df_a_diff %>% 
-  # filter(scheme %in% c("WUE","CGAIN","CMAX",'PHYDRO')) %>% 
-  ggplot(aes(gamma_diff, r_diff, color = scheme, group = scheme))+
-  geom_hline(yintercept = 0, color = "grey20", linetype = 3)+
-  geom_vline(xintercept = 0, color = "grey20", linetype = 3)+
-  # geom_encircle()+
-  geom_convexhull(alpha=0, fill = "transparent", size = 1.3, show.legend = FALSE)+
-  geom_point()+
-  # geom_density_2d()+
-  mytheme2()+
-  theme(legend.title = element_blank())+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  # scale_color_manual(values = brewer_pal(palette = "RdYlGn")(4))+
-  # ylab(expression("(Acclimated - No acclimated) A rate r Pearson's correlation"))+
-  ylab("")+
-  xlab(expression(Delta*gamma))
-
-
-annotate_figure(
-  ggarrange(p1,p2, 
-          align='hv', labels=c('a', 'b'),
-          common.legend = T,ncol=2, nrow = 1),
-  left = textGrob("(Acclimated - No acclimated) A rate r Pearson's correlation", 
-                  rot = 90, vjust = 1, gp = gpar(cex = 1)))
-
-# A - BETA
-p1 <- df_a_diff %>% 
-  # filter(scheme %in% c("PROFITMAX","PROFITMAX2","SOX")) %>%
-  mutate(beta_diff = case_when(scheme %in% c("PROFITMAX","PROFITMAX2","SOX")~beta_diff,
-                               TRUE~NA_real_)) %>% 
-  ggplot(aes(K.scale_diff, beta_diff, color = scheme, group = scheme))+
-  geom_hline(yintercept = 0, color = "grey20", linetype = 3)+
-  geom_vline(xintercept = 0, color = "grey20", linetype = 3)+
-  # geom_encircle()+
-  geom_convexhull(alpha=0, fill = "transparent", size = 1.3, show.legend = FALSE)+
-  geom_point()+
-  # geom_density_2d()+
-  mytheme2()+
-  theme(legend.title = element_blank())+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  # scale_color_manual(values = brewer_pal(palette = "RdYlGn")(4))+
-  # ylab(expression("(Acclimated - No acclimated) A rate r Pearson's correlation"))+
-  ylab("")+
-  xlab(expression(Delta*"K"))
-
-p2 <- df_a_diff %>% 
-  # filter(scheme %in% c("WUE","CGAIN","CMAX",'PHYDRO')) %>% 
-  ggplot(aes(gamma_diff, beta_diff, color = scheme, group = scheme))+
-  geom_hline(yintercept = 0, color = "grey20", linetype = 3)+
-  geom_vline(xintercept = 0, color = "grey20", linetype = 3)+
-  # geom_encircle()+
-  geom_convexhull(alpha=0, fill = "transparent", size = 1.3, show.legend = FALSE)+
-  geom_point()+
-  # geom_density_2d()+
-  mytheme2()+
-  theme(legend.title = element_blank())+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  # scale_color_manual(values = brewer_pal(palette = "RdYlGn")(4))+
-  # ylab(expression("(Acclimated - No acclimated) A rate r Pearson's correlation"))+
-  ylab("")+
-  xlab(expression(Delta*gamma))
-
-annotate_figure(
-  ggarrange(p1,p2,
-            align='hv', labels=c('a', 'b'),
-            common.legend = T,ncol=2, nrow = 1),
-  left = textGrob("(Acclimated - No acclimated) A rate \u03B2", 
-                  rot = 90, vjust = 1, gp = gpar(cex = 1)))
-
-
-# A - RMSE
-p1 <- df_a_diff %>% 
-  # filter(scheme %in% c("PROFITMAX","PROFITMAX2","SOX")) %>%
-  mutate(rmse_diff = case_when(scheme %in% c("PROFITMAX","PROFITMAX2","SOX")~rmse_diff,
-                            TRUE~NA_real_)) %>% 
-  ggplot(aes(K.scale_diff, rmse_diff, color = scheme, group = scheme))+
-  geom_hline(yintercept = 0, color = "grey20", linetype = 3)+
-  geom_vline(xintercept = 0, color = "grey20", linetype = 3)+
-  # geom_encircle()+
-  geom_convexhull(alpha=0, fill = "transparent", size = 1.3, show.legend = FALSE)+
-  geom_point()+
-  # geom_density_2d()+
-  mytheme2()+
-  theme(legend.title = element_blank())+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  # scale_color_manual(values = brewer_pal(palette = "RdYlGn")(4))+
-  # ylab(expression("(Acclimated - No acclimated) A rate r Pearson's correlation"))+
-  ylab("")+
-  xlab(expression(Delta*"K"))
-
-p2 <- df_a_diff %>% 
-  # filter(scheme %in% c("WUE","CGAIN","CMAX",'PHYDRO')) %>% 
-  ggplot(aes(gamma_diff, rmse_diff, color = scheme, group = scheme))+
-  geom_hline(yintercept = 0, color = "grey20", linetype = 3)+
-  geom_vline(xintercept = 0, color = "grey20", linetype = 3)+
-  # geom_encircle()+
-  geom_convexhull(alpha=0, fill = "transparent", size = 1.3, show.legend = FALSE)+
-  geom_point()+
-  # geom_density_2d()+
-  mytheme2()+
-  theme(legend.title = element_blank())+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  # scale_color_manual(values = brewer_pal(palette = "RdYlGn")(4))+
-  # ylab(expression("(Acclimated - No acclimated) A rate r Pearson's correlation"))+
-  ylab("")+
-  xlab(expression(Delta*gamma))
-
-annotate_figure(
-  ggarrange(p1,p2,
-            align='hv', labels=c('a', 'b'),
-            common.legend = T,ncol=2, nrow = 1),
-  left = textGrob("(Acclimated - No acclimated) A rate RMSE", 
-                  rot = 90, vjust = 1, gp = gpar(cex = 1)))
-
-
-# A - BIAS
-p1 <- df_a_diff %>% 
-  # filter(scheme %in% c("PROFITMAX","PROFITMAX2","SOX")) %>%
-  mutate(bias_diff = case_when(scheme %in% c("PROFITMAX","PROFITMAX2","SOX")~bias_diff,
-                               TRUE~NA_real_)) %>% 
-  ggplot(aes(K.scale_diff, bias_diff, color = scheme, group = scheme))+
-  geom_hline(yintercept = 0, color = "grey20", linetype = 3)+
-  geom_vline(xintercept = 0, color = "grey20", linetype = 3)+
-  # geom_encircle()+
-  geom_convexhull(alpha=0, fill = "transparent", size = 1.3, show.legend = FALSE)+
-  geom_point()+
-  # geom_density_2d()+
-  mytheme2()+
-  theme(legend.title = element_blank())+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  # scale_color_manual(values = brewer_pal(palette = "RdYlGn")(4))+
-  # ylab(expression("(Acclimated - No acclimated) A rate r Pearson's correlation"))+
-  ylab("")+
-  xlab(expression(Delta*"K"))
-
-p2 <- df_a_diff %>% 
-  # filter(scheme %in% c("WUE","CGAIN","CMAX",'PHYDRO')) %>% 
-  ggplot(aes(gamma_diff, bias_diff, color = scheme, group = scheme))+
-  geom_hline(yintercept = 0, color = "grey20", linetype = 3)+
-  geom_vline(xintercept = 0, color = "grey20", linetype = 3)+
-  # geom_encircle()+
-  geom_convexhull(alpha=0, fill = "transparent", size = 1.3, show.legend = FALSE)+
-  geom_point()+
-  # geom_density_2d()+
-  mytheme2()+
-  theme(legend.title = element_blank())+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  # scale_color_manual(values = brewer_pal(palette = "RdYlGn")(4))+
-  # ylab(expression("(Acclimated - No acclimated) A rate r Pearson's correlation"))+
-  ylab("")+
-  xlab(expression(Delta*gamma))
-
-annotate_figure(
-  ggarrange(p1,p2,
-            align='hv', labels=c('a', 'b'),
-            common.legend = T,ncol=2, nrow = 1),
-  left = textGrob("(Acclimated - No acclimated) A rate BIAS", 
-                  rot = 90, vjust = 1, gp = gpar(cex = 1)))
-
-
-
+# df_a_diff <- df %>% 
+#   group_by(scheme,acclimation,Species,source) %>% 
+#   filter(!is.na(A)) %>% 
+#   dplyr::select(-c(dpsi,genus,species,subsp,P88..MPa.,P50..MPa.,P12..MPa.,
+#              SLA..cm2.g.1.,Height.max..m.,Ks..kg.m.1.MPa.1.s.1.,Huber.value,
+#              KL..kg.m.1.MPa.1.s.1.)) %>% 
+#   mutate(diff_a = A - a_pred) %>% 
+#   summarise(n_dist = n(),
+#             r = cor(A, a_pred, use = "pairwise.complete.obs"),
+#             bias = mean(diff_a,na.rm = TRUE)/mean(A,na.rm = TRUE),
+#             rmse = Metrics::rmse(A,a_pred),
+#             beta = lm(A~a_pred)$coefficients[2]) %>%
+#   left_join(df_param%>%
+#               dplyr::select(- c(dpsi, inst,genus,species,subsp,P88..MPa.,P50..MPa.,P12..MPa.,
+#                          SLA..cm2.g.1.,Height.max..m.,Ks..kg.m.1.MPa.1.s.1.,Huber.value,
+#                          KL..kg.m.1.MPa.1.s.1.))) %>%
+#   ungroup() %>% 
+#   pivot_wider(names_from = acclimation, values_from = c(6:14)) %>% 
+#   mutate(r_diff = r_Acclimated - `r_No acclimated`,
+#          bias_diff = bias_Acclimated - `bias_No acclimated`,
+#          rmse_diff = rmse_Acclimated - `rmse_No acclimated`,
+#          beta_diff = beta_Acclimated - `beta_No acclimated`,
+#          K.scale_diff = K.scale_Acclimated - `K.scale_No acclimated`,
+#          psi50_diff = P50_Acclimated - `P50_No acclimated`,
+#          b_diff = b_Acclimated - `b_No acclimated`,
+#          gamma_diff = gamma_Acclimated - `gamma_No acclimated`
+#   ) 
+# 
+# # A - r Pearson's
+# p1 <- df_a_diff %>% 
+#   # filter(scheme %in% c("PROFITMAX","PROFITMAX2","SOX")) %>%
+#   mutate(r_diff = case_when(scheme %in% c("PROFITMAX","PROFITMAX2","SOX")~r_diff,
+#                             TRUE~NA_real_)) %>% 
+#   ggplot(aes(K.scale_diff, r_diff, color = scheme, group = scheme))+
+#   geom_hline(yintercept = 0, color = "grey20", linetype = 3)+
+#   geom_vline(xintercept = 0, color = "grey20", linetype = 3)+
+#   # geom_encircle()+
+#   geom_convexhull(alpha=0, fill = "transparent", size = 1.3, show.legend = FALSE)+
+#   geom_point()+
+#   # geom_density_2d()+
+#   mytheme2()+
+#   theme(legend.title = element_blank())+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   # scale_color_manual(values = brewer_pal(palette = "RdYlGn")(4))+
+#   # ylab(expression("(Acclimated - No acclimated) A rate r Pearson's correlation"))+
+#   ylab("")+
+#   xlab(expression(Delta*"K"))
+# 
+# p2 <- df_a_diff %>% 
+#   # filter(scheme %in% c("WUE","CGAIN","CMAX",'PHYDRO')) %>% 
+#   ggplot(aes(gamma_diff, r_diff, color = scheme, group = scheme))+
+#   geom_hline(yintercept = 0, color = "grey20", linetype = 3)+
+#   geom_vline(xintercept = 0, color = "grey20", linetype = 3)+
+#   # geom_encircle()+
+#   geom_convexhull(alpha=0, fill = "transparent", size = 1.3, show.legend = FALSE)+
+#   geom_point()+
+#   # geom_density_2d()+
+#   mytheme2()+
+#   theme(legend.title = element_blank())+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   # scale_color_manual(values = brewer_pal(palette = "RdYlGn")(4))+
+#   # ylab(expression("(Acclimated - No acclimated) A rate r Pearson's correlation"))+
+#   ylab("")+
+#   xlab(expression(Delta*gamma))
+# 
+# 
+# annotate_figure(
+#   ggarrange(p1,p2, 
+#           align='hv', labels=c('a', 'b'),
+#           common.legend = T,ncol=2, nrow = 1),
+#   left = textGrob("(Acclimated - No acclimated) A rate r Pearson's correlation", 
+#                   rot = 90, vjust = 1, gp = gpar(cex = 1)))
+# 
+# # A - BETA
+# p1 <- df_a_diff %>% 
+#   # filter(scheme %in% c("PROFITMAX","PROFITMAX2","SOX")) %>%
+#   mutate(beta_diff = case_when(scheme %in% c("PROFITMAX","PROFITMAX2","SOX")~beta_diff,
+#                                TRUE~NA_real_)) %>% 
+#   ggplot(aes(K.scale_diff, beta_diff, color = scheme, group = scheme))+
+#   geom_hline(yintercept = 0, color = "grey20", linetype = 3)+
+#   geom_vline(xintercept = 0, color = "grey20", linetype = 3)+
+#   # geom_encircle()+
+#   geom_convexhull(alpha=0, fill = "transparent", size = 1.3, show.legend = FALSE)+
+#   geom_point()+
+#   # geom_density_2d()+
+#   mytheme2()+
+#   theme(legend.title = element_blank())+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   # scale_color_manual(values = brewer_pal(palette = "RdYlGn")(4))+
+#   # ylab(expression("(Acclimated - No acclimated) A rate r Pearson's correlation"))+
+#   ylab("")+
+#   xlab(expression(Delta*"K"))
+# 
+# p2 <- df_a_diff %>% 
+#   # filter(scheme %in% c("WUE","CGAIN","CMAX",'PHYDRO')) %>% 
+#   ggplot(aes(gamma_diff, beta_diff, color = scheme, group = scheme))+
+#   geom_hline(yintercept = 0, color = "grey20", linetype = 3)+
+#   geom_vline(xintercept = 0, color = "grey20", linetype = 3)+
+#   # geom_encircle()+
+#   geom_convexhull(alpha=0, fill = "transparent", size = 1.3, show.legend = FALSE)+
+#   geom_point()+
+#   # geom_density_2d()+
+#   mytheme2()+
+#   theme(legend.title = element_blank())+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   # scale_color_manual(values = brewer_pal(palette = "RdYlGn")(4))+
+#   # ylab(expression("(Acclimated - No acclimated) A rate r Pearson's correlation"))+
+#   ylab("")+
+#   xlab(expression(Delta*gamma))
+# 
+# annotate_figure(
+#   ggarrange(p1,p2,
+#             align='hv', labels=c('a', 'b'),
+#             common.legend = T,ncol=2, nrow = 1),
+#   left = textGrob("(Acclimated - No acclimated) A rate \u03B2", 
+#                   rot = 90, vjust = 1, gp = gpar(cex = 1)))
+# 
+# 
+# # A - RMSE
+# p1 <- df_a_diff %>% 
+#   # filter(scheme %in% c("PROFITMAX","PROFITMAX2","SOX")) %>%
+#   mutate(rmse_diff = case_when(scheme %in% c("PROFITMAX","PROFITMAX2","SOX")~rmse_diff,
+#                             TRUE~NA_real_)) %>% 
+#   ggplot(aes(K.scale_diff, rmse_diff, color = scheme, group = scheme))+
+#   geom_hline(yintercept = 0, color = "grey20", linetype = 3)+
+#   geom_vline(xintercept = 0, color = "grey20", linetype = 3)+
+#   # geom_encircle()+
+#   geom_convexhull(alpha=0, fill = "transparent", size = 1.3, show.legend = FALSE)+
+#   geom_point()+
+#   # geom_density_2d()+
+#   mytheme2()+
+#   theme(legend.title = element_blank())+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   # scale_color_manual(values = brewer_pal(palette = "RdYlGn")(4))+
+#   # ylab(expression("(Acclimated - No acclimated) A rate r Pearson's correlation"))+
+#   ylab("")+
+#   xlab(expression(Delta*"K"))
+# 
+# p2 <- df_a_diff %>% 
+#   # filter(scheme %in% c("WUE","CGAIN","CMAX",'PHYDRO')) %>% 
+#   ggplot(aes(gamma_diff, rmse_diff, color = scheme, group = scheme))+
+#   geom_hline(yintercept = 0, color = "grey20", linetype = 3)+
+#   geom_vline(xintercept = 0, color = "grey20", linetype = 3)+
+#   # geom_encircle()+
+#   geom_convexhull(alpha=0, fill = "transparent", size = 1.3, show.legend = FALSE)+
+#   geom_point()+
+#   # geom_density_2d()+
+#   mytheme2()+
+#   theme(legend.title = element_blank())+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   # scale_color_manual(values = brewer_pal(palette = "RdYlGn")(4))+
+#   # ylab(expression("(Acclimated - No acclimated) A rate r Pearson's correlation"))+
+#   ylab("")+
+#   xlab(expression(Delta*gamma))
+# 
+# annotate_figure(
+#   ggarrange(p1,p2,
+#             align='hv', labels=c('a', 'b'),
+#             common.legend = T,ncol=2, nrow = 1),
+#   left = textGrob("(Acclimated - No acclimated) A rate RMSE", 
+#                   rot = 90, vjust = 1, gp = gpar(cex = 1)))
+# 
+# 
+# # A - BIAS
+# p1 <- df_a_diff %>% 
+#   # filter(scheme %in% c("PROFITMAX","PROFITMAX2","SOX")) %>%
+#   mutate(bias_diff = case_when(scheme %in% c("PROFITMAX","PROFITMAX2","SOX")~bias_diff,
+#                                TRUE~NA_real_)) %>% 
+#   ggplot(aes(K.scale_diff, bias_diff, color = scheme, group = scheme))+
+#   geom_hline(yintercept = 0, color = "grey20", linetype = 3)+
+#   geom_vline(xintercept = 0, color = "grey20", linetype = 3)+
+#   # geom_encircle()+
+#   geom_convexhull(alpha=0, fill = "transparent", size = 1.3, show.legend = FALSE)+
+#   geom_point()+
+#   # geom_density_2d()+
+#   mytheme2()+
+#   theme(legend.title = element_blank())+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   # scale_color_manual(values = brewer_pal(palette = "RdYlGn")(4))+
+#   # ylab(expression("(Acclimated - No acclimated) A rate r Pearson's correlation"))+
+#   ylab("")+
+#   xlab(expression(Delta*"K"))
+# 
+# p2 <- df_a_diff %>% 
+#   # filter(scheme %in% c("WUE","CGAIN","CMAX",'PHYDRO')) %>% 
+#   ggplot(aes(gamma_diff, bias_diff, color = scheme, group = scheme))+
+#   geom_hline(yintercept = 0, color = "grey20", linetype = 3)+
+#   geom_vline(xintercept = 0, color = "grey20", linetype = 3)+
+#   # geom_encircle()+
+#   geom_convexhull(alpha=0, fill = "transparent", size = 1.3, show.legend = FALSE)+
+#   geom_point()+
+#   # geom_density_2d()+
+#   mytheme2()+
+#   theme(legend.title = element_blank())+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   # scale_color_manual(values = brewer_pal(palette = "RdYlGn")(4))+
+#   # ylab(expression("(Acclimated - No acclimated) A rate r Pearson's correlation"))+
+#   ylab("")+
+#   xlab(expression(Delta*gamma))
+# 
+# annotate_figure(
+#   ggarrange(p1,p2,
+#             align='hv', labels=c('a', 'b'),
+#             common.legend = T,ncol=2, nrow = 1),
+#   left = textGrob("(Acclimated - No acclimated) A rate BIAS", 
+#                   rot = 90, vjust = 1, gp = gpar(cex = 1)))
+# 
+# 
+# 
 
 
 
 ################################################################################
-get_no_acclimated_response <- function(x,tc_now,ppfd_now,vpd_now,co2_now){
-  stomatal_model = x$stomatal_model
-  par_plant_now = list(
-    conductivity = x$K.scale*1e-16,
-    psi50 = x$P50%>% unique(),
-    b = x$b%>% unique()
-  )
-  par_cost_now = list(
-    alpha = 0.1,
-    gamma = x$gamma
-  )
-  ndays = 30
-  psi_max = 0
-  psi_min = -6
-  lwp = seq(psi_min, 0, length.out=50)
 
-  dat_a <- rpmodel::rpmodel(tc =tc_now, ppfd = ppfd_now, 
-                            vpd = vpd_now, co2 = co2_now, 
-                            elv = 0, fapar = .99)
-  
-  dat1 = tibble(var = lwp, jmax_a=dat_a$jmax, vcmax_a=dat_a$vcmax) %>%
-    mutate(p = purrr::pmap(list(var, jmax_a, vcmax_a), 
-                           ~model_numerical_instantaneous(tc =tc_now, ppfd = ppfd_now, 
-                                                          vpd = vpd_now, co2 = co2_now, 
-                                                          elv = 0, fapar = .99, 
-                                                          kphio = 0.087, 
-                                                          psi_soil = ..1, rdark = 0.02, 
-                                                          par_plant=par_plant_now, 
-                                                          par_cost = par_cost_now, 
-                                                          jmax = ..2, vcmax = ..3, 
-                                                          stomatal_model = stomatal_model)) ) %>% 
-    unnest_wider(p)
-  dat2 <- dat1 %>% filter(gs>=1e-40)
-  gx = log(dat2$gs)
-  gy = dat2$var
-  fpsi = splinefun(x = gx, y=gy, method = "natural")
-  gs0 = dat2$gs[which(dat2$var==0)]
-  psi88S = fpsi(log(gs0*0.12))
-  dpx = dat2$var
-  dpy = dat2$dpsi
-  f1 = splinefun(dpy~dpx)
-  dp88S = f1(psi88S)
-  psiL88S = psi88S-dp88S
-  return(dat1 %>% cbind(scheme = x$scheme, Species = x$Species, psi88S=psi88S,psiL88S=psiL88S,gs0 = gs0))
-  
-}
-
-Qi_params_no <- df_param %>% 
-  filter(Species=="Quercus ilex",
-         acclimation == "No acclimated",
-         source == "Epron and Dreyer (1990)",
-         dpsi == FALSE)
-
-Ep_params_no <- df_param %>% 
-  filter(Species=="Eucalyptus pilularis",
-         acclimation == "No acclimated",
-         dpsi == FALSE)
-
-Epo_params_no <- df_param %>% 
-  filter(Species=="Eucalyptus populnea",
-         acclimation == "No acclimated",
-         dpsi == FALSE)
-
-
-df_sim_Qi_no <- Qi_params_no %>%
-  split(seq(nrow(.))) %>% 
-  purrr::map_df(get_no_acclimated_response,tc_now=25,ppfd_now=1200,vpd_now=1000,co2_now = 400)
-
-df_sim_Ep_no <- Ep_params_no %>% 
-  split(seq(nrow(.))) %>% 
-  purrr::map_df(get_no_acclimated_response,tc_now=25,ppfd_now=1200,vpd_now=1000,co2_now = 400)
-
-df_sim_Epo_no <- Epo_params_no %>% 
-  split(seq(nrow(.))) %>% 
-  purrr::map_df(get_no_acclimated_response,tc_now=25,ppfd_now=1200,vpd_now=1000,co2_now = 400)
-
-df_summary_no <- df_sim_Qi_no  %>% 
-  rbind(df_sim_Ep_no) %>% 
-  rbind(df_sim_Epo_no) %>% 
-  # filter(a>0.2) %>% 
-  group_by(Species,scheme) %>% 
-  dplyr::select(psi88S) %>% 
-  summarise_all(mean,na.rm=TRUE)
-
-
-
-get_acclimated_response <- function(x,tc_now,ppfd_now,vpd_now,co2_now){
-  stomatal_model = x$stomatal_model
-  par_plant_now = list(
-    conductivity = x$K.scale*1e-16,
-    psi50 = x$P50%>% unique(),
-    b = x$b%>% unique()
-  )
-  par_cost_now = list(
-    alpha = x$alpha,
-    gamma = x$gamma
-  )
-  ndays = 30
-  psi_max = 0
-  psi_min = -7
-  lwp = seq(psi_min, 0, length.out=100)
-  day = ndays * (lwp-psi_max)/(psi_min-psi_max)
-  
-  lwp_day = function(day_num){
-    psi_max + day_num/ndays * (psi_min-psi_max)
-  }
-  
-  k = 7
-  lwp_week = rollmean(x = lwp_day(c(max(day):0, rep(0,k-1))), k = k, align = "right")
-  
-  spl = splinefun(x = max(day):0, y=lwp_week)
-  
-  dat_acc = tibble(var = spl(day)) %>% 
-    mutate(var = case_when(var>0~0,
-                           TRUE~var),
-           pmod = map(var, ~model_numerical(tc =tc_now, ppfd = ppfd_now, 
-                                            vpd = vpd_now, co2 = co2_now, 
-                                            elv = 0, fapar = .99, kphio = 0.087, 
-                                            psi_soil = ., rdark = 0.02, par_plant=par_plant_now, 
-                                            par_cost = par_cost_now, stomatal_model = stomatal_model))) %>% 
-    unnest_wider(pmod)
-  dat1 = tibble(var = lwp, jmax_a=dat_acc$jmax, vcmax_a=dat_acc$vcmax) %>%
-    mutate(p = purrr::pmap(list(var, jmax_a, vcmax_a), 
-                           ~model_numerical_instantaneous(tc =tc_now, ppfd = ppfd_now, 
-                                                          vpd = vpd_now, co2 = co2_now, 
-                                                          elv = 0, fapar = .99, 
-                                                          kphio = 0.087, 
-                                                          psi_soil = ..1, rdark = 0.02, 
-                                                          par_plant=par_plant_now, 
-                                                          par_cost = par_cost_now, 
-                                                          jmax = ..2, vcmax = ..3, 
-                                                          stomatal_model = stomatal_model)) ) %>% 
-    unnest_wider(p)
-  dat2 <- dat1 %>% filter(gs>=1e-40)
-  gx = log(dat2$gs)
-  gy = dat2$var
-  fpsi = splinefun(x = gx, y=gy, method = "natural")
-  gs0 = dat2$gs[which(dat2$var==0)]
-  psi88S = fpsi(log(gs0*0.12))
-  dpx = dat2$var
-  dpy = dat2$dpsi
-  f1 = splinefun(dpy~dpx)
-  dp88S = f1(psi88S)
-  psiL88S = psi88S-dp88S
-  return(dat1 %>% cbind(scheme = x$scheme, Species = x$Species, psi88S=psi88S,psiL88S=psiL88S,gs0 = gs0))
-  
-}
-
-
-Q_params <- df_param %>% 
-  filter(Species%in%c("Quercus ilex","Quercus petraea","Quercus pubescens"),
-         acclimation == "Acclimated",
-         source == "Epron and Dreyer (1990)",
-         dpsi == FALSE)
-
-Q_params_actual <- df_param %>% 
-  left_join(df %>% 
-              dplyr::select(Species,ca,T,D,Iabs_used,gC) %>% 
-              group_by(Species) %>% 
-              summarise_all(mean, na.rm=TRUE)) %>% 
-  filter(Species%in%c("Quercus ilex","Quercus petraea","Quercus pubescens"),
-         acclimation == "Acclimated",
-         source == "Epron and Dreyer (1990)",
-         dpsi == FALSE)
-
-Q_params_actual_kmax_alpha <- df_param_kmax_alpha %>% 
-  left_join(df %>% 
-              dplyr::select(Species,ca,T,D,Iabs_used,gC) %>% 
-              group_by(Species) %>% 
-              summarise_all(mean, na.rm=TRUE)) %>% 
-  filter(Species%in%c("Quercus ilex","Quercus petraea","Quercus pubescens"),
-         acclimation == "Acclimated",
-         source == "Epron and Dreyer (1990)",
-         dpsi == FALSE)
 # 
-# Ep_params <- df_param %>% 
+# Qi_params_no <- df_a_fix_param%>% 
+#   filter(Species=="Quercus ilex",
+#          acclimation == "No acclimated",
+#          source == "Epron and Dreyer (1990)",
+#          dpsi == FALSE)
+# 
+# Ep_params_no <- df_a_fix_param%>% 
+#   filter(Species=="Eucalyptus pilularis",
+#          acclimation == "No acclimated",
+#          dpsi == FALSE)
+# 
+# Epo_params_no <- df_a_fix_param%>% 
+#   filter(Species=="Eucalyptus populnea",
+#          acclimation == "No acclimated",
+#          dpsi == FALSE)
+# 
+# 
+# df_sim_Qi_no <- Qi_params_no %>%
+#   split(seq(nrow(.))) %>% 
+#   purrr::map_df(get_no_acclimated_response,tc_now=25,ppfd_now=1200,vpd_now=1000,co2_now = 400)
+# 
+# df_sim_Ep_no <- Ep_params_no %>% 
+#   split(seq(nrow(.))) %>% 
+#   purrr::map_df(get_no_acclimated_response,tc_now=25,ppfd_now=1200,vpd_now=1000,co2_now = 400)
+# 
+# df_sim_Epo_no <- Epo_params_no %>% 
+#   split(seq(nrow(.))) %>% 
+#   purrr::map_df(get_no_acclimated_response,tc_now=25,ppfd_now=1200,vpd_now=1000,co2_now = 400)
+# 
+# df_summary_no <- df_sim_Qi_no  %>% 
+#   rbind(df_sim_Ep_no) %>% 
+#   rbind(df_sim_Epo_no) %>% 
+#   # filter(a>0.2) %>% 
+#   group_by(Species,scheme) %>% 
+#   dplyr::select(psi88S) %>% 
+#   summarise_all(mean,na.rm=TRUE)
+
+
+# 
+# Q_params <- df_a_fix_param%>% 
+#   filter(Species%in%c("Quercus ilex","Quercus petraea","Quercus pubescens"),
+#          acclimation == "Acclimated",
+#          source == "Epron and Dreyer (1990)",
+#          dpsi == FALSE)
+# 
+# Q_params_actual <- df_a_fix_param%>% 
+#   left_join(df %>% 
+#               dplyr::select(Species,ca,T,D,Iabs_used,gC) %>% 
+#               group_by(Species) %>% 
+#               summarise_all(mean, na.rm=TRUE)) %>% 
+#   filter(Species%in%c("Quercus ilex","Quercus petraea","Quercus pubescens"),
+#          acclimation == "Acclimated",
+#          source == "Epron and Dreyer (1990)",
+#          dpsi == FALSE)
+# 
+# Q_params_actual_kmax_alpha <- df_param_kmax_alpha %>% 
+#   left_join(df %>% 
+#               dplyr::select(Species,ca,T,D,Iabs_used,gC) %>% 
+#               group_by(Species) %>% 
+#               summarise_all(mean, na.rm=TRUE)) %>% 
+#   filter(Species%in%c("Quercus ilex","Quercus petraea","Quercus pubescens"),
+#          acclimation == "Acclimated",
+#          source == "Epron and Dreyer (1990)",
+#          dpsi == FALSE)
+# 
+# Ep_params <- df_a_fix_param%>% 
 #   filter(Species=="Eucalyptus pilularis",
 #          acclimation == "Acclimated",
 #          dpsi == FALSE)
 # 
-# Epo_params <- df_param %>% 
+# Epo_params <- df_a_fix_param%>% 
 #   filter(Species=="Eucalyptus populnea",
 #          acclimation == "Acclimated",
 #          dpsi == FALSE)
@@ -2139,877 +2247,565 @@ Q_params_actual_kmax_alpha <- df_param_kmax_alpha %>%
 #   dplyr::select(psi88S) %>% 
 #   summarise_all(mean,na.rm=TRUE)
 
-
-df_sim_Q_low <- Q_params %>%
-  split(seq(nrow(.))) %>%
-  purrr::map_df(get_acclimated_response,tc_now=25,ppfd_now=1200,vpd_now=1000,co2_now = 400)
-df_summary_low <- df_sim_Q_low  %>% 
-  group_by(Species,scheme) %>% 
-  dplyr::select(psi88S) %>% 
-  summarise_all(mean,na.rm=TRUE)
-
-df_sim_Q_high <- Q_params %>%
-  split(seq(nrow(.))) %>%
-  purrr::map_df(get_acclimated_response,tc_now=25,ppfd_now=1200,vpd_now=3000,co2_now = 400)
-df_summary_high <- df_sim_Q_high  %>% 
-  group_by(Species,scheme) %>% 
-  dplyr::select(psi88S) %>% 
-  summarise_all(mean,na.rm=TRUE)
-
-df_sim_Q_actual <- Q_params_actual %>%
-  rowwise() %>%
-  do(mapped = get_acclimated_response(.,tc_now=.$T,ppfd_now=.$Iabs_used,vpd_now=.$D*101325,co2_now = .$ca)) %>% 
-  unnest(cols = c(mapped))
-df_summary_actual<- df_sim_Q_actual  %>% 
-  group_by(Species,scheme) %>% 
-  dplyr::select(psi88S) %>% 
-  summarise_all(mean,na.rm=TRUE)
-
-df_sim_Q_actual_kmax_alpha <- Q_params_actual_kmax_alpha %>%
-  rowwise() %>%
-  do(mapped = get_acclimated_response(.,tc_now=.$T,ppfd_now=.$Iabs_used,vpd_now=.$D*101325,co2_now = .$ca)) %>% 
-  unnest(cols = c(mapped))
-df_summary_actual_kmax_alpha <- df_sim_Q_actual_kmax_alpha  %>% 
-  group_by(Species,scheme) %>% 
-  dplyr::select(psi88S) %>% 
-  summarise_all(mean,na.rm=TRUE)
-
-df_test <- df %>% 
-  filter(Species%in%c("Quercus ilex","Quercus petraea","Quercus pubescens"),
-         acclimation == "Acclimated",
-         source == "Epron and Dreyer (1990)")
-df_summary_sp <- df_test %>% 
-  group_by(Species) %>% 
-  dplyr::select(P50) %>% 
-  summarise_all(mean,na.rm=TRUE)
-
-
-
-p1 <- df_sim_Q_low  %>%
-  # rbind(df_sim_Ep) %>% 
-  # rbind(df_sim_Epo) %>%
-  # filter(a>0.2) %>%
-  ggplot()+
-  geom_line(aes(var,jmax,color = scheme),size = 1)+
-  geom_line(aes(p_leaf,jmax,color = scheme,group = interaction(Species,scheme)), 
-            linetype = 2,size = 1)+
-  # geom_segment(aes(x=psi88S,xend=psi88S, y= 190, yend= 170,color=scheme),
-  #              arrow = arrow(length = unit(0.3, "cm")),
-  #              lineend = c('round'),linejoin = c('mitre'),
-  #            data=df_summary_low,
-  #            linetype = 1,size=1,
-  #            show.legend = FALSE)+
-  # geom_segment(data=df_summary_sp,aes(x=P50,xend=P50,y=190,yend=170),
-  #              arrow = arrow(length = unit(0.3, "cm")),
-  #              lineend = c('round'),linejoin = c('mitre'),
-  #            linetype = 1,color="grey20",size=1)+
-  mytheme()+
-  labs(color = "")+
-  xlab(expression(psi*" (MPa)"))+
-  ylab(expression(atop("J"[max]*" ("*mu*"mol m"^-2~"s"^-1*")")))+
-  scale_colour_manual(breaks = col_df$scheme, 
-                    values = unique(as.character(col_df$col)))+
-  theme(legend.position = "top",
-        legend.background = element_rect(fill="transparent"))+
-  guides(colour = guide_legend(nrow = 1))+
-  facet_wrap(~Species)+
-  xlim(-7,0)+
-  ylim(0,170)+
-  NULL
-
-p2 <- df_sim_Q_high  %>%
-  # rbind(df_sim_Ep) %>% 
-  # rbind(df_sim_Epo) %>%
-  # filter(a>0.2) %>%
-  ggplot()+
-  geom_line(aes(var,jmax,color = scheme),size = 1)+
-  geom_line(aes(p_leaf,jmax,color = scheme,group = interaction(Species,scheme)), 
-            linetype = 2,size = 1)+
-  # geom_segment(aes(x=psi88S,xend=psi88S, y= 190, yend= 170,color=scheme),
-  #              arrow = arrow(length = unit(0.3, "cm")),
-  #              lineend = c('round'),linejoin = c('mitre'),
-  #              data=df_summary_high,
-  #              linetype = 1,size=1,
-  #              show.legend = FALSE)+
-  # geom_segment(data=df_summary_sp,aes(x=P50,xend=P50,y=190,yend=170),
-  #              arrow = arrow(length = unit(0.3, "cm")),
-  #              lineend = c('round'),linejoin = c('mitre'),
-  #              linetype = 1,color="grey20",size=1)+
-  mytheme()+
-  labs(color = "")+
-  xlab(expression(psi*" (MPa)"))+
-  ylab(expression(atop("J"[max]*" ("*mu*"mol m"^-2~"s"^-1*")")))+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  theme(legend.position = "top",
-        legend.background = element_rect(fill="transparent"))+
-  guides(colour = guide_legend(nrow = 1))+
-  facet_wrap(~Species)+
-  xlim(-7,0)+
-  ylim(0,170)+
-  NULL
-
-p3 <- df_sim_Q_actual  %>%
-  # rbind(df_sim_Ep) %>% 
-  # rbind(df_sim_Epo) %>%
-  # filter(a>0.2) %>%
-  ggplot()+
-  geom_line(aes(var,jmax,color = scheme),size = 1)+
-  geom_line(aes(p_leaf,jmax,color = scheme,group = interaction(Species,scheme)), 
-            linetype = 2,size = 1)+
-  # geom_segment(aes(x=psi88S,xend=psi88S, y= 190, yend= 170,color=scheme),
-  #              arrow = arrow(length = unit(0.3, "cm")),
-  #              lineend = c('round'),linejoin = c('mitre'),
-  #              data=df_summary_high,
-  #              linetype = 1,size=1,
-  #              show.legend = FALSE)+
-  # geom_segment(data=df_summary_sp,aes(x=P50,xend=P50,y=190,yend=170),
-  #              arrow = arrow(length = unit(0.3, "cm")),
-  #              lineend = c('round'),linejoin = c('mitre'),
-  #              linetype = 1,color="grey20",size=1)+
-  mytheme()+
-  labs(color = "")+
-  xlab(expression(psi*" (MPa)"))+
-  ylab(expression(atop("J"[max]*" ("*mu*"mol m"^-2~"s"^-1*")")))+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  theme(legend.position = "top",
-        legend.background = element_rect(fill="transparent"))+
-  guides(colour = guide_legend(nrow = 1))+
-  facet_wrap(~Species)+
-  xlim(-7,0)+
-  ylim(0,60)+
-  NULL
-
-p4 <- df_sim_Q_actual_kmax_alpha %>%
-  # rbind(df_sim_Ep) %>% 
-  # rbind(df_sim_Epo) %>%
-  # filter(a>0.2) %>%
-  ggplot()+
-  geom_line(aes(var,jmax,color = scheme),size = 1)+
-  geom_line(aes(p_leaf,jmax,color = scheme,group = interaction(Species,scheme)), 
-            linetype = 2,size = 1)+
-  # geom_segment(aes(x=psi88S,xend=psi88S, y= 190, yend= 170,color=scheme),
-  #              arrow = arrow(length = unit(0.3, "cm")),
-  #              lineend = c('round'),linejoin = c('mitre'),
-  #              data=df_summary_high,
-  #              linetype = 1,size=1,
-  #              show.legend = FALSE)+
-  # geom_segment(data=df_summary_sp,aes(x=P50,xend=P50,y=190,yend=170),
-  #              arrow = arrow(length = unit(0.3, "cm")),
-  #              lineend = c('round'),linejoin = c('mitre'),
-  #              linetype = 1,color="grey20",size=1)+
-  mytheme()+
-  labs(color = "")+
-  xlab(expression(psi*" (MPa)"))+
-  ylab(expression(atop("J"[max]*" ("*mu*"mol m"^-2~"s"^-1*")")))+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  theme(legend.position = "top",
-        legend.background = element_rect(fill="transparent"))+
-  guides(colour = guide_legend(nrow = 1))+
-  facet_wrap(~Species)+
-  xlim(-7,0)+
-  ylim(0,70)+
-  NULL
-
-ggarrange(p1,p2, 
-          align='hv', labels=c('a', 'b'),
-          common.legend = T,ncol=2, nrow = 1)
+# 
+# df_sim_Q_low <- Q_params %>%
+#   split(seq(nrow(.))) %>%
+#   purrr::map_df(get_acclimated_response,tc_now=25,ppfd_now=1200,vpd_now=1000,co2_now = 400)
+# df_summary_low <- df_sim_Q_low  %>% 
+#   group_by(Species,scheme) %>% 
+#   dplyr::select(psi88S) %>% 
+#   summarise_all(mean,na.rm=TRUE)
+# 
+# df_sim_Q_high <- Q_params %>%
+#   split(seq(nrow(.))) %>%
+#   purrr::map_df(get_acclimated_response,tc_now=25,ppfd_now=1200,vpd_now=3000,co2_now = 400)
+# df_summary_high <- df_sim_Q_high  %>% 
+#   group_by(Species,scheme) %>% 
+#   dplyr::select(psi88S) %>% 
+#   summarise_all(mean,na.rm=TRUE)
+# 
+# df_sim_Q_actual <- Q_params_actual %>%
+#   rowwise() %>%
+#   do(mapped = get_acclimated_response(.,tc_now=.$T,ppfd_now=.$Iabs_used,vpd_now=.$D*101325,co2_now = .$ca)) %>% 
+#   unnest(cols = c(mapped))
+# df_summary_actual<- df_sim_Q_actual  %>% 
+#   group_by(Species,scheme) %>% 
+#   dplyr::select(psi88S) %>% 
+#   summarise_all(mean,na.rm=TRUE)
+# 
+# df_sim_Q_actual_kmax_alpha <- Q_params_actual_kmax_alpha %>%
+#   rowwise() %>%
+#   do(mapped = get_acclimated_response(.,tc_now=.$T,ppfd_now=.$Iabs_used,vpd_now=.$D*101325,co2_now = .$ca)) %>% 
+#   unnest(cols = c(mapped))
+# df_summary_actual_kmax_alpha <- df_sim_Q_actual_kmax_alpha  %>% 
+#   group_by(Species,scheme) %>% 
+#   dplyr::select(psi88S) %>% 
+#   summarise_all(mean,na.rm=TRUE)
+# 
+# df_test <- df %>% 
+#   filter(Species%in%c("Quercus ilex","Quercus petraea","Quercus pubescens"),
+#          acclimation == "Acclimated",
+#          source == "Epron and Dreyer (1990)")
+# df_summary_sp <- df_test %>% 
+#   group_by(Species) %>% 
+#   dplyr::select(P50) %>% 
+#   summarise_all(mean,na.rm=TRUE)
 
 
-
-p1 <- df_sim_Q_low  %>%
-  # rbind(df_sim_Ep) %>% 
-  # rbind(df_sim_Epo) %>%
-  # filter(a>0.2) %>%
-  ggplot()+
-  geom_line(aes(var,gs,color = scheme),size = 1)+
-  geom_line(aes(p_leaf,gs,color = scheme,group = interaction(Species,scheme)), 
-            linetype = 2,size = 1)+
-  geom_segment(aes(x=psi88S,xend=psi88S, y= 0.5, yend= 0.45,color=scheme),
-               arrow = arrow(length = unit(0.3, "cm")),
-               lineend = c('round'),linejoin = c('mitre'),
-               data=df_summary_low,
-               linetype = 1,size=1,
-               show.legend = FALSE)+
-  geom_segment(data=df_summary_sp,aes(x=P50,xend=P50,y=0.5,yend=0.45),
-               arrow = arrow(length = unit(0.3, "cm")),
-               lineend = c('round'),linejoin = c('mitre'),
-               linetype = 1,color="grey20",size=1)+
-  mytheme()+
-  labs(color = "")+
-  xlab(expression(psi*" (MPa)"))+
-  ylab(expression(g[s]*" (mol m"^-2~"s"^-1*")"))+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  theme(legend.position = "top",
-        legend.background = element_rect(fill="transparent"))+
-  guides(colour = guide_legend(nrow = 1))+
-  facet_wrap(~Species)+
-  xlim(-7,0)+
-  ylim(0,0.6)+
-  NULL
-
-p2 <- df_sim_Q_high  %>%
-  # rbind(df_sim_Ep) %>% 
-  # rbind(df_sim_Epo) %>%
-  # filter(a>0.2) %>%
-  ggplot()+
-  geom_line(aes(var,gs,color = scheme),size = 1)+
-  geom_line(aes(p_leaf,gs,color = scheme,group = interaction(Species,scheme)), 
-            linetype = 2,size = 1)+
-  geom_segment(aes(x=psi88S,xend=psi88S, y= 0.5, yend= 0.45,color=scheme),
-               arrow = arrow(length = unit(0.3, "cm")),
-               lineend = c('round'),linejoin = c('mitre'),
-               data=df_summary_high,
-               linetype = 1,size=1,
-               show.legend = FALSE)+
-  geom_segment(data=df_summary_sp,aes(x=P50,xend=P50,y=0.5,yend=0.45),
-               arrow = arrow(length = unit(0.3, "cm")),
-               lineend = c('round'),linejoin = c('mitre'),
-               linetype = 1,color="grey20",size=1)+
-  mytheme()+
-  labs(color = "")+
-  xlab(expression(psi*" (MPa)"))+
-  ylab(expression(g[s]*" (mol m"^-2~"s"^-1*")"))+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  theme(legend.position = "top",
-        legend.background = element_rect(fill="transparent"))+
-  guides(colour = guide_legend(nrow = 1))+
-  facet_wrap(~Species)+
-  xlim(-7,0)+
-  ylim(0,0.6)+
-  NULL
-
-p3 <- df_sim_Q_actual  %>%
-  # rbind(df_sim_Ep) %>% 
-  # rbind(df_sim_Epo) %>%
-  # filter(a>0.2) %>%
-  ggplot()+
-  geom_line(aes(var,gs,color = scheme),size = 1)+
-  geom_line(aes(p_leaf,gs,color = scheme,group = interaction(Species,scheme)), 
-            linetype = 2,size = 1,alpha=0.5)+
-  geom_point(aes(LWP,gC),data=df_test)+
-  # geom_segment(aes(x=psi88S,xend=psi88S, y= 0.24, yend= 0.22,color=scheme),
-  #              arrow = arrow(length = unit(0.3, "cm")),
-  #              lineend = c('round'),linejoin = c('mitre'),
-  #              data=df_summary_high,
-  #              linetype = 1,size=1,
-  #              show.legend = FALSE)+
-  # geom_segment(data=df_summary_sp,aes(x=P50,xend=P50,y=0.24,yend=0.22),
-  #              arrow = arrow(length = unit(0.3, "cm")),
-  #              lineend = c('round'),linejoin = c('mitre'),
-  #              linetype = 1,color="grey20",size=1)+
-  mytheme()+
-  labs(color = "")+
-  xlab(expression(psi*" (MPa)"))+
-  ylab(expression(g[s]*" (mol m"^-2~"s"^-1*")"))+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  theme(legend.position = "top",
-        legend.background = element_rect(fill="transparent"))+
-  guides(colour = guide_legend(nrow = 1))+
-  facet_wrap(~Species)+
-  xlim(-6,0)+
-  # ylim(0,0.31)+
-  NULL
-
-ggarrange(p1,p2, 
-          align='hv', labels=c('a', 'b'),
-          common.legend = T,ncol=2, nrow = 1)
-
-p_dpsi_accl <- df_sim_Qi %>%
-  rbind(df_sim_Ep) %>% 
-  rbind(df_sim_Epo) %>%
-  # filter(a>0.2) %>%
-  ggplot()+
-  geom_line(aes(var,dpsi,color = scheme),size = 1)+
-  # geom_line(aes(p_leaf,dpsi,color = scheme,group = interaction(Species,scheme)), 
-  #           linetype = 2,size = 1)+
-  # geom_segment(aes(x=psi88S,xend=psi88S, y= 0.5, yend= 0.45,color=scheme),
-  #              arrow = arrow(length = unit(0.3, "cm")),
-  #              lineend = c('round'),linejoin = c('mitre'),
-  #              data=df_summary,
-  #              linetype = 1,size=1,
-  #              show.legend = FALSE)+
-  # geom_segment(data=df_summary_sp,aes(x=P50,xend=P50,y=0.5,yend=0.45),
-  #              arrow = arrow(length = unit(0.3, "cm")),
-  #              lineend = c('round'),linejoin = c('mitre'),
-  #              linetype = 1,color="grey20",size=1)+
-  mytheme()+
-  labs(color = "")+
-  xlab(expression(psi*" (MPa)"))+
-  ylab(expression(Delta*psi*" (MPa)"))+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  theme(legend.position = "top",
-        legend.background = element_rect(fill="transparent"))+
-  facet_wrap(~Species)+
-  xlim(-6,0)+
-  ylim(0,1.8)+
-  NULL
-
-
-p_dpsi_no_accl <- df_sim_Qi_no %>%
-  rbind(df_sim_Ep_no) %>% 
-  rbind(df_sim_Epo_no) %>%
-  # filter(a>0.2) %>%
-  ggplot()+
-  geom_line(aes(var,dpsi,color = scheme),size = 1)+
-  # geom_line(aes(p_leaf,dpsi,color = scheme,group = interaction(Species,scheme)), 
-  #           linetype = 2,size = 1)+
-  # geom_segment(aes(x=psi88S,xend=psi88S, y= 0.5, yend= 0.45,color=scheme),
-  #              arrow = arrow(length = unit(0.3, "cm")),
-  #              lineend = c('round'),linejoin = c('mitre'),
-  #              data=df_summary,
-  #              linetype = 1,size=1,
-  #              show.legend = FALSE)+
-  # geom_segment(data=df_summary_sp,aes(x=P50,xend=P50,y=0.5,yend=0.45),
-  #              arrow = arrow(length = unit(0.3, "cm")),
-  #              lineend = c('round'),linejoin = c('mitre'),
-#              linetype = 1,color="grey20",size=1)+
-mytheme()+
-  labs(color = "")+
-  xlab(expression(psi*" (MPa)"))+
-  ylab(expression(Delta*psi*" (MPa)"))+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  theme(legend.position = "top",
-        legend.background = element_rect(fill="transparent"))+
-  facet_wrap(~Species)+
-  xlim(-6,0)+
-  ylim(0,2)+
-  NULL
-
-ggarrange(p_dpsi_accl,p_dpsi_no_accl, 
-          align='hv', labels=c('a', 'b'),
-          common.legend = T,ncol=1, nrow = 2)
-
-
-
-df_sim_Qi %>% 
-  rbind(df_sim_Ep) %>% 
-  rbind(df_sim_Epo) %>% 
-  filter(a>0.2) %>% 
-  ggplot()+
-  geom_point(data=df_test,
-             aes(gC,A),
-             color = "grey20",shape=1)+
-  mytheme()+
-  labs(color = "")+
-  xlab(expression(g[s]*" (mol m"^-2~"s"^-1*")"))+
-  ylab(expression(atop("A ("*mu*"mol m"^-2~"s"^-1*")")))+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  theme(legend.position = "top",
-        legend.background = element_rect(fill="transparent"))+
-  facet_wrap(~Species)+
-  NULL
-
-
-
-
-
-
-df_sim_Qi  %>% 
-  rbind(df_sim_Ep) %>% 
-  rbind(df_sim_Epo) %>% 
-  filter(a>0.2) %>%
-  ggplot()+
-  geom_line(aes(var,a/ci,color = scheme),size = 1)+
-  # geom_line(aes(p_leaf,jmax,color = scheme,group = interaction(Species,scheme)), 
-  #           linetype = 2,size = 1)+
-  geom_point(data=df_test,
-             aes(LWP,A/(Ciest*101325/1e6)),
-             color = "grey20",shape=1)+
-  geom_line(aes(gs,a,color = scheme,group = interaction(Species,scheme)),size = 1)+
-  mytheme()+
-  labs(color = "")+
-  xlab(expression(psi*" (MPa)"))+
-  ylab(expression(atop("A/"*c[i]~" ("*mu*"mol m"^-2~"s"^-1*"Pa"^-1~")")))+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  theme(legend.position = "top",
-        legend.background = element_rect(fill="transparent"))+
-  facet_wrap(~Species)+
-  NULL
-
-
-df_sim_Qi  %>% 
-  rbind(df_sim_Ep) %>% 
-  rbind(df_sim_Epo) %>% 
-  filter(a>0.2) %>%
-  ggplot()+
-  geom_line(aes(gs,a/ci,color = scheme),size = 1)+
-  # geom_line(aes(p_leaf,jmax,color = scheme,group = interaction(Species,scheme)), 
-  #           linetype = 2,size = 1)+
-  geom_point(data=df %>% 
-               filter(Species%in%c("Eucalyptus populnea",
-                                   "Eucalyptus pilularis",
-                                   "Quercus ilex")),
-             aes(gC,A/(Ciest*101325/1e6)),
-             color = "grey20",shape=1)+
-  mytheme()+
-  labs(color = "")+
-  xlab(expression(g[s]*" (mol m"^-2~"s"^-1*")"))+
-  ylab(expression(atop("A/"*c[i]~" ("*mu*"mol m"^-2~"s"^-1*"Pa"^-1~")")))+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  theme(legend.position = "top",
-        legend.background = element_rect(fill="transparent"))+
-  facet_wrap(~Species)+
-  NULL
-
-df_sim_Qi  %>% 
-  rbind(df_sim_Ep) %>% 
-  rbind(df_sim_Epo) %>% 
-  filter(a>0.2) %>%
-  ggplot()+
-  geom_line(aes(a,ci,color = scheme),size = 1)+
-  # geom_line(aes(p_leaf,jmax,color = scheme,group = interaction(Species,scheme)), 
-  #           linetype = 2,size = 1)+
-  geom_point(data=df %>% 
-               filter(Species%in%c("Eucalyptus populnea",
-                                   "Eucalyptus pilularis",
-                                   "Quercus ilex")),
-             aes(A,(Ciest*101325/1e6)),
-             color = "grey20",shape=1)+
-  mytheme()+
-  labs(color = "")+
-  ylab(expression(c[i]*" (Pa)"))+
-  xlab(expression(atop("A ("*mu*"mol m"^-2~"s"^-1~")")))+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  theme(legend.position = "top",
-        legend.background = element_rect(fill="transparent"))+
-  facet_wrap(~Species)+
-  NULL
-
-################################################################################
-
-df_sim_Q_low %>%
-  # rbind(df_sim_Ep) %>% 
-  # rbind(df_sim_Epo) %>% 
-  group_by(scheme,Species) %>% 
-  mutate(
-    rprima1 = a/(lead(ci)-lag(ci)),
-    r1 = 1/gs,
-    r2 = 1/lead(gs),
-    rprima2 = lead(rprima1),
-    A1 = a*1e-6,
-    A2 = lead(a)*1e-6,
-    L = (r2-r1)/(A2-A1),
-    sens_g = -(0.5*((A1/(rprima1+r1))+(A2/(rprima2+r2)))*L)) %>% 
-  filter(sens_g<=1,gs>=gs0*0.12,sens_g>=0) %>% 
-  ggplot()+
-  geom_line(aes(var,sens_g,color = scheme,group= scheme),size = 1)+
-  geom_vline(data=df_summary_sp, aes(xintercept=P50),linetype=3)+
-  mytheme()+
-  labs(color = "")+
-  xlab(expression(psi*" (MPa)"))+
-  ylab(expression("Relative stomatal limitation"))+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  theme(legend.position = "top",
-        legend.background = element_rect(fill="transparent"))+
-  guides(colour = guide_legend(nrow = 1))+
-  facet_wrap(~Species)+
-  NULL
-
-
-
-
-
-################################################################################
-
-
-vcmax_jmax_params <- df_param %>% 
-  left_join(df %>% 
-              dplyr::select(Species,ca,T,D,Iabs_used) %>% 
-              group_by(Species) %>% 
-              summarise_all(mean, na.rm=TRUE)) %>% 
-  filter(Species%in%c("Picea abies","Populus tremula"),
-         acclimation == "Acclimated",
-         dpsi == FALSE)
-
-
-df_sim_jmax <- vcmax_jmax_params %>%
-  rowwise() %>%
-  do(mapped = get_acclimated_response(.,tc_now=.$T,ppfd_now=.$Iabs_used,vpd_now=.$D*101325,co2_now = .$ca)) %>% 
-  unnest(cols = c(mapped))
-df_summary_jmax <- df_sim_jmax  %>% 
-  group_by(Species,scheme) %>% 
-  dplyr::select(psi88S) %>% 
-  summarise_all(mean,na.rm=TRUE)
-
-df_test_jmax <- df %>% 
-  filter(Species%in%c("Picea abies","Populus tremula"))
-
-df_summary_jmax <- df_test_jmax %>% 
-  group_by(Species) %>% 
-  dplyr::select(P50) %>% 
-  summarise_all(mean,na.rm=TRUE)
-
-
-df_summary_jmax_error <- df %>% filter(Species%in%c("Picea abies","Populus tremula"),
-              acclimation == "Acclimated") %>% 
-  dplyr::select(LWP,Species,week,jmax_obs) %>% 
-  group_by(Species,week) %>% 
-  drop_na() %>% 
-  summarise(
-    jmax_sd = sd(jmax_obs,na.rm=TRUE),
-    LWP_sd = sd(LWP,na.rm=TRUE),
-    jmax_obs=mean(jmax_obs,na.rm=TRUE),
-    LWP=mean(LWP,na.rm=TRUE)) %>% 
-  drop_na()
-
-df_sim_jmax %>%
-  ggplot()+
-  geom_line(aes(var,jmax,color = scheme),size = 1)+
-  geom_line(aes(p_leaf,jmax,color = scheme,group = interaction(Species,scheme)), 
-            linetype = 2,size = 1)+
-  geom_point(data = df %>% filter(Species%in%c("Picea abies","Populus tremula"),
-                                  acclimation == "Acclimated") %>%
-               group_by(Species,LWP) %>% summarise(jmax_obs=mean(jmax_obs,na.rm=TRUE)),
-             mapping=aes(LWP,jmax_obs),
-             color="grey50")+
-  geom_point(data=df_summary_jmax_error,mapping = aes(LWP,jmax_obs))+
-  geom_errorbarh(aes(y=jmax_obs,
-                     xmin=LWP-LWP_sd,
-                     xmax=LWP+LWP_sd),
-                 data=df_summary_jmax_error,
-                 height=2)+
-  geom_errorbar(aes(x=LWP,
-                    ymin=jmax_obs-jmax_sd,
-                    ymax=jmax_obs+jmax_sd),
-                data=df_summary_jmax_error,
-                width=0.1)+
-  mytheme()+
-  labs(color = "")+
-  xlab(expression(psi*" (MPa)"))+
-  ylab(expression(atop("J"[max]*" ("*mu*"mol m"^-2~"s"^-1*")")))+
-  scale_colour_manual(breaks = col_df$scheme, 
-                      values = unique(as.character(col_df$col)))+
-  theme(legend.position = "top",
-        legend.background = element_rect(fill="transparent"))+
-  facet_wrap(~Species)+
-  xlim(-7,0)+
-  guides(colour = guide_legend(nrow = 1))+
-  NULL
-
-
-################################################################################
-#### A ONLY DROUGHT
-################################################################################
-# df_a <- df %>% 
-#   group_by(scheme,acclimation,Species,source) %>% 
-#   mutate(LWP_q50 = quantile(LWP, 0.5,na.rm = TRUE)) %>% 
-#   filter(!is.na(A),LWP<=LWP_q50) %>% 
-#   mutate(diff_a = A - a_pred) %>% 
-#   summarise(n_dist = n(),
-#             r = cor(A, a_pred, use = "pairwise.complete.obs"),
-#             bias = mean(diff_a,na.rm = TRUE)/mean(A,na.rm = TRUE),
-#             rmse = Metrics::rmse(A,a_pred),
-#             beta = lm(A~a_pred)$coefficients[2]) #%>% 
-# # filter(beta<40)
+# 
+# p1 <- df_sim_Q_low  %>%
+#   # rbind(df_sim_Ep) %>% 
+#   # rbind(df_sim_Epo) %>%
+#   # filter(a>0.2) %>%
+#   ggplot()+
+#   geom_line(aes(var,jmax,color = scheme),size = 1)+
+#   geom_line(aes(p_leaf,jmax,color = scheme,group = interaction(Species,scheme)), 
+#             linetype = 2,size = 1)+
+#   # geom_segment(aes(x=psi88S,xend=psi88S, y= 190, yend= 170,color=scheme),
+#   #              arrow = arrow(length = unit(0.3, "cm")),
+#   #              lineend = c('round'),linejoin = c('mitre'),
+#   #            data=df_summary_low,
+#   #            linetype = 1,size=1,
+#   #            show.legend = FALSE)+
+#   # geom_segment(data=df_summary_sp,aes(x=P50,xend=P50,y=190,yend=170),
+#   #              arrow = arrow(length = unit(0.3, "cm")),
+#   #              lineend = c('round'),linejoin = c('mitre'),
+#   #            linetype = 1,color="grey20",size=1)+
+#   mytheme()+
+#   labs(color = "")+
+#   xlab(expression(psi*" (MPa)"))+
+#   ylab(expression(atop("J"[max]*" ("*mu*"mol m"^-2~"s"^-1*")")))+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                     values = unique(as.character(col_df$col)))+
+#   theme(legend.position = "top",
+#         legend.background = element_rect(fill="transparent"))+
+#   guides(colour = guide_legend(nrow = 1))+
+#   facet_wrap(~Species)+
+#   xlim(-7,0)+
+#   ylim(0,170)+
+#   NULL
+# 
+# p2 <- df_sim_Q_high  %>%
+#   # rbind(df_sim_Ep) %>% 
+#   # rbind(df_sim_Epo) %>%
+#   # filter(a>0.2) %>%
+#   ggplot()+
+#   geom_line(aes(var,jmax,color = scheme),size = 1)+
+#   geom_line(aes(p_leaf,jmax,color = scheme,group = interaction(Species,scheme)), 
+#             linetype = 2,size = 1)+
+#   # geom_segment(aes(x=psi88S,xend=psi88S, y= 190, yend= 170,color=scheme),
+#   #              arrow = arrow(length = unit(0.3, "cm")),
+#   #              lineend = c('round'),linejoin = c('mitre'),
+#   #              data=df_summary_high,
+#   #              linetype = 1,size=1,
+#   #              show.legend = FALSE)+
+#   # geom_segment(data=df_summary_sp,aes(x=P50,xend=P50,y=190,yend=170),
+#   #              arrow = arrow(length = unit(0.3, "cm")),
+#   #              lineend = c('round'),linejoin = c('mitre'),
+#   #              linetype = 1,color="grey20",size=1)+
+#   mytheme()+
+#   labs(color = "")+
+#   xlab(expression(psi*" (MPa)"))+
+#   ylab(expression(atop("J"[max]*" ("*mu*"mol m"^-2~"s"^-1*")")))+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   theme(legend.position = "top",
+#         legend.background = element_rect(fill="transparent"))+
+#   guides(colour = guide_legend(nrow = 1))+
+#   facet_wrap(~Species)+
+#   xlim(-7,0)+
+#   ylim(0,170)+
+#   NULL
+# 
+# p3 <- df_sim_Q_actual  %>%
+#   # rbind(df_sim_Ep) %>% 
+#   # rbind(df_sim_Epo) %>%
+#   # filter(a>0.2) %>%
+#   ggplot()+
+#   geom_line(aes(var,jmax,color = scheme),size = 1)+
+#   geom_line(aes(p_leaf,jmax,color = scheme,group = interaction(Species,scheme)), 
+#             linetype = 2,size = 1)+
+#   # geom_segment(aes(x=psi88S,xend=psi88S, y= 190, yend= 170,color=scheme),
+#   #              arrow = arrow(length = unit(0.3, "cm")),
+#   #              lineend = c('round'),linejoin = c('mitre'),
+#   #              data=df_summary_high,
+#   #              linetype = 1,size=1,
+#   #              show.legend = FALSE)+
+#   # geom_segment(data=df_summary_sp,aes(x=P50,xend=P50,y=190,yend=170),
+#   #              arrow = arrow(length = unit(0.3, "cm")),
+#   #              lineend = c('round'),linejoin = c('mitre'),
+#   #              linetype = 1,color="grey20",size=1)+
+#   mytheme()+
+#   labs(color = "")+
+#   xlab(expression(psi*" (MPa)"))+
+#   ylab(expression(atop("J"[max]*" ("*mu*"mol m"^-2~"s"^-1*")")))+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   theme(legend.position = "top",
+#         legend.background = element_rect(fill="transparent"))+
+#   guides(colour = guide_legend(nrow = 1))+
+#   facet_wrap(~Species)+
+#   xlim(-7,0)+
+#   ylim(0,60)+
+#   NULL
+# 
+# p4 <- df_sim_Q_actual_kmax_alpha %>%
+#   # rbind(df_sim_Ep) %>% 
+#   # rbind(df_sim_Epo) %>%
+#   # filter(a>0.2) %>%
+#   ggplot()+
+#   geom_line(aes(var,jmax,color = scheme),size = 1)+
+#   geom_line(aes(p_leaf,jmax,color = scheme,group = interaction(Species,scheme)), 
+#             linetype = 2,size = 1)+
+#   # geom_segment(aes(x=psi88S,xend=psi88S, y= 190, yend= 170,color=scheme),
+#   #              arrow = arrow(length = unit(0.3, "cm")),
+#   #              lineend = c('round'),linejoin = c('mitre'),
+#   #              data=df_summary_high,
+#   #              linetype = 1,size=1,
+#   #              show.legend = FALSE)+
+#   # geom_segment(data=df_summary_sp,aes(x=P50,xend=P50,y=190,yend=170),
+#   #              arrow = arrow(length = unit(0.3, "cm")),
+#   #              lineend = c('round'),linejoin = c('mitre'),
+#   #              linetype = 1,color="grey20",size=1)+
+#   mytheme()+
+#   labs(color = "")+
+#   xlab(expression(psi*" (MPa)"))+
+#   ylab(expression(atop("J"[max]*" ("*mu*"mol m"^-2~"s"^-1*")")))+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   theme(legend.position = "top",
+#         legend.background = element_rect(fill="transparent"))+
+#   guides(colour = guide_legend(nrow = 1))+
+#   facet_wrap(~Species)+
+#   xlim(-7,0)+
+#   ylim(0,70)+
+#   NULL
+# 
+# ggarrange(p1,p2, 
+#           align='hv', labels=c('a', 'b'),
+#           common.legend = T,ncol=2, nrow = 1)
 # 
 # 
 # 
-# r_a <- lmerTest::lmer(r~scheme*acclimation + (1|Species), data = df_a#, weights = n_dist
-# )
-# r_a_p <- emmeans::contrast(emmeans(r_a, "acclimation",by='scheme'))%>% 
-#   broom::tidy() %>% 
-#   dplyr::select(scheme,adj.p.value) %>% 
-#   summarise_all(unique)
-# r_a <- emmeans(r_a,~scheme*acclimation) %>% 
-#   broom::tidy(conf.int = TRUE)%>% 
-#   left_join(r_a_p) %>% 
-#   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
-#                          TRUE~"YES")) 
-# p1 <- df_a %>%
-#   ggplot(aes(scheme,r,fill = acclimation, color = acclimation, group = acclimation))+
-#   geom_point(shape= 21,position=position_dodge(width = 0.3))+
-#   geom_abline(intercept = 0, slope = 0, color = "grey20")+
-#   geom_pointrange(data = r_a, 
-#                   aes(scheme,estimate,color = acclimation,
-#                       ymin = conf.low,ymax = conf.high,
-#                       shape = sig),size = 0.8,
-#                   position=position_dodge(width = 0.3),
-#                   show.legend = FALSE)+
-#   # stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
-#   #              geom="pointrange", position=position_dodge(width = 0.3))+
-#   mytheme2()+
-#   theme(legend.title = element_blank())+
-#   xlab("")+
-#   ylab(expression("Assimilation rate r Pearson's correlation"))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
-#   scale_fill_manual(values =c("#DFC27D","#80CDC1"))+
-#   scale_shape_manual(values = c(1, 19))+
-#   coord_flip()
+# p1 <- df_sim_Q_low  %>%
+#   # rbind(df_sim_Ep) %>% 
+#   # rbind(df_sim_Epo) %>%
+#   # filter(a>0.2) %>%
+#   ggplot()+
+#   geom_line(aes(var,gs,color = scheme),size = 1)+
+#   geom_line(aes(p_leaf,gs,color = scheme,group = interaction(Species,scheme)), 
+#             linetype = 2,size = 1)+
+#   geom_segment(aes(x=psi88S,xend=psi88S, y= 0.5, yend= 0.45,color=scheme),
+#                arrow = arrow(length = unit(0.3, "cm")),
+#                lineend = c('round'),linejoin = c('mitre'),
+#                data=df_summary_low,
+#                linetype = 1,size=1,
+#                show.legend = FALSE)+
+#   geom_segment(data=df_summary_sp,aes(x=P50,xend=P50,y=0.5,yend=0.45),
+#                arrow = arrow(length = unit(0.3, "cm")),
+#                lineend = c('round'),linejoin = c('mitre'),
+#                linetype = 1,color="grey20",size=1)+
+#   mytheme()+
+#   labs(color = "")+
+#   xlab(expression(psi*" (MPa)"))+
+#   ylab(expression(g[s]*" (mol m"^-2~"s"^-1*")"))+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   theme(legend.position = "top",
+#         legend.background = element_rect(fill="transparent"))+
+#   guides(colour = guide_legend(nrow = 1))+
+#   facet_wrap(~Species)+
+#   xlim(-7,0)+
+#   ylim(0,0.6)+
+#   NULL
+# 
+# p2 <- df_sim_Q_high  %>%
+#   # rbind(df_sim_Ep) %>% 
+#   # rbind(df_sim_Epo) %>%
+#   # filter(a>0.2) %>%
+#   ggplot()+
+#   geom_line(aes(var,gs,color = scheme),size = 1)+
+#   geom_line(aes(p_leaf,gs,color = scheme,group = interaction(Species,scheme)), 
+#             linetype = 2,size = 1)+
+#   geom_segment(aes(x=psi88S,xend=psi88S, y= 0.5, yend= 0.45,color=scheme),
+#                arrow = arrow(length = unit(0.3, "cm")),
+#                lineend = c('round'),linejoin = c('mitre'),
+#                data=df_summary_high,
+#                linetype = 1,size=1,
+#                show.legend = FALSE)+
+#   geom_segment(data=df_summary_sp,aes(x=P50,xend=P50,y=0.5,yend=0.45),
+#                arrow = arrow(length = unit(0.3, "cm")),
+#                lineend = c('round'),linejoin = c('mitre'),
+#                linetype = 1,color="grey20",size=1)+
+#   mytheme()+
+#   labs(color = "")+
+#   xlab(expression(psi*" (MPa)"))+
+#   ylab(expression(g[s]*" (mol m"^-2~"s"^-1*")"))+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   theme(legend.position = "top",
+#         legend.background = element_rect(fill="transparent"))+
+#   guides(colour = guide_legend(nrow = 1))+
+#   facet_wrap(~Species)+
+#   xlim(-7,0)+
+#   ylim(0,0.6)+
+#   NULL
+# 
+# p3 <- df_sim_Q_actual  %>%
+#   # rbind(df_sim_Ep) %>% 
+#   # rbind(df_sim_Epo) %>%
+#   # filter(a>0.2) %>%
+#   ggplot()+
+#   geom_line(aes(var,gs,color = scheme),size = 1)+
+#   geom_line(aes(p_leaf,gs,color = scheme,group = interaction(Species,scheme)), 
+#             linetype = 2,size = 1,alpha=0.5)+
+#   geom_point(aes(LWP,gC),data=df_test)+
+#   # geom_segment(aes(x=psi88S,xend=psi88S, y= 0.24, yend= 0.22,color=scheme),
+#   #              arrow = arrow(length = unit(0.3, "cm")),
+#   #              lineend = c('round'),linejoin = c('mitre'),
+#   #              data=df_summary_high,
+#   #              linetype = 1,size=1,
+#   #              show.legend = FALSE)+
+#   # geom_segment(data=df_summary_sp,aes(x=P50,xend=P50,y=0.24,yend=0.22),
+#   #              arrow = arrow(length = unit(0.3, "cm")),
+#   #              lineend = c('round'),linejoin = c('mitre'),
+#   #              linetype = 1,color="grey20",size=1)+
+#   mytheme()+
+#   labs(color = "")+
+#   xlab(expression(psi*" (MPa)"))+
+#   ylab(expression(g[s]*" (mol m"^-2~"s"^-1*")"))+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   theme(legend.position = "top",
+#         legend.background = element_rect(fill="transparent"))+
+#   guides(colour = guide_legend(nrow = 1))+
+#   facet_wrap(~Species)+
+#   xlim(-6,0)+
+#   # ylim(0,0.31)+
+#   NULL
+# 
+# ggarrange(p1,p2, 
+#           align='hv', labels=c('a', 'b'),
+#           common.legend = T,ncol=2, nrow = 1)
+# 
+# p_dpsi_accl <- df_sim_Qi %>%
+#   rbind(df_sim_Ep) %>% 
+#   rbind(df_sim_Epo) %>%
+#   # filter(a>0.2) %>%
+#   ggplot()+
+#   geom_line(aes(var,dpsi,color = scheme),size = 1)+
+#   # geom_line(aes(p_leaf,dpsi,color = scheme,group = interaction(Species,scheme)), 
+#   #           linetype = 2,size = 1)+
+#   # geom_segment(aes(x=psi88S,xend=psi88S, y= 0.5, yend= 0.45,color=scheme),
+#   #              arrow = arrow(length = unit(0.3, "cm")),
+#   #              lineend = c('round'),linejoin = c('mitre'),
+#   #              data=df_summary,
+#   #              linetype = 1,size=1,
+#   #              show.legend = FALSE)+
+#   # geom_segment(data=df_summary_sp,aes(x=P50,xend=P50,y=0.5,yend=0.45),
+#   #              arrow = arrow(length = unit(0.3, "cm")),
+#   #              lineend = c('round'),linejoin = c('mitre'),
+#   #              linetype = 1,color="grey20",size=1)+
+#   mytheme()+
+#   labs(color = "")+
+#   xlab(expression(psi*" (MPa)"))+
+#   ylab(expression(Delta*psi*" (MPa)"))+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   theme(legend.position = "top",
+#         legend.background = element_rect(fill="transparent"))+
+#   facet_wrap(~Species)+
+#   xlim(-6,0)+
+#   ylim(0,1.8)+
+#   NULL
+# 
+# 
+# p_dpsi_no_accl <- df_sim_Qi_no %>%
+#   rbind(df_sim_Ep_no) %>% 
+#   rbind(df_sim_Epo_no) %>%
+#   # filter(a>0.2) %>%
+#   ggplot()+
+#   geom_line(aes(var,dpsi,color = scheme),size = 1)+
+#   # geom_line(aes(p_leaf,dpsi,color = scheme,group = interaction(Species,scheme)), 
+#   #           linetype = 2,size = 1)+
+#   # geom_segment(aes(x=psi88S,xend=psi88S, y= 0.5, yend= 0.45,color=scheme),
+#   #              arrow = arrow(length = unit(0.3, "cm")),
+#   #              lineend = c('round'),linejoin = c('mitre'),
+#   #              data=df_summary,
+#   #              linetype = 1,size=1,
+#   #              show.legend = FALSE)+
+#   # geom_segment(data=df_summary_sp,aes(x=P50,xend=P50,y=0.5,yend=0.45),
+#   #              arrow = arrow(length = unit(0.3, "cm")),
+#   #              lineend = c('round'),linejoin = c('mitre'),
+# #              linetype = 1,color="grey20",size=1)+
+# mytheme()+
+#   labs(color = "")+
+#   xlab(expression(psi*" (MPa)"))+
+#   ylab(expression(Delta*psi*" (MPa)"))+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   theme(legend.position = "top",
+#         legend.background = element_rect(fill="transparent"))+
+#   facet_wrap(~Species)+
+#   xlim(-6,0)+
+#   ylim(0,2)+
+#   NULL
+# 
+# ggarrange(p_dpsi_accl,p_dpsi_no_accl, 
+#           align='hv', labels=c('a', 'b'),
+#           common.legend = T,ncol=1, nrow = 2)
 # 
 # 
 # 
-# beta_a <- lmerTest::lmer(beta~scheme*acclimation + (1|Species), data = df_a#, weights = n_dist
-# )
-# beta_a_p <- emmeans::contrast(emmeans(beta_a, "acclimation",by='scheme'))%>% 
-#   broom::tidy() %>% 
-#   dplyr::select(scheme,adj.p.value) %>% 
-#   summarise_all(unique)
-# beta_a <- emmeans(beta_a,~scheme*acclimation) %>% 
-#   broom::tidy(conf.int = TRUE) %>% 
-#   left_join(beta_a_p) %>% 
-#   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
-#                          TRUE~"YES")) 
-# 
-# p2 <- df_a%>% 
-#   ggplot(aes(scheme,beta, fill = acclimation, color = acclimation, group = acclimation))+
-#   geom_point(shape= 21,position=position_dodge(width = 0.3))+
-#   geom_abline(intercept = 1, slope = 0, color = "grey20")+
-#   geom_pointrange(data = beta_a, 
-#                   aes(scheme,estimate,color = acclimation,
-#                       ymin = conf.low,ymax = conf.high,
-#                       shape = sig),size = 0.8,
-#                   position=position_dodge(width = 0.3),
-#                   show.legend = FALSE)+
-#   # stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
-#   #              geom="pointrange",position=position_dodge(width = 0.3))+
-#   mytheme2()+
-#   theme(legend.title = element_blank())+
-#   xlab("")+
-#   # ylim(-10,40)+
-#   ylab(expression(' Assimilation rate'~beta))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
-#   scale_fill_manual(values =c("#DFC27D","#80CDC1"))+
-#   scale_shape_manual(values = c(1, 19))+
-#   coord_flip()+
-#   # scale_y_log10()+
+# df_sim_Qi %>% 
+#   rbind(df_sim_Ep) %>% 
+#   rbind(df_sim_Epo) %>% 
+#   filter(a>0.2) %>% 
+#   ggplot()+
+#   geom_point(data=df_test,
+#              aes(gC,A),
+#              color = "grey20",shape=1)+
+#   mytheme()+
+#   labs(color = "")+
+#   xlab(expression(g[s]*" (mol m"^-2~"s"^-1*")"))+
+#   ylab(expression(atop("A ("*mu*"mol m"^-2~"s"^-1*")")))+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   theme(legend.position = "top",
+#         legend.background = element_rect(fill="transparent"))+
+#   facet_wrap(~Species)+
 #   NULL
 # 
 # 
 # 
-# rmse_a <- lmerTest::lmer(rmse~scheme*acclimation + (1|Species), data = df_a#, weights = n_dist
-# )
-# rmse_a_p <- emmeans::contrast(emmeans(rmse_a, "acclimation",by='scheme'))%>% 
-#   broom::tidy() %>% 
-#   dplyr::select(scheme,adj.p.value) %>% 
-#   summarise_all(unique)
-# rmse_a <- emmeans(rmse_a,~scheme*acclimation) %>% 
-#   broom::tidy(conf.int = TRUE) %>% 
-#   left_join(rmse_a_p) %>% 
-#   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
-#                          TRUE~"YES")) 
-# p3 <- df_a %>%
-#   ggplot(aes(scheme,rmse, fill = acclimation, color = acclimation, group = acclimation))+
-#   geom_point(shape= 21,position=position_dodge(width = 0.3))+
-#   geom_pointrange(data = rmse_a, 
-#                   aes(scheme,estimate,color = acclimation,
-#                       ymin = conf.low,ymax = conf.high,
-#                       shape = sig),size = 0.8,
-#                   position=position_dodge(width = 0.3),
-#                   show.legend = FALSE)+
-#   # stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
-#   #              geom="pointrange",position=position_dodge(width = 0.3))+
-#   mytheme2()+
-#   theme(legend.title = element_blank())+
-#   xlab("")+
-#   ylab(expression("Assimilation rate RMSE  ("*mu*"mol m"^-2~"s"^-1*")"))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
-#   scale_fill_manual(values =c("#DFC27D","#80CDC1"))+
-#   scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
-#   coord_flip()
-# 
-# bias_a <- lmerTest::lmer(bias~scheme*acclimation + (1|Species), data = df_a#, weights = n_dist
-# )
-# bias_a_p <- emmeans::contrast(emmeans(bias_a, "acclimation",by='scheme'))%>% 
-#   broom::tidy() %>% 
-#   dplyr::select(scheme,adj.p.value) %>% 
-#   summarise_all(unique)
-# bias_a <- emmeans(bias_a,~scheme*acclimation) %>% 
-#   broom::tidy(conf.int = TRUE) %>% 
-#   left_join(bias_a_p) %>% 
-#   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
-#                          TRUE~"YES")) 
-# p4 <- df_a %>%
-#   ggplot(aes(scheme,bias,fill = acclimation, color = acclimation, group = acclimation))+
-#   geom_point(shape= 21,position=position_dodge(width = 0.3))+
-#   geom_abline(intercept = 0, slope = 0, color = "grey20")+
-#   geom_pointrange(data = bias_a, 
-#                   aes(scheme,estimate,color = acclimation,
-#                       ymin = conf.low,ymax = conf.high,
-#                       shape = sig), size = 0.8,
-#                   position=position_dodge(width = 0.3),
-#                   show.legend = FALSE)+
-#   # stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
-#   #              geom="pointrange",position=position_dodge(width = 0.3))+
-#   mytheme2()+
-#   theme(legend.title = element_blank())+
-#   xlab("")+
-#   ylab(expression("Assimilation rate BIAS"))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
-#   scale_fill_manual(values =c("#DFC27D","#80CDC1"))+
-#   scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
-#   coord_flip()
 # 
 # 
-# ggarrange(p1,p2,p3,p4, 
-#           align='hv', labels=c('a', 'b','c','d'),
-#           common.legend = T,ncol=2, nrow = 2)
+# 
+# df_sim_Qi  %>% 
+#   rbind(df_sim_Ep) %>% 
+#   rbind(df_sim_Epo) %>% 
+#   filter(a>0.2) %>%
+#   ggplot()+
+#   geom_line(aes(var,a/ci,color = scheme),size = 1)+
+#   # geom_line(aes(p_leaf,jmax,color = scheme,group = interaction(Species,scheme)), 
+#   #           linetype = 2,size = 1)+
+#   geom_point(data=df_test,
+#              aes(LWP,A/(Ciest*101325/1e6)),
+#              color = "grey20",shape=1)+
+#   geom_line(aes(gs,a,color = scheme,group = interaction(Species,scheme)),size = 1)+
+#   mytheme()+
+#   labs(color = "")+
+#   xlab(expression(psi*" (MPa)"))+
+#   ylab(expression(atop("A/"*c[i]~" ("*mu*"mol m"^-2~"s"^-1*"Pa"^-1~")")))+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   theme(legend.position = "top",
+#         legend.background = element_rect(fill="transparent"))+
+#   facet_wrap(~Species)+
+#   NULL
+# 
+# 
+# df_sim_Qi  %>% 
+#   rbind(df_sim_Ep) %>% 
+#   rbind(df_sim_Epo) %>% 
+#   filter(a>0.2) %>%
+#   ggplot()+
+#   geom_line(aes(gs,a/ci,color = scheme),size = 1)+
+#   # geom_line(aes(p_leaf,jmax,color = scheme,group = interaction(Species,scheme)), 
+#   #           linetype = 2,size = 1)+
+#   geom_point(data=df %>% 
+#                filter(Species%in%c("Eucalyptus populnea",
+#                                    "Eucalyptus pilularis",
+#                                    "Quercus ilex")),
+#              aes(gC,A/(Ciest*101325/1e6)),
+#              color = "grey20",shape=1)+
+#   mytheme()+
+#   labs(color = "")+
+#   xlab(expression(g[s]*" (mol m"^-2~"s"^-1*")"))+
+#   ylab(expression(atop("A/"*c[i]~" ("*mu*"mol m"^-2~"s"^-1*"Pa"^-1~")")))+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   theme(legend.position = "top",
+#         legend.background = element_rect(fill="transparent"))+
+#   facet_wrap(~Species)+
+#   NULL
+# 
+# df_sim_Qi  %>% 
+#   rbind(df_sim_Ep) %>% 
+#   rbind(df_sim_Epo) %>% 
+#   filter(a>0.2) %>%
+#   ggplot()+
+#   geom_line(aes(a,ci,color = scheme),size = 1)+
+#   # geom_line(aes(p_leaf,jmax,color = scheme,group = interaction(Species,scheme)), 
+#   #           linetype = 2,size = 1)+
+#   geom_point(data=df %>% 
+#                filter(Species%in%c("Eucalyptus populnea",
+#                                    "Eucalyptus pilularis",
+#                                    "Quercus ilex")),
+#              aes(A,(Ciest*101325/1e6)),
+#              color = "grey20",shape=1)+
+#   mytheme()+
+#   labs(color = "")+
+#   ylab(expression(c[i]*" (Pa)"))+
+#   xlab(expression(atop("A ("*mu*"mol m"^-2~"s"^-1~")")))+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   theme(legend.position = "top",
+#         legend.background = element_rect(fill="transparent"))+
+#   facet_wrap(~Species)+
+#   NULL
+
+################################################################################
+# 
+# df_sim_Q_low %>%
+#   # rbind(df_sim_Ep) %>% 
+#   # rbind(df_sim_Epo) %>% 
+#   group_by(scheme,Species) %>% 
+#   mutate(
+#     rprima1 = a/(lead(ci)-lag(ci)),
+#     r1 = 1/gs,
+#     r2 = 1/lead(gs),
+#     rprima2 = lead(rprima1),
+#     A1 = a*1e-6,
+#     A2 = lead(a)*1e-6,
+#     L = (r2-r1)/(A2-A1),
+#     sens_g = -(0.5*((A1/(rprima1+r1))+(A2/(rprima2+r2)))*L)) %>% 
+#   filter(sens_g<=1,gs>=gs0*0.12,sens_g>=0) %>% 
+#   ggplot()+
+#   geom_line(aes(var,sens_g,color = scheme,group= scheme),size = 1)+
+#   geom_vline(data=df_summary_sp, aes(xintercept=P50),linetype=3)+
+#   mytheme()+
+#   labs(color = "")+
+#   xlab(expression(psi*" (MPa)"))+
+#   ylab(expression("Relative stomatal limitation"))+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   theme(legend.position = "top",
+#         legend.background = element_rect(fill="transparent"))+
+#   guides(colour = guide_legend(nrow = 1))+
+#   facet_wrap(~Species)+
+#   NULL
+
 
 
 
 
 ################################################################################
-#### CHI
-################################################################################
-# df_c <- df %>% 
-#   group_by(scheme,acclimation,Species,source) %>% 
-#   mutate(LWP_q75 = quantile(LWP, 0.75,na.rm = TRUE)) %>% 
-#   filter(!is.na(chi),LWP<=LWP_q75) %>% 
-#   mutate(diff_c = chi - c_pred) %>% 
-#   summarise(n_dist = n(),
-#             r = cor(chi, c_pred, use = "pairwise.complete.obs"),
-#             bias = mean(diff_c,na.rm = TRUE)/mean(chi,na.rm = TRUE),
-#             rmse = Metrics::rmse(chi,c_pred),
-#             beta = lm(chi~c_pred)$coefficients[2])
-# 
-# 
-# 
-# r_c <- lmerTest::lmer(r~scheme*acclimation + (1|Species), data = df_c, weights = n_dist)
-# r_c_p <- emmeans::contrast(emmeans(r_c, "acclimation",by='scheme'))%>% 
-#   broom::tidy() %>% 
-#   dplyr::select(scheme,adj.p.value) %>% 
-#   summarise_all(unique)
-# r_c <- emmeans(r_c,~scheme*acclimation) %>% 
-#   broom::tidy(conf.int = TRUE)%>% 
-#   left_join(r_c_p) %>% 
-#   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
-#                          TRUE~"YES")) 
-# p1 <- df_c %>%
-#   ggplot(aes(scheme,r,fill = acclimation, color = acclimation, group = acclimation))+
-#   geom_point(shape= 21,position=position_dodge(width = 0.3))+
-#   geom_abline(intercept = 0, slope = 0, color = "grey20")+
-#   geom_pointrange(data = r_c, 
-#                   aes(scheme,estimate,color = acclimation,
-#                       ymin = conf.low,ymax = conf.high,
-#                       shape = sig),size = 0.8,
-#                   position=position_dodge(width = 0.3),
-#                   show.legend = FALSE)+
-#   # stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
-#   #              geom="pointrange", position=position_dodge(width = 0.3))+
-#   mytheme2()+
-#   theme(legend.title = element_blank())+
-#   xlab("")+
-#   ylab(expression("Leaf internal-to-ambient CO"[2]~"ratio r Pearson's correlation"))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
-#   scale_fill_manual(values =c("#DFC27D","#80CDC1"))+
-#   scale_shape_manual(values = c(1, 19))+
-#   coord_flip()
-# 
-# 
-# 
-# beta_c <- lmerTest::lmer(beta~scheme*acclimation + (1|Species), data = df_c, weights = n_dist)
-# beta_c_p <- emmeans::contrast(emmeans(beta_c, "acclimation",by='scheme'))%>% 
-#   broom::tidy() %>% 
-#   dplyr::select(scheme,adj.p.value) %>% 
-#   summarise_all(unique)
-# beta_c <- emmeans(beta_c,~scheme*acclimation) %>% 
-#   broom::tidy(conf.int = TRUE) %>% 
-#   left_join(beta_c_p) %>% 
-#   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
-#                          TRUE~"YES")) 
-# 
-# p2 <- df_c%>% 
-#   ggplot(aes(scheme, beta, fill = acclimation, color = acclimation, group = acclimation))+
-#   geom_point(shape= 21,position=position_dodge(width = 0.3))+
-#   geom_abline(intercept = 1, slope = 0, color = "grey20")+
-#   geom_pointrange(data = beta_c, 
-#                   aes(scheme,estimate,color = acclimation,
-#                       ymin = conf.low,ymax = conf.high,
-#                       shape = sig),size = 0.8,
-#                   position=position_dodge(width = 0.3),
-#                   show.legend = FALSE)+
-#   # stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
-#   #              geom="pointrange",position=position_dodge(width = 0.3))+
-#   mytheme2()+
-#   theme(legend.title = element_blank())+
-#   xlab("")+
-#   # ylim(0,2)+
-#   ylab(expression("Leaf internal-to-ambient CO"[2]~"ratio"~beta))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
-#   scale_fill_manual(values =c("#DFC27D","#80CDC1"))+
-#   scale_shape_manual(values = c(1, 19))+
-#   coord_flip()
-# 
-# 
-# 
-# rmse_c <- lmerTest::lmer(rmse~scheme*acclimation + (1|Species), data = df_c, weights = n_dist)
-# rmse_c_p <- emmeans::contrast(emmeans(rmse_c, "acclimation",by='scheme'))%>% 
-#   broom::tidy() %>% 
-#   dplyr::select(scheme,adj.p.value) %>% 
-#   summarise_all(unique)
-# rmse_c <- emmeans(rmse_c,~scheme*acclimation) %>% 
-#   broom::tidy(conf.int = TRUE) %>% 
-#   left_join(rmse_c_p) %>% 
-#   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
-#                          TRUE~"YES")) 
-# p3 <- df_c %>%
-#   ggplot(aes(scheme,rmse, fill = acclimation, color = acclimation, group = acclimation))+
-#   geom_point(shape= 21,position=position_dodge(width = 0.3))+
-#   geom_pointrange(data = rmse_c, 
-#                   aes(scheme,estimate,color = acclimation,
-#                       ymin = conf.low,ymax = conf.high,
-#                       shape = sig),size = 0.8,
-#                   position=position_dodge(width = 0.3),
-#                   show.legend = FALSE)+
-#   # stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
-#   #              geom="pointrange",position=position_dodge(width = 0.3))+
-#   mytheme2()+
-#   theme(legend.title = element_blank())+
-#   xlab("")+
-#   ylab(expression("Leaf internal-to-ambient CO"[2]~"ratio RMSE"))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
-#   scale_fill_manual(values =c("#DFC27D","#80CDC1"))+
-#   scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
-#   coord_flip()
-# 
-# bias_c <- lmerTest::lmer(bias~scheme*acclimation + (1|Species), data = df_c, weights = n_dist)
-# bias_c_p <- emmeans::contrast(emmeans(bias_c, "acclimation",by='scheme'))%>% 
-#   broom::tidy() %>% 
-#   dplyr::select(scheme,adj.p.value) %>% 
-#   summarise_all(unique)
-# bias_c <- emmeans(bias_c,~scheme*acclimation) %>% 
-#   broom::tidy(conf.int = TRUE) %>% 
-#   left_join(bias_c_p) %>% 
-#   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
-#                          TRUE~"YES")) 
-# p4 <- df_c %>%
-#   ggplot(aes(scheme,bias,fill = acclimation, color = acclimation, group = acclimation))+
-#   geom_point(shape= 21,position=position_dodge(width = 0.3))+
-#   geom_abline(intercept = 0, slope = 0, color = "grey20")+
-#   geom_pointrange(data = bias_c, 
-#                   aes(scheme,estimate,color = acclimation,
-#                       ymin = conf.low,ymax = conf.high,
-#                       shape = sig), size = 0.8,
-#                   position=position_dodge(width = 0.3),
-#                   show.legend = FALSE)+
-#   # stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
-#   #              geom="pointrange",position=position_dodge(width = 0.3))+
-#   mytheme2()+
-#   theme(legend.title = element_blank())+
-#   xlab("")+
-#   ylab(expression("Leaf internal-to-ambient CO"[2]~"ratio BIAS"))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
-#   scale_fill_manual(values =c("#DFC27D","#80CDC1"))+
-#   scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
-#   coord_flip()
-# 
-# 
-# ggarrange(p1,p2,p3,p4, 
-#           align='hv', labels=c('a', 'b','c','d'),
-#           common.legend = T,ncol=2, nrow = 2)
 
+
+# vcmax_jmax_params <- df_a_fix_param%>% 
+#   left_join(df_a_fix %>% 
+#               dplyr::select(Species,ca,T,D,Iabs_used) %>% 
+#               group_by(Species) %>% 
+#               summarise_all(mean, na.rm=TRUE)) %>% 
+#   filter(Species%in%c("Picea abies","Populus tremula"),
+#          acclimation == "Acclimated",
+#          dpsi == FALSE)
+# 
+# 
+# df_sim_jmax <- vcmax_jmax_params %>%
+#   rowwise() %>%
+#   do(mapped = get_acclimated_response(.,tc_now=.$T,ppfd_now=.$Iabs_used,vpd_now=.$D*101325,co2_now = .$ca)) %>% 
+#   unnest(cols = c(mapped))
+# df_summary_jmax <- df_sim_jmax  %>% 
+#   group_by(Species,scheme) %>% 
+#   dplyr::select(psi88S) %>% 
+#   summarise_all(mean,na.rm=TRUE)
+# 
+# df_test_jmax <- df_a_fix %>% 
+#   filter(Species%in%c("Picea abies","Populus tremula"))
+# 
+# df_summary_jmax <- df_test_jmax %>% 
+#   group_by(Species) %>% 
+#   dplyr::select(P50) %>% 
+#   summarise_all(mean,na.rm=TRUE)
+# 
+# 
+# df_summary_jmax_error <- df_a_fix %>% filter(Species%in%c("Picea abies","Populus tremula"),
+#               acclimation == "Acclimated") %>% 
+#   dplyr::select(LWP,Species,week,jmax_obs) %>% 
+#   group_by(Species,week) %>% 
+#   drop_na() %>% 
+#   summarise(
+#     jmax_sd = sd(jmax_obs,na.rm=TRUE),
+#     LWP_sd = sd(LWP,na.rm=TRUE),
+#     jmax_obs=mean(jmax_obs,na.rm=TRUE),
+#     LWP=mean(LWP,na.rm=TRUE)) %>% 
+#   drop_na()
+# 
+# df_sim_jmax %>%
+#   ggplot()+
+#   geom_line(aes(var,jmax,color = scheme),size = 1)+
+#   geom_line(aes(p_leaf,jmax,color = scheme,group = interaction(Species,scheme)), 
+#             linetype = 2,size = 1)+
+#   geom_point(data = df %>% filter(Species%in%c("Picea abies","Populus tremula"),
+#                                   acclimation == "Acclimated") %>%
+#                group_by(Species,LWP) %>% summarise(jmax_obs=mean(jmax_obs,na.rm=TRUE)),
+#              mapping=aes(LWP,jmax_obs),
+#              color="grey50")+
+#   geom_point(data=df_summary_jmax_error,mapping = aes(LWP,jmax_obs))+
+#   geom_errorbarh(aes(y=jmax_obs,
+#                      xmin=LWP-LWP_sd,
+#                      xmax=LWP+LWP_sd),
+#                  data=df_summary_jmax_error,
+#                  height=2)+
+#   geom_errorbar(aes(x=LWP,
+#                     ymin=jmax_obs-jmax_sd,
+#                     ymax=jmax_obs+jmax_sd),
+#                 data=df_summary_jmax_error,
+#                 width=0.1)+
+#   mytheme()+
+#   labs(color = "")+
+#   xlab(expression(psi*" (MPa)"))+
+#   ylab(expression(atop("J"[max]*" ("*mu*"mol m"^-2~"s"^-1*")")))+
+#   scale_colour_manual(breaks = col_df$scheme, 
+#                       values = unique(as.character(col_df$col)))+
+#   theme(legend.position = "top",
+#         legend.background = element_rect(fill="transparent"))+
+#   facet_wrap(~Species)+
+#   xlim(-7,0)+
+#   guides(colour = guide_legend(nrow = 1))+
+#   NULL
 
 
 ################################################################################
@@ -3091,46 +2887,7 @@ df %>%
 ####################################
 #### COST PARTITION CALCULATION ####
 ####################################
-get_cost <- function(x,tc_now,ppfd_now,vpd_now,co2_now){
-  stomatal_model = x$stomatal_model
-  par_plant_now = list(
-    conductivity = x$K.scale*1e-16,
-    psi50 = x$P50%>% unique(),
-    b = x$b%>% unique()
-  )
-  par_cost_now = list(
-    alpha = x$alpha,
-    gamma = x$gamma
-  )
-  ndays = x$Drydown.days
-  psi_max = 0
-  psi_min = -7
-  lwp = seq(psi_min, 0, length.out=20)
-  day = ndays * (lwp-psi_max)/(psi_min-psi_max)
-  
-  lwp_day = function(day_num){
-    psi_max + day_num/ndays * (psi_min-psi_max)
-  }
-  
-  k = 7
-  lwp_week = rollmean(x = lwp_day(c(max(day):0, rep(0,k-1))), k = k, align = "right")
-  
-  spl = splinefun(x = max(day):0, y=lwp_week)
-  
-  dat_acc = tibble(var = spl(day)) %>% 
-    mutate(var = case_when(var>0~0,
-                           TRUE~var),
-           pmod = map(var, ~model_numerical(tc =tc_now, ppfd = ppfd_now, 
-                                            vpd = vpd_now, co2 = co2_now, 
-                                            elv = 0, fapar = .99, kphio = 0.087, 
-                                            psi_soil = ., rdark = 0.02, par_plant=par_plant_now, 
-                                            par_cost = par_cost_now, stomatal_model = stomatal_model))) %>% 
-    unnest_wider(pmod)
 
-
-  return(dat_acc %>% cbind(scheme = x$scheme, Species = x$Species, source = x$source))
-  
-}
 
 
 cost_df <- df_param_kmax_alpha %>% 

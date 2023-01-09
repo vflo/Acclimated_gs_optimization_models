@@ -62,11 +62,15 @@ dat <- dat %>% filter(!is.na(D),!is.na(LWP),!is.na(T),!is.na(ca),!is.na(Iabs_use
 dpsi_df <-  read.csv(file = "DATA/drying_experiments_dpsi_extended.csv")
 
 traits <- read.csv(file="DATA/imputation_df.csv") %>% rename(species = 'Species', genus = 'Genus',Species = "Binomial")
+traits[which(traits$Species == "Olea europaea var. meski"), "Species"] <- "Olea europaea var. Meski"
+traits[which(traits$Species == "Olea europaea var. chemlali"), "Species"] <- "Olea europaea var. Chemlali"
+traits[which(traits$Species == "Beta maritima subsp.marcosii"), "Species"] <- "Beta maritima subsp. marcosii"
+traits[which(traits$Species == "Beta maritima subsp. maritima"), "Species"] <- "Beta maritima subsp. maritima"
 # traits <- traits %>% separate(taxon,c("genus","species", "subsp"),sep="_")
 
 template <-  read.csv("DATA/fitted_params_template.csv")
-template <- template %>% 
-  left_join(traits) %>% 
+template <- template %>% dplyr::select(-c(species,genus))%>% 
+  left_join(traits,by=c('Species','ID')) %>%
   filter(!is.na(P50..MPa.)) %>%
   rowwise() %>%
   mutate(P50 = optimr::optimr(c(p=-2,b=2),
@@ -79,7 +83,7 @@ template <- template %>%
                             p88=P88..MPa.,
                             p50=P50..MPa.,
                             p12=P12..MPa.)$par[2]) %>% 
-  ungroup()
+  ungroup() 
   
 
 plot_all = function(df_w_vol, varname, species, data, dpsi_data=NULL, analytical=F){
@@ -467,7 +471,7 @@ get_parameters <- function(x){
                                         
     print(stomatal_model_now)
     print(species)
-    parameter_max <- 50
+    parameter_max <- 60
     # if(stomatal_model_now %in% c("CGAIN")){
     #   parameter_max <- 50}
     # if(stomatal_model_now %in% c("CMAX")){
@@ -512,7 +516,7 @@ get_parameters <- function(x){
     print(stomatal_model_now)
     print(species)
 
-    parameter_max <- 50
+    parameter_max <- 60
     # if(stomatal_model_now %in% c("PHYDRO")){
     #   if(species == "Broussonetia papyrifera"){
     #     parameter_max <- 1000
@@ -589,7 +593,8 @@ get_parameters <- function(x){
 ##### COMPUTE PARAMETERS #####
 #First compute PROFITMAX model to obtain Kmax for CMAX. CGAIN, WUE and PHYDRO models
 K_PROFITMAX <- NULL
-template %>% filter(scheme == "PROFITMAX",Species == "Ficus tikoua"
+template %>% filter(scheme == "PROFITMAX",Species %in% c("Beta maritima subsp. maritima",
+                                                          "Beta maritima subsp. marcosii")
                     # Species %in% c("Rosa cymosa",
                     #                "Broussonetia papyrifera",
                     #                "Cinnamomum bodinieri",
@@ -610,7 +615,8 @@ K_PROFITMAX <- res %>%
 
 #Compute the rest of the models
 template %>% 
-  filter(!scheme %in% c("PROFITMAX","CGAIN")
+  filter(!scheme %in% c("PROFITMAX"),Species %in% c("Beta maritima subsp. maritima",
+                                                    "Beta maritima subsp. marcosii")
          # Species %in% c(
          #                # "Rosa cymosa",
          #                # "Broussonetia papyrifera",

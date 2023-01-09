@@ -11,6 +11,7 @@ library(scales)
 library(zoo)
 library(stringr)
 library(rphydro)
+library(DEoptim)
 source("stomatal_optimization_functions.R")
 source('hydraulic_functions.R')
 source('photosynthetic_functions.R')
@@ -398,7 +399,7 @@ df <- par_data %>%
   purrr::map(get_simulations) %>%
   bind_rows()
 # 
-save(df, file = "DATA/simulations_kmax_vpd.RData")
+save(df, file = "DATA/simulations_kmax.RData")
 
 
 

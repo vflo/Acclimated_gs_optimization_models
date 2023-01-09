@@ -62,11 +62,15 @@ dat <- dat %>% filter(!is.na(D),!is.na(LWP),!is.na(T),!is.na(ca),!is.na(Iabs_use
 dpsi_df <-  read.csv(file = "DATA/drying_experiments_dpsi_extended.csv")
 
 traits <- read.csv(file="DATA/imputation_df.csv") %>% rename(species = 'Species', genus = 'Genus',Species = "Binomial")
+traits[which(traits$Species == "Olea europaea var. meski"), "Species"] <- "Olea europaea var. Meski"
+traits[which(traits$Species == "Olea europaea var. chemlali"), "Species"] <- "Olea europaea var. Chemlali"
+traits[which(traits$Species == "Beta maritima subsp.marcosii"), "Species"] <- "Beta maritima subsp. marcosii"
+traits[which(traits$Species == "Beta maritima subsp. maritima"), "Species"] <- "Beta maritima subsp. maritima"
 # traits <- traits %>% separate(taxon,c("genus","species", "subsp"),sep="_")
 
 template <-  read.csv("DATA/fitted_params_template.csv")
-template <- template %>% 
-  left_join(traits) %>% 
+template <- template %>% dplyr::select(-c(species,genus))%>% 
+  left_join(traits, by=c('Species','ID')) %>%
   filter(!is.na(P50..MPa.)) %>%
   rowwise() %>%
   mutate(P50 = optimr::optimr(c(p=-2,b=2),
@@ -563,12 +567,13 @@ get_parameters_kmaxww_alpha <- function(x){
 
 ##### COMPUTE PARAMETERS #####
 #First compute PROFITMAX model to obtain Kmax for CMAX. CGAIN, WUE and PHYDRO models
-# K_PROFITMAX <- NULL
-# template %>% filter(scheme == "PROFITMAX") %>%
-#   group_split(scheme, dpsi, Species,source) %>%
-#   purrr::map_df(get_parameters_kmaxww_alpha)->res
-# 
-# save(res,file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
+K_PROFITMAX <- NULL
+template %>% filter(scheme == "PROFITMAX", Species %in% c("Beta maritima subsp. maritima",
+                                                          "Beta maritima subsp. marcosii")) %>%
+  group_split(scheme, dpsi, Species,source) %>%
+  purrr::map_df(get_parameters_kmaxww_alpha)->res
+
+save(res,file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
 
 load(file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
 
@@ -579,7 +584,8 @@ K_PROFITMAX <- res %>%
 
 #Compute the other models
 template %>% 
-  filter(!scheme %in% c("PROFITMAX","CGAIN","CMAX","PHYDRO")#,
+  filter(!scheme %in% c("PROFITMAX"),Species %in% c("Beta maritima subsp. maritima",
+                                                    "Beta maritima subsp. marcosii")
          # Species %in% c(
          #   # "Rosa cymosa",
          #   # "Broussonetia papyrifera",

@@ -37,6 +37,7 @@ Quercus petraea,CGAIN,FALSE,TRUE,Epron and Dreyer (1990),Quercus,petraea,NA,1612
 Quercus pubescens,CGAIN,FALSE,TRUE,Epron and Dreyer (1990),Quercus,pubescens,NA,1613
 Quercus suber,CGAIN,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,suber,NA,1607
 Rosa cymosa,CGAIN,FALSE,FALSE,Liu et al. (2010),Rosa,cymosa,NA,1620
+Sequoia sempervirens,CGAIN,FALSE,FALSE,Simonin et al. (2009),Sequoia,sempervirens,NA,1636
 Allocasuarina luehmannii,CMAX,FALSE,TRUE,Posch & Bennett (2009),Allocasuarina,luehmannii,NA,1598
 Beta maritima subsp. marcosii,CMAX,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,marcosii,1631
 Beta maritima subsp. maritima,CMAX,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,maritima,1632
@@ -75,6 +76,7 @@ Quercus petraea,CMAX,FALSE,TRUE,Epron and Dreyer (1990),Quercus,petraea,NA,1612
 Quercus pubescens,CMAX,FALSE,TRUE,Epron and Dreyer (1990),Quercus,pubescens,NA,1613
 Quercus suber,CMAX,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,suber,NA,1607
 Rosa cymosa,CMAX,FALSE,FALSE,Liu et al. (2010),Rosa,cymosa,NA,1620
+Sequoia sempervirens,CMAX,FALSE,FALSE,Simonin et al. (2009),Sequoia,sempervirens,NA,1636
 Allocasuarina luehmannii,PHYDRO,FALSE,TRUE,Posch & Bennett (2009),Allocasuarina,luehmannii,NA,1598
 Beta maritima subsp. marcosii,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,marcosii,1631
 Beta maritima subsp. maritima,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,maritima,1632
@@ -113,6 +115,7 @@ Quercus petraea,PHYDRO,FALSE,TRUE,Epron and Dreyer (1990),Quercus,petraea,NA,161
 Quercus pubescens,PHYDRO,FALSE,TRUE,Epron and Dreyer (1990),Quercus,pubescens,NA,1613
 Quercus suber,PHYDRO,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,suber,NA,1607
 Rosa cymosa,PHYDRO,FALSE,FALSE,Liu et al. (2010),Rosa,cymosa,NA,1620
+Sequoia sempervirens,PHYDRO,FALSE,FALSE,Simonin et al. (2009),Sequoia,sempervirens,NA,1636
 Allocasuarina luehmannii,PROFITMAX,FALSE,TRUE,Posch & Bennett (2009),Allocasuarina,luehmannii,NA,1598
 Beta maritima subsp. marcosii,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,marcosii,1631
 Beta maritima subsp. maritima,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,maritima,1632
@@ -151,6 +154,7 @@ Quercus petraea,PROFITMAX,FALSE,TRUE,Epron and Dreyer (1990),Quercus,petraea,NA,
 Quercus pubescens,PROFITMAX,FALSE,TRUE,Epron and Dreyer (1990),Quercus,pubescens,NA,1613
 Quercus suber,PROFITMAX,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,suber,NA,1607
 Rosa cymosa,PROFITMAX,FALSE,FALSE,Liu et al. (2010),Rosa,cymosa,NA,1620
+Sequoia sempervirens,PROFITMAX,FALSE,FALSE,Simonin et al. (2009),Sequoia,sempervirens,NA,1636
 Allocasuarina luehmannii,PROFITMAX2,FALSE,TRUE,Posch & Bennett (2009),Allocasuarina,luehmannii,NA,1598
 Beta maritima subsp. marcosii,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,marcosii,1631
 Beta maritima subsp. maritima,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,maritima,1632
@@ -189,6 +193,7 @@ Quercus petraea,PROFITMAX2,FALSE,TRUE,Epron and Dreyer (1990),Quercus,petraea,NA
 Quercus pubescens,PROFITMAX2,FALSE,TRUE,Epron and Dreyer (1990),Quercus,pubescens,NA,1613
 Quercus suber,PROFITMAX2,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,suber,NA,1607
 Rosa cymosa,PROFITMAX2,FALSE,FALSE,Liu et al. (2010),Rosa,cymosa,NA,1620
+Sequoia sempervirens,PROFITMAX2,FALSE,FALSE,Simonin et al. (2009),Sequoia,sempervirens,NA,1636
 Allocasuarina luehmannii,SOX,FALSE,TRUE,Posch & Bennett (2009),Allocasuarina,luehmannii,NA,1598
 Beta maritima subsp. marcosii,SOX,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,marcosii,1631
 Beta maritima subsp. maritima,SOX,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,maritima,1632
@@ -227,3 +232,4 @@ Quercus petraea,SOX,FALSE,TRUE,Epron and Dreyer (1990),Quercus,petraea,NA,1612
 Quercus pubescens,SOX,FALSE,TRUE,Epron and Dreyer (1990),Quercus,pubescens,NA,1613
 Quercus suber,SOX,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,suber,NA,1607
 Rosa cymosa,SOX,FALSE,FALSE,Liu et al. (2010),Rosa,cymosa,NA,1620
+Sequoia sempervirens,SOX,FALSE,FALSE,Simonin et al. (2009),Sequoia,sempervirens,NA,1636

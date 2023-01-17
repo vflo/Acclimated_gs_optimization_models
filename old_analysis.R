@@ -1182,3 +1182,439 @@ ggarrange(p1,p2,p3,p4,p5,p6,
 #   NULL
 
 
+
+
+
+# #### CHI ####
+# df_c <- df_a_fix %>% 
+#   group_by(scheme,acclimation,Species,source) %>% 
+#   filter(!is.na(chi)) %>% 
+#   mutate(diff_c = chi - c_pred) %>% 
+#   summarise(n_dist = n(),
+#             r = cor(chi, c_pred, use = "pairwise.complete.obs"),
+#             bias = mean(diff_c,na.rm = TRUE)/mean(chi,na.rm = TRUE),
+#             rmse = Metrics::rmse(chi,c_pred),
+#             beta = lm(chi~c_pred)$coefficients[2]) %>% 
+#   filter(beta<10)
+# 
+# 
+# 
+# r_c <- lmerTest::lmer(r~scheme*acclimation + (1|Species), data = df_c, weights = log(n_dist))
+# r_c_p <- emmeans::contrast(emmeans(r_c, "acclimation",by='scheme'))%>% 
+#   broom::tidy() %>% 
+#   dplyr::select(scheme,adj.p.value) %>% 
+#   summarise_all(unique)
+# r_c <- emmeans(r_c,~scheme*acclimation) %>% 
+#   broom::tidy(conf.int = TRUE)%>% 
+#   left_join(r_c_p) %>% 
+#   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
+#                          TRUE~"YES")) 
+# p1 <- df_c %>%
+#   ggplot(aes(scheme,r,fill = acclimation, color = acclimation, group = acclimation))+
+#   geom_point(shape= 21,position=position_dodge(width = 0.4))+
+#   geom_abline(intercept = 0, slope = 0, color = "grey20")+
+#   geom_pointrange(data = r_c, 
+#                   aes(scheme,estimate,color = acclimation,
+#                       ymin = conf.low,ymax = conf.high,
+#                       shape = sig),size = 0.8,
+#                   position=position_dodge(width = 0.4),
+#                   show.legend = FALSE)+
+#   # stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
+#   #              geom="pointrange", position=position_dodge(width = 0.4))+
+#   mytheme2()+
+#   theme(legend.title = element_blank())+
+#   xlab("")+
+#   ylab(expression("Leaf internal-to-ambient CO"[2]~"ratio r Pearson's correlation"))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_fill_manual(values =c("#DFC27D","#80CDC1"))+
+#   scale_shape_manual(values = c(1, 19))+
+#   coord_flip()
+# 
+# 
+# 
+# beta_c <- lmerTest::lmer(beta~scheme*acclimation + (1|Species), data = df_c, weights = log(n_dist))
+# beta_c_p <- emmeans::contrast(emmeans(beta_c, "acclimation",by='scheme'))%>% 
+#   broom::tidy() %>% 
+#   dplyr::select(scheme,adj.p.value) %>% 
+#   summarise_all(unique)
+# beta_c <- emmeans(beta_c,~scheme*acclimation) %>% 
+#   broom::tidy(conf.int = TRUE) %>% 
+#   left_join(beta_c_p) %>% 
+#   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
+#                          TRUE~"YES")) 
+# 
+# p2 <- df_c%>% 
+#   ggplot(aes(scheme, beta, fill = acclimation, color = acclimation, group = acclimation))+
+#   geom_point(shape= 21,position=position_dodge(width = 0.4))+
+#   geom_abline(intercept = 1, slope = 0, color = "grey20")+
+#   geom_pointrange(data = beta_c, 
+#                   aes(scheme,estimate,color = acclimation,
+#                       ymin = conf.low,ymax = conf.high,
+#                       shape = sig),size = 0.8,
+#                   position=position_dodge(width = 0.4),
+#                   show.legend = FALSE)+
+#   # stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
+#   #              geom="pointrange",position=position_dodge(width = 0.4))+
+#   mytheme2()+
+#   theme(legend.title = element_blank())+
+#   xlab("")+
+#   # ylim(0,2)+
+#   ylab(expression("Leaf internal-to-ambient CO"[2]~"ratio"~beta))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_fill_manual(values =c("#DFC27D","#80CDC1"))+
+#   scale_shape_manual(values = c(1, 19))+
+#   coord_flip()
+# 
+# 
+# 
+# rmse_c <- lmerTest::lmer(rmse~scheme*acclimation + (1|Species), data = df_c, weights = log(n_dist))
+# rmse_c_p <- emmeans::contrast(emmeans(rmse_c, "acclimation",by='scheme'))%>% 
+#   broom::tidy() %>% 
+#   dplyr::select(scheme,adj.p.value) %>% 
+#   summarise_all(unique)
+# rmse_c <- emmeans(rmse_c,~scheme*acclimation) %>% 
+#   broom::tidy(conf.int = TRUE) %>% 
+#   left_join(rmse_c_p) %>% 
+#   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
+#                          TRUE~"YES")) 
+# p3 <- df_c %>%
+#   ggplot(aes(scheme,rmse, fill = acclimation, color = acclimation, group = acclimation))+
+#   geom_point(shape= 21,position=position_dodge(width = 0.4))+
+#   geom_pointrange(data = rmse_c, 
+#                   aes(scheme,estimate,color = acclimation,
+#                       ymin = conf.low,ymax = conf.high,
+#                       shape = sig),size = 0.8,
+#                   position=position_dodge(width = 0.4),
+#                   show.legend = FALSE)+
+#   # stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
+#   #              geom="pointrange",position=position_dodge(width = 0.4))+
+#   mytheme2()+
+#   theme(legend.title = element_blank())+
+#   xlab("")+
+#   ylab(expression("Leaf internal-to-ambient CO"[2]~"ratio RMSE"))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_fill_manual(values =c("#DFC27D","#80CDC1"))+
+#   scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
+#   coord_flip()
+# 
+# bias_c <- lmerTest::lmer(bias~scheme*acclimation + (1|Species), data = df_c, weights = log(n_dist))
+# bias_c_p <- emmeans::contrast(emmeans(bias_c, "acclimation",by='scheme'))%>% 
+#   broom::tidy() %>% 
+#   dplyr::select(scheme,adj.p.value) %>% 
+#   summarise_all(unique)
+# bias_c <- emmeans(bias_c,~scheme*acclimation) %>% 
+#   broom::tidy(conf.int = TRUE) %>% 
+#   left_join(bias_c_p) %>% 
+#   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
+#                          TRUE~"YES")) 
+# p4 <- df_c %>%
+#   ggplot(aes(scheme,bias,fill = acclimation, color = acclimation, group = acclimation))+
+#   geom_point(shape= 21,position=position_dodge(width = 0.4))+
+#   geom_abline(intercept = 0, slope = 0, color = "grey20")+
+#   geom_pointrange(data = bias_c, 
+#                   aes(scheme,estimate,color = acclimation,
+#                       ymin = conf.low,ymax = conf.high,
+#                       shape = sig), size = 0.8,
+#                   position=position_dodge(width = 0.4),
+#                   show.legend = FALSE)+
+#   # stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
+#   #              geom="pointrange",position=position_dodge(width = 0.4))+
+#   mytheme2()+
+#   theme(legend.title = element_blank())+
+#   xlab("")+
+#   ylab(expression("Leaf internal-to-ambient CO"[2]~"ratio BIAS"))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_fill_manual(values =c("#DFC27D","#80CDC1"))+
+#   scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
+#   coord_flip()
+# 
+# 
+# ggarrange(p1,p2,p3,p4, 
+#           align='hv', labels=c('a', 'b','c','d'),
+#           common.legend = T,ncol=2, nrow = 2)
+
+# 
+# 
+# df_a_fix %>% 
+#   filter(scheme == "PROFITMAX") %>% 
+#   ggplot(aes(c_pred,chi,color = acclimation))+
+#   geom_point()+
+#   geom_abline(intercept = 0,slope = 1, color = "grey20")+
+#   geom_smooth(method = "lm", se = FALSE)+
+#   facet_wrap(~Species)+
+#   mytheme2()+
+#   theme(legend.title = element_blank(),
+#         legend.position="top",
+#         plot.title = element_text(vjust = -10))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   xlab(expression("Predicted "~chi))+
+#   ylab(expression("Observed "~chi))+
+#   ggtitle(expression(atop("PROFITMAX Leaf internal-to-ambient CO"[2]~"ratio")))
+# 
+# df_a_fix %>% 
+#   filter(scheme == "PROFITMAX2") %>% 
+#   ggplot(aes(c_pred,chi,color = acclimation))+
+#   geom_point()+
+#   geom_abline(intercept = 0,slope = 1, color = "grey20")+
+#   geom_smooth(method = "lm", se = FALSE)+
+#   facet_wrap(~Species)+
+#   mytheme2()+
+#   theme(legend.title = element_blank(),
+#         legend.position="top",
+#         plot.title = element_text(vjust = -10))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   xlab(expression("Predicted "~chi))+
+#   ylab(expression("Observed "~chi))+
+#   ggtitle(expression(atop("PROFITMAX2 Leaf internal-to-ambient CO"[2]~"ratio")))
+# 
+# df_a_fix %>% 
+#   filter(scheme == "SOX") %>% 
+#   ggplot(aes(c_pred,chi,color = acclimation))+
+#   geom_point()+
+#   geom_abline(intercept = 0,slope = 1, color = "grey20")+
+#   geom_smooth(method = "lm", se = FALSE)+
+#   facet_wrap(~Species)+
+#   mytheme2()+
+#   theme(legend.title = element_blank(),
+#         legend.position="top",
+#         plot.title = element_text(vjust = -10))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   xlab(expression("Predicted "~chi))+
+#   ylab(expression("Observed "~chi))+
+#   ggtitle(expression(atop("SOX Leaf internal-to-ambient CO"[2]~"ratio")))
+# 
+# df_a_fix %>% 
+#   filter(scheme == "PHYDRO") %>% 
+#   ggplot(aes(c_pred,chi,color = acclimation))+
+#   geom_point()+
+#   geom_abline(intercept = 0,slope = 1, color = "grey20")+
+#   geom_smooth(method = "lm", se = FALSE)+
+#   facet_wrap(~Species)+
+#   mytheme2()+
+#   theme(legend.title = element_blank(),
+#         legend.position="top",
+#         plot.title = element_text(vjust = -10))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   xlab(expression("Predicted "~chi))+
+#   ylab(expression("Observed "~chi))+
+#   ggtitle(expression(atop("PHYDRO Leaf internal-to-ambient CO"[2]~"ratio")))
+# 
+# 
+# 
+# 
+# #### DPSI ####
+# df_d <- df_a_fix %>% 
+#   group_by(scheme,acclimation,Species,source) %>% 
+#   filter(!is.na(Dpsi)) %>% select(Dpsi,d_pred)%>% 
+#   mutate(diff_d = Dpsi - d_pred) %>% 
+#   summarise(n_dist = n(),
+#             r = cor(Dpsi, d_pred, use = "pairwise.complete.obs"),
+#             bias = mean(diff_d,na.rm = TRUE)/mean(Dpsi,na.rm = TRUE),
+#             rmse = Metrics::rmse(Dpsi,d_pred),
+#             beta = lm(Dpsi~d_pred)$coefficients[2]) %>% 
+#   filter(beta> (-50),beta <50, rmse<100)
+# 
+# 
+# 
+# r_d <- lmerTest::lmer(r~scheme*acclimation + (1|Species), data = df_d, weights = log(n_dist))
+# r_d_p <- emmeans::contrast(emmeans(r_d, "acclimation",by='scheme'))%>% 
+#   broom::tidy() %>% 
+#   dplyr::select(scheme,adj.p.value) %>% 
+#   summarise_all(unique)
+# r_d <- emmeans(r_d,~scheme*acclimation) %>% 
+#   broom::tidy(conf.int = TRUE)%>% 
+#   left_join(r_d_p) %>% 
+#   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
+#                          TRUE~"YES")) 
+# p1 <- df_d %>%
+#   ggplot(aes(scheme,r,fill = acclimation, color = acclimation, group = acclimation))+
+#   geom_point(shape= 21,position=position_dodge(width = 0.4))+
+#   geom_abline(intercept = 0, slope = 0, color = "grey20")+
+#   geom_pointrange(data = r_d, 
+#                   aes(scheme,estimate,color = acclimation,
+#                       ymin = conf.low,ymax = conf.high,
+#                       shape = sig),size = 0.8,
+#                   position=position_dodge(width = 0.4),
+#                   show.legend = FALSE)+
+#   # stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
+#   #              geom="pointrange", position=position_dodge(width = 0.4))+
+#   mytheme2()+
+#   theme(legend.title = element_blank())+
+#   xlab("")+
+#   ylab(expression("Soil-leaf water-potential difference"~italic(Delta*psi)~"ratio r Pearson's correlation"))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_fill_manual(values =c("#DFC27D","#80CDC1"))+
+#   scale_shape_manual(values = c(1, 19))+
+#   coord_flip()
+# 
+# 
+# 
+# beta_d <- lmerTest::lmer(beta~scheme*acclimation + (1|Species), data = df_d, weights = log(n_dist))
+# beta_d_p <- emmeans::contrast(emmeans(beta_d, "acclimation",by='scheme'))%>% 
+#   broom::tidy() %>% 
+#   dplyr::select(scheme,adj.p.value) %>% 
+#   summarise_all(unique)
+# beta_d <- emmeans(beta_d,~scheme*acclimation) %>% 
+#   broom::tidy(conf.int = TRUE) %>% 
+#   left_join(beta_d_p) %>% 
+#   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
+#                          TRUE~"YES")) 
+# 
+# p2 <- df_d%>% 
+#   ggplot(aes(scheme, beta, fill = acclimation, color = acclimation, group = acclimation))+
+#   geom_point(shape= 21,position=position_dodge(width = 0.4))+
+#   geom_abline(intercept = 1, slope = 0, color = "grey20")+
+#   geom_pointrange(data = beta_d, 
+#                   aes(scheme,estimate,color = acclimation,
+#                       ymin = conf.low,ymax = conf.high,
+#                       shape = sig),size = 0.8,
+#                   position=position_dodge(width = 0.4),
+#                   show.legend = FALSE)+
+#   # stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
+#   #              geom="pointrange",position=position_dodge(width = 0.4))+
+#   mytheme2()+
+#   theme(legend.title = element_blank())+
+#   xlab("")+
+#   # ylim(0,2)+
+#   ylab(expression("Soil-leaf water-potential difference"~italic(Delta*psi)~beta))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_fill_manual(values =c("#DFC27D","#80CDC1"))+
+#   scale_shape_manual(values = c(1, 19))+
+#   coord_flip()
+# 
+# 
+# 
+# rmse_d <- lmerTest::lmer(rmse~scheme*acclimation + (1|Species), data = df_d, weights = log(n_dist))
+# rmse_d_p <- emmeans::contrast(emmeans(rmse_d, "acclimation",by='scheme'))%>% 
+#   broom::tidy() %>% 
+#   dplyr::select(scheme,adj.p.value) %>% 
+#   summarise_all(unique)
+# rmse_d <- emmeans(rmse_d,~scheme*acclimation) %>% 
+#   broom::tidy(conf.int = TRUE) %>% 
+#   left_join(rmse_d_p) %>% 
+#   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
+#                          TRUE~"YES")) 
+# p3 <- df_d %>%
+#   ggplot(aes(scheme,rmse, fill = acclimation, color = acclimation, group = acclimation))+
+#   geom_point(shape= 21,position=position_dodge(width = 0.4))+
+#   geom_pointrange(data = rmse_d, 
+#                   aes(scheme,estimate,color = acclimation,
+#                       ymin = conf.low,ymax = conf.high,
+#                       shape = sig),size = 0.8,
+#                   position=position_dodge(width = 0.4),
+#                   show.legend = FALSE)+
+#   # stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
+#   #              geom="pointrange",position=position_dodge(width = 0.4))+
+#   mytheme2()+
+#   theme(legend.title = element_blank())+
+#   xlab("")+
+#   ylab(expression("Soil-leaf water-potential difference"~italic(Delta*psi)~"(MPa) RMSE"))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_fill_manual(values =c("#DFC27D","#80CDC1"))+
+#   scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
+#   coord_flip()
+# 
+# bias_d <- lmerTest::lmer(bias~scheme*acclimation + (1|Species), data = df_d, weights = log(n_dist))
+# bias_d_p <- emmeans::contrast(emmeans(bias_d, "acclimation",by='scheme'))%>% 
+#   broom::tidy() %>% 
+#   dplyr::select(scheme,adj.p.value) %>% 
+#   summarise_all(unique)
+# bias_d <- emmeans(bias_d,~scheme*acclimation) %>% 
+#   broom::tidy(conf.int = TRUE) %>% 
+#   left_join(bias_d_p) %>% 
+#   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
+#                          TRUE~"YES")) 
+# p4 <- df_d %>%
+#   ggplot(aes(scheme,bias,fill = acclimation, color = acclimation, group = acclimation))+
+#   geom_point(shape= 21,position=position_dodge(width = 0.4))+
+#   geom_abline(intercept = 0, slope = 0, color = "grey20")+
+#   geom_pointrange(data = bias_d, 
+#                   aes(scheme,estimate,color = acclimation,
+#                       ymin = conf.low,ymax = conf.high,
+#                       shape = sig), size = 0.8,
+#                   position=position_dodge(width = 0.4),
+#                   show.legend = FALSE)+
+#   # stat_summary(fun.data=mean_sdl, fun.args = list(mult=1), 
+#   #              geom="pointrange",position=position_dodge(width = 0.4))+
+#   mytheme2()+
+#   theme(legend.title = element_blank())+
+#   xlab("")+
+#   ylab(expression("Soil-leaf water-potential difference"~italic(Delta*psi)~" BIAS"))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_fill_manual(values =c("#DFC27D","#80CDC1"))+
+#   scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
+#   coord_flip()
+# 
+# 
+# ggarrange(p1,p2,p3,p4, 
+#           align='hv', labels=c('a', 'b','c','d'),
+#           common.legend = T,ncol=2, nrow = 2)
+# 
+# 
+# 
+# df_a_fix %>% 
+#   filter(scheme == "PROFITMAX") %>% 
+#   ggplot(aes(d_pred,Dpsi,color = acclimation))+
+#   geom_point()+
+#   geom_abline(intercept = 0,slope = 1, color = "grey20")+
+#   geom_smooth(method = "lm", se = FALSE)+
+#   facet_wrap(~Species)+
+#   mytheme2()+
+#   theme(legend.title = element_blank(),
+#         legend.position="top",
+#         plot.title = element_text(vjust = -10))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   xlab(expression("Predicted "~Delta*psi))+
+#   ylab(expression("Observed "~Delta*psi))+
+#   ggtitle(expression(atop("PROFITMAX Soil-leaf water-potential","difference,"~italic(Delta*psi)~"(MPa)")))
+# 
+# df_a_fix %>% 
+#   filter(scheme == "PROFITMAX2") %>% 
+#   ggplot(aes(d_pred,Dpsi,color = acclimation))+
+#   geom_point()+
+#   geom_abline(intercept = 0,slope = 1, color = "grey20")+
+#   geom_smooth(method = "lm", se = FALSE)+
+#   facet_wrap(~Species)+
+#   mytheme2()+
+#   theme(legend.title = element_blank(),
+#         legend.position="top",
+#         plot.title = element_text(vjust = -10))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   xlab(expression("Predicted "~Delta*psi))+
+#   ylab(expression("Observed "~Delta*psi))+
+#   ggtitle(expression(atop("PROFITMAX2 Soil-leaf water-potential","difference,"~italic(Delta*psi)~"(MPa)")))
+# 
+# df_a_fix %>% 
+#   filter(scheme == "SOX") %>% 
+#   ggplot(aes(d_pred,Dpsi,color = acclimation))+
+#   geom_point()+
+#   geom_abline(intercept = 0,slope = 1, color = "grey20")+
+#   geom_smooth(method = "lm", se = FALSE)+
+#   facet_wrap(~Species)+
+#   mytheme2()+
+#   theme(legend.title = element_blank(),
+#         legend.position="top",
+#         plot.title = element_text(vjust = -10))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   xlab(expression("Predicted "~Delta*psi))+
+#   ylab(expression("Observed "~Delta*psi))+
+#   ggtitle(expression(atop("SOX Soil-leaf water-potential","difference,"~italic(Delta*psi)~"(MPa)")))
+# 
+# df_a_fix %>% 
+#   filter(scheme == "PHYDRO") %>% 
+#   ggplot(aes(d_pred,Dpsi,color = acclimation))+
+#   geom_point()+
+#   geom_abline(intercept = 0,slope = 1, color = "grey20")+
+#   geom_smooth(method = "lm", se = FALSE)+
+#   facet_wrap(~Species)+
+#   mytheme2()+
+#   theme(legend.title = element_blank(),
+#         legend.position="top",
+#         plot.title = element_text(vjust = -10))+
+#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   xlab(expression("Predicted "~Delta*psi))+
+#   ylab(expression("Observed "~Delta*psi))+
+#   ggtitle(expression(atop("PHYDRO Soil-leaf water-potential","difference,"~italic(Delta*psi)~"(MPa)")))
+# 
+# 
+# 

@@ -231,7 +231,7 @@ error_fun_no_accl = function(x, data, data_template, plot=F,
     )
     
     par_cost_now = list(
-      alpha = 0.1,
+      alpha = 0.095,
       gamma = x[1]
     )
     
@@ -244,7 +244,7 @@ error_fun_no_accl = function(x, data, data_template, plot=F,
     )
     
     par_cost_now = list(
-      alpha  = 0.1
+      alpha  = 0.095
     )
     
   }
@@ -308,7 +308,7 @@ error_fun = function(x, data, data_template,  plot=F, dpsi_data = dpsi_data,
     )
     
     par_cost_now = list(
-      alpha = 0.1,
+      alpha = 0.095,
       gamma = x[1]
     )
     
@@ -321,7 +321,7 @@ error_fun = function(x, data, data_template,  plot=F, dpsi_data = dpsi_data,
     )
     
     par_cost_now = list(
-      alpha  = 0.1
+      alpha  = 0.095
     )
     
   }
@@ -443,7 +443,7 @@ get_parameters <- function(x){
     }else{
     data_ww <- data1 %>% 
       filter(!is.na(gC)) %>% 
-      mutate(LWP_q90 = quantile(LWP, 0.9, na.rm = TRUE),
+      mutate(LWP_q90 = quantile(LWP, 0.8, na.rm = TRUE),
              ci = ca-A/gC) %>% 
       filter(LWP >= LWP_q90) %>% 
       dplyr::select(LWP,A,gC,T,ci,Iabs_growth) %>% 
@@ -571,13 +571,13 @@ get_parameters <- function(x){
       res_accl <- tibble(x,
                          acclimation = TRUE,
                          K.scale=K_PROFITMAX_acclimate$K_PROFITMAX,
-                         alpha=0.1,
+                         alpha=0.095,
                          gamma=x_accl[1])
     }else{
       res_accl <- tibble(x,
                          acclimation = TRUE,
                          K.scale=x_accl[1],
-                         alpha=0.1,
+                         alpha=0.095,
                          gamma=NA)
     }
     
@@ -593,8 +593,7 @@ get_parameters <- function(x){
 ##### COMPUTE PARAMETERS #####
 #First compute PROFITMAX model to obtain Kmax for CMAX. CGAIN, WUE and PHYDRO models
 K_PROFITMAX <- NULL
-template %>% filter(scheme == "PROFITMAX",Species %in% c("Beta maritima subsp. maritima",
-                                                          "Beta maritima subsp. marcosii")
+template %>% filter(scheme == "PROFITMAX"#,Species %in% c("Sequoia sempervirens")
                     # Species %in% c("Rosa cymosa",
                     #                "Broussonetia papyrifera",
                     #                "Cinnamomum bodinieri",
@@ -604,9 +603,9 @@ template %>% filter(scheme == "PROFITMAX",Species %in% c("Beta maritima subsp. m
   group_split(scheme, dpsi, Species,source) %>%
   purrr::map_df(get_parameters)->res
 
-save(res,file = "DATA/K_PROFITMAX_meta-analysis_kmax_vpd.RData")
-
-load(file = "DATA/K_PROFITMAX_meta-analysis_kmax_vpd.RData")
+# save(res,file = "DATA/K_PROFITMAX_meta-analysis_kmax_vpd.RData")
+# 
+# load(file = "DATA/K_PROFITMAX_meta-analysis_kmax_vpd.RData")
 
 K_PROFITMAX <- res %>% 
   select(Species,K_PROFITMAX = K.scale,dpsi,acclimation,source) %>% 
@@ -615,8 +614,7 @@ K_PROFITMAX <- res %>%
 
 #Compute the rest of the models
 template %>% 
-  filter(!scheme %in% c("PROFITMAX"),Species %in% c("Beta maritima subsp. maritima",
-                                                    "Beta maritima subsp. marcosii")
+  filter(!scheme %in% c("PROFITMAX")#,Species %in% c("Sequoia sempervirens")
          # Species %in% c(
          #                # "Rosa cymosa",
          #                # "Broussonetia papyrifera",

@@ -51,6 +51,23 @@ mytheme5 = function(){
 }
 
 
+mytheme6 = function(){
+  theme_classic()+
+    theme(axis.text=element_text(size=12),
+          axis.title=element_text(size=14),
+          legend.text=element_text(size=14),
+          plot.tag.position = "topleft",
+          # panel.background = element_blank(),
+          panel.grid.major = element_line(colour="grey50", size=0.5),
+          # panel.grid.minor = element_blank(),
+          # axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=0.5)
+          ) 
+  
+}
+
+
+
 col_df <- tibble(scheme = factor(c('CMAX','CGAIN','PHYDRO','PROFITMAX2','SOX','PROFITMAX')),
                  col = brewer_pal(palette = "Dark2")(6)
 )
@@ -235,4 +252,13 @@ get_cost <- function(x,tc_now,ppfd_now,vpd_now,co2_now){
   
   return(dat_acc %>% cbind(scheme = x$scheme, Species = x$Species, source = x$source))
   
+}
+
+
+get_density <- function(x, y, ...) {
+  dens <- MASS::kde2d(x, y, ...)
+  ix <- findInterval(x, dens$x)
+  iy <- findInterval(y, dens$y)
+  ii <- cbind(ix, iy)
+  return(dens$z[ii])
 }

@@ -444,7 +444,7 @@ get_parameters_kmaxww_alpha <- function(x){
     }else{
       data_ww <- data1 %>% 
         filter(!is.na(gC)) %>% 
-        mutate(LWP_q90 = quantile(LWP, 0.9, na.rm = TRUE),
+        mutate(LWP_q90 = quantile(LWP, 0.8, na.rm = TRUE),
                ci = ca-A/gC) %>% 
         filter(LWP >= LWP_q90) %>% 
         dplyr::select(LWP,A,gC,T,ci,ca,D,Iabs_growth,Iabs_used) %>% 
@@ -568,14 +568,14 @@ get_parameters_kmaxww_alpha <- function(x){
 ##### COMPUTE PARAMETERS #####
 #First compute PROFITMAX model to obtain Kmax for CMAX. CGAIN, WUE and PHYDRO models
 K_PROFITMAX <- NULL
-template %>% filter(scheme == "PROFITMAX", Species %in% c("Beta maritima subsp. maritima",
-                                                          "Beta maritima subsp. marcosii")) %>%
+template %>% filter(scheme == "PROFITMAX"#, Species %in% c("Sequoia sempervirens")
+                    ) %>%
   group_split(scheme, dpsi, Species,source) %>%
   purrr::map_df(get_parameters_kmaxww_alpha)->res
-
-save(res,file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
-
-load(file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
+# 
+# save(res,file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
+# 
+# load(file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
 
 K_PROFITMAX <- res %>% 
   select(Species,K_PROFITMAX = K.scale,dpsi,acclimation,source) %>% 
@@ -584,8 +584,7 @@ K_PROFITMAX <- res %>%
 
 #Compute the other models
 template %>% 
-  filter(!scheme %in% c("PROFITMAX"),Species %in% c("Beta maritima subsp. maritima",
-                                                    "Beta maritima subsp. marcosii")
+  filter(!scheme %in% c("PROFITMAX")#,Species %in% c("Sequoia sempervirens")
          # Species %in% c(
          #   # "Rosa cymosa",
          #   # "Broussonetia papyrifera",

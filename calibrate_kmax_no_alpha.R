@@ -226,7 +226,8 @@ error_fun_no_accl = function(x, data, data_template, plot=F,
     }
   
   lwp = data$LWP
-  dat1 = tibble(var = lwp, jmax_a=jmax, vcmax_a=vcmax) %>% 
+  dat1 = try(
+    tibble(var = lwp, jmax_a=jmax, vcmax_a=vcmax) %>% 
     cbind(data %>% select(t=T,Iabs_used, D,ca)) %>% 
     mutate(var = case_when(var>0~0,
                            TRUE~var),
@@ -242,42 +243,47 @@ error_fun_no_accl = function(x, data, data_template, plot=F,
                                                           jmax = ..2, vcmax = ..3, 
                                                           stomatal_model = stomatal_model)) 
     ) %>% 
-    unnest_wider(p)
-  
-  if(plot==T) dat1 %>% plot_all(varname = "psi_soil", species=Species_now, data = data, dpsi_data=dpsi_data)
-  
-  dat2 <- dat1 %>% filter(gs>=1e-40)
-  gx = log(dat2$gs)
-  gy = dat2$var
-  fpsi = splinefun(x = gx, y=gy, method = "natural")
-  gs0 = dat2$gs[which(dat2$var==0)]
-  psi88S = fpsi(log(gs0*0.12))
-  dpx = dat2$var
-  dpy = dat2$dpsi
-  f1 = splinefun(dpy~dpx)
-  dp88S = f1(psi88S)
-  psiL88S = psi88S-dp88S
-  
-  data_f <- data #%>% filter(LWP >= psi88S) #use only values over Psi88S
-  y2 = mean((dat1$gs - data_f$gC)^2,na.rm  = TRUE)/mean(data_f$gC,na.rm  = TRUE)^2
-  y1 = mean((dat1$a - data_f$A)^2,na.rm  = TRUE)/mean(data_f$A,na.rm  = TRUE)^2
-  y4 = mean((dat1$chi - (data_f$Ciest/data_f$ca))^2,na.rm  = TRUE)/mean((data_f$Ciest/data_f$ca),na.rm  = TRUE)^2
-  
-  if (!is.null(dpsi_data)){
-    d_spl = splinefun(lwp, y=dat1$dpsi)
-    dpsi_data_f <- dpsi_data #%>% filter(SWP >= psi88S) #use only values over Psi88S
-    y3 = mean((d_spl(dpsi_data_f$SWP) - dpsi_data_f$Dpsi)^2,na.rm  = TRUE)/mean(dpsi_data_f$Dpsi,na.rm  = TRUE)^2 #*40
-    # cat("d_spl:", d_spl(dpsi_data_f$SWP), "\n")
+    unnest_wider(p),
+    silent = TRUE)
+  if(any(class(dat1) %in% "try-error")){
+    print(paste("error try"))
+    return(1e2)
   }else{
-    y3=0
-  }
+    if(plot==T) dat1 %>% plot_all(varname = "psi_soil", species=Species_now, data = data, dpsi_data=dpsi_data)
   
-  y=y2+y1+y4
-  
-  # cat(x, "|", y2, " / ", y1, " / ", y4, " / ",y, "\n")
-  cat(x, "|", y, "\n")
-  
-  y
+    dat2 <- dat1 %>% filter(gs>=1e-40)
+    gx = log(dat2$gs)
+    gy = dat2$var
+    fpsi = splinefun(x = gx, y=gy, method = "natural")
+    gs0 = dat2$gs[which(dat2$var==0)]
+    psi88S = fpsi(log(gs0*0.12))
+    dpx = dat2$var
+    dpy = dat2$dpsi
+    f1 = splinefun(dpy~dpx)
+    dp88S = f1(psi88S)
+    psiL88S = psi88S-dp88S
+    
+    data_f <- data #%>% filter(LWP >= psi88S) #use only values over Psi88S
+    y2 = mean((dat1$gs - data_f$gC)^2,na.rm  = TRUE)/mean(data_f$gC,na.rm  = TRUE)^2
+    y1 = mean((dat1$a - data_f$A)^2,na.rm  = TRUE)/mean(data_f$A,na.rm  = TRUE)^2
+    y4 = mean((dat1$chi - (data_f$Ciest/data_f$ca))^2,na.rm  = TRUE)/mean((data_f$Ciest/data_f$ca),na.rm  = TRUE)^2
+    
+    if (!is.null(dpsi_data)){
+      d_spl = splinefun(lwp, y=dat1$dpsi)
+      dpsi_data_f <- dpsi_data #%>% filter(SWP >= psi88S) #use only values over Psi88S
+      y3 = mean((d_spl(dpsi_data_f$SWP) - dpsi_data_f$Dpsi)^2,na.rm  = TRUE)/mean(dpsi_data_f$Dpsi,na.rm  = TRUE)^2 #*40
+      # cat("d_spl:", d_spl(dpsi_data_f$SWP), "\n")
+    }else{
+      y3=0
+    }
+    
+    y=y2+y1+y4
+    
+    # cat(x, "|", y2, " / ", y1, " / ", y4, " / ",y, "\n")
+    cat(x, "|", y, "\n")
+    
+    y
+    }
   }
 }
 
@@ -352,7 +358,7 @@ get_parameters_kmax_no_alpha <- function(x){
     print(species)
     parameter_ini <- c(1,-1,2) #hydraulic parameter and alpha
     # if(stomatal_model_now %in% c("CGAIN")){
-    #     parameter_ini <- c(5,0.1)}
+    #     parameter_ini <- c(10,-1,1)}
     optim(fn = error_fun_no_accl,
           par = parameter_ini,
           data=data1,
@@ -362,7 +368,7 @@ get_parameters_kmax_no_alpha <- function(x){
           Species_now = species,
           vcmax = vcmax,
           jmax = jmax,
-          K_PROFITMAX = K_PROFITMAX_acclimate,
+          K_PROFITMAX = K_PROFITMAX_no_acclimate,
           control = list(maxit = 500,#, maximize = TRUE, 
                          parscale = c(1,0.1,0.1),
                          REPORT=0, trace=0, reltol=1e-4)
@@ -372,12 +378,12 @@ get_parameters_kmax_no_alpha <- function(x){
     error_fun_no_accl(x_accl, data1, data_template = data_template_now, dpsi_data = dpsi_data,
               plot=T, stomatal_model = stomatal_model_now, Species_now = species,
               vcmax = vcmax, jmax = jmax,
-              K_PROFITMAX = K_PROFITMAX_acclimate)
+              K_PROFITMAX = K_PROFITMAX_no_acclimate)
     
     if(stomatal_model_now %in% par_scheme){
       res_accl <- tibble(x,
                          acclimation = FALSE,
-                         K.scale=K_PROFITMAX_acclimate$K_PROFITMAX,
+                         K.scale=K_PROFITMAX_no_acclimate$K_PROFITMAX,
                          alpha=NA,
                          gamma=x_accl[1],
                          p50_opt=x_accl[2],
@@ -402,15 +408,15 @@ get_parameters_kmax_no_alpha <- function(x){
 
 ##### COMPUTE PARAMETERS #####
 #First compute PROFITMAX model to obtain Kmax for CMAX. CGAIN, WUE and PHYDRO models
-K_PROFITMAX <- NULL
-template %>% filter(scheme == "PROFITMAX",
-                    # Species == "Helianthus annuus"
-                    # source == "Epron and Dreyer (1990)"
-                    ) %>%
-  group_split(scheme, dpsi, Species,source) %>%
-  purrr::map_df(get_parameters_kmax_no_alpha)->res
-
-save(res,file = "DATA/Kmax_PROFITMAX_kmax_no_alpha.RData")
+# K_PROFITMAX <- NULL
+# template %>% filter(scheme == "PROFITMAX",
+#                     # Species == "Helianthus annuus"
+#                     # source == "Epron and Dreyer (1990)"
+#                     ) %>%
+#   group_split(scheme, dpsi, Species,source) %>%
+#   purrr::map_df(get_parameters_kmax_no_alpha)->res
+# 
+# save(res,file = "DATA/Kmax_PROFITMAX_kmax_no_alpha.RData")
 
 load(file = "DATA/Kmax_PROFITMAX_kmax_no_alpha.RData")
 
@@ -421,7 +427,7 @@ K_PROFITMAX <- res %>%
 
 #Compute the other models
 template %>% 
-  filter(!scheme %in% c("PROFITMAX"),
+  filter(!scheme %in% c("PROFITMAX","PROFITMAX2","SOX"), #scheme == "CGAIN",Species == "Diplotaxis ibicensis"
          # Species %in% c(
          #   # "Rosa cymosa",
          #   # "Broussonetia papyrifera",

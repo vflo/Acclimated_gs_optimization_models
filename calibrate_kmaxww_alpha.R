@@ -470,11 +470,24 @@ get_parameters_kmaxww_alpha <- function(x){
     ##### PARAMETERIZATION WITHOUT ACCLIMATION #####
     print(stomatal_model_now)
     print(species)
-    parameter_max <- 15
-    if(stomatal_model_now %in% c("CGAIN")){
-      parameter_max <- 50}
-    if(stomatal_model_now %in% c("CMAX")){
-      parameter_max <- 6}
+    parameter_max <- 60
+    if(stomatal_model_now %in% c("CMAX")){parameter_max <- 6}
+    if(stomatal_model_now %in% c("CMAX")&
+       species %in%c("Pteroceltis tatarinowii")){parameter_max <- 30}
+    if(stomatal_model_now %in% c("CMAX") &
+       species %in% c("Pyracantha fortuneana")){parameter_max <- 3}
+    if(stomatal_model_now %in% c("CMAX") &
+       species %in% c("Broussonetia papyrifera")){parameter_max <- 100}
+    if(!stomatal_model_now %in% c("CMAX")&
+       species %in%c("Broussonetia papyrifera")){parameter_max <- 200}
+    if(stomatal_model_now %in% c("PHYDRO")&
+       species %in%c("Broussonetia papyrifera",
+                     "Pteroceltis tatarinowii")){parameter_max <- 300}
+    if(stomatal_model_now %in% c("SOX")&
+       species %in%c("Broussonetia papyrifera",
+                     "Pteroceltis tatarinowii")){parameter_max <- 300}
+    if(stomatal_model_now %in% c("PROFITMAX2")&
+       species %in%c("Helianthus annuus")){parameter_max <- 200}
     
     optimise(error_fun_no_accl,
              interval = c(0,parameter_max),
@@ -568,14 +581,14 @@ get_parameters_kmaxww_alpha <- function(x){
 ##### COMPUTE PARAMETERS #####
 #First compute PROFITMAX model to obtain Kmax for CMAX. CGAIN, WUE and PHYDRO models
 K_PROFITMAX <- NULL
-template %>% filter(scheme == "PROFITMAX"#, Species %in% c("Sequoia sempervirens")
+template %>% filter(scheme == "PROFITMAX"#, Species %in% c("Pteroceltis tatarinowii")
                     ) %>%
   group_split(scheme, dpsi, Species,source) %>%
   purrr::map_df(get_parameters_kmaxww_alpha)->res
 # 
-# save(res,file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
+save(res,file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
 # 
-# load(file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
+load(file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
 
 K_PROFITMAX <- res %>% 
   select(Species,K_PROFITMAX = K.scale,dpsi,acclimation,source) %>% 
@@ -584,13 +597,16 @@ K_PROFITMAX <- res %>%
 
 #Compute the other models
 template %>% 
-  filter(!scheme %in% c("PROFITMAX")#,Species %in% c("Sequoia sempervirens")
+  filter(!scheme %in% c("PROFITMAX")#,scheme %in% c("PROFITMAX2"),#,Species %in% c("Sequoia sempervirens")
          # Species %in% c(
+         #   "Ficus tikoua"
+           # "Malva subovata"
          #   # "Rosa cymosa",
-         #   # "Broussonetia papyrifera",
+           # "Broussonetia papyrifera"#,
+           # "Helianthus annuus"
          #   # "Cinnamomum bodinieri",
          #   # "Platycarya longipes",
-         #   # "Pteroceltis tatarinowii"
+           # "Pteroceltis tatarinowii"
          #   # "Picea abies",
          #   # "Betula pendula",
          #   # "Pinus sylvestris",

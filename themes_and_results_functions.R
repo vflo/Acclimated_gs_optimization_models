@@ -66,9 +66,16 @@ mytheme6 = function(){
   
 }
 
+mytheme7 = function(){
+  theme_classic()+
+    theme(axis.text=element_text(size=12),
+          axis.title=element_text(size=14),
+          legend.text=element_text(size=14),
+          plot.tag.position = "topleft") 
+  
+}
 
-
-col_df <- tibble(scheme = factor(c('CMAX','CGAIN','PHYDRO','PROFITMAX2','SOX','PROFITMAX')),
+col_df <- tibble(scheme = factor(c('CMAX','CGAIN','PHYDRO','PMAX2','SOX','PMAX')),
                  col = brewer_pal(palette = "Dark2")(6)
 )
 

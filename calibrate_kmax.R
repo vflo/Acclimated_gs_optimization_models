@@ -432,7 +432,7 @@ get_parameters <- function(x){
       unique()
     }
     ##### PARAMETERIZATION WITHOUT ACCLIMATION #####
-    if(unique(data1$Source) == "Galmes et al. (2007)"){ #just 4 values -> ww calculated with quantile 0.5
+    if(nrow(data1) <= 4){ #just 4 values -> ww calculated with quantile 0.5
       data_ww <- data1 %>% 
         filter(!is.na(gC)) %>% 
         mutate(LWP_q90 = quantile(LWP, 0.5, na.rm = TRUE),
@@ -472,10 +472,21 @@ get_parameters <- function(x){
     print(stomatal_model_now)
     print(species)
     parameter_max <- 60
-    # if(stomatal_model_now %in% c("CGAIN")){
-    #   parameter_max <- 50}
-    # if(stomatal_model_now %in% c("CMAX")){
-    #   parameter_max <- 6}
+    if(stomatal_model_now %in% c("CMAX")){parameter_max <- 6}
+    if(stomatal_model_now %in% c("CMAX")&
+       species %in%c("Pteroceltis tatarinowii")){parameter_max <- 30}
+    if(stomatal_model_now %in% c("CMAX") &
+       species %in% c("Pyracantha fortuneana")){parameter_max <- 3}
+    if(stomatal_model_now %in% c("CMAX") &
+       species %in% c("Broussonetia papyrifera")){parameter_max <- 100}
+    if(!stomatal_model_now %in% c("CMAX")&
+       species %in%c("Broussonetia papyrifera")){parameter_max <- 200}
+    if(stomatal_model_now %in% c("PHYDRO")&
+       species %in%c("Broussonetia papyrifera",
+                     "Pteroceltis tatarinowii")){parameter_max <- 300}
+    if(stomatal_model_now %in% c("SOX")&
+       species %in%c("Broussonetia papyrifera",
+                     "Pteroceltis tatarinowii")){parameter_max <- 300}
 
       optimise(error_fun_no_accl,
                interval = c(0,parameter_max),
@@ -517,38 +528,21 @@ get_parameters <- function(x){
     print(species)
 
     parameter_max <- 60
-    # if(stomatal_model_now %in% c("PHYDRO")){
-    #   if(species == "Broussonetia papyrifera"){
-    #     parameter_max <- 1000
-    #   }else{
-    #     parameter_max <- 30
-    #   }
-    # }
-    # if(stomatal_model_now %in% c("CMAX")){
-    #   if(species %in% c("Broussonetia papyrifera","Cinnamomum bodinieri")){
-    #     parameter_max <- 1 #B papyrifera = 10
-    #   }else{
-    #     parameter_max <- 6
-    #   }
-    # }
-    # if(stomatal_model_now %in% c("SOX")){
-    #   if(species %in% c("Broussonetia papyrifera","Platycarya longipes",
-    #                     "Cinnamomum bodinieri","Pteroceltis tatarinowii")){
-    #     parameter_max <- 30000
-    #   }else{
-    #     parameter_max <- 6
-    #   }
-    # }
-    # if(stomatal_model_now %in% c("CGAIN")){
-    #   if(species != "Broussonetia papyrifera"){
-    #     parameter_max <- 50
-    #   }else{
-    #     parameter_max <- 40
-    #     }
-    #   }
-    # if(stomatal_model_now %in% c("CMAX")){
-    #   parameter_max <- 6}
-    
+    if(stomatal_model_now %in% c("CMAX")){parameter_max <- 6}
+    if(stomatal_model_now %in% c("CMAX")&
+       species %in%c("Pteroceltis tatarinowii")){parameter_max <- 30}
+    if(stomatal_model_now %in% c("CMAX") &
+       species %in% c("Pyracantha fortuneana")){parameter_max <- 4}
+    if(stomatal_model_now %in% c("CMAX") &
+       species %in% c("Broussonetia papyrifera")){parameter_max <- 100}
+    if(!stomatal_model_now %in% c("CMAX")&
+       species %in%c("Broussonetia papyrifera")){parameter_max <- 200}
+    if(stomatal_model_now %in% c("PHYDRO")&
+       species %in%c("Broussonetia papyrifera",
+                     "Pteroceltis tatarinowii")){parameter_max <- 400}
+    if(stomatal_model_now %in% c("SOX")&
+       species %in%c("Broussonetia papyrifera")){parameter_max <- 115}
+
       optimise(error_fun,
                interval = c(0,parameter_max),
                data=data1,
@@ -593,7 +587,7 @@ get_parameters <- function(x){
 ##### COMPUTE PARAMETERS #####
 #First compute PROFITMAX model to obtain Kmax for CMAX. CGAIN, WUE and PHYDRO models
 K_PROFITMAX <- NULL
-template %>% filter(scheme == "PROFITMAX"#,Species %in% c("Sequoia sempervirens")
+template %>% filter(scheme == "PROFITMAX"#,Species %in% c("Pteroceltis tatarinowii")
                     # Species %in% c("Rosa cymosa",
                     #                "Broussonetia papyrifera",
                     #                "Cinnamomum bodinieri",
@@ -603,29 +597,19 @@ template %>% filter(scheme == "PROFITMAX"#,Species %in% c("Sequoia sempervirens"
   group_split(scheme, dpsi, Species,source) %>%
   purrr::map_df(get_parameters)->res
 
-# save(res,file = "DATA/K_PROFITMAX_meta-analysis_kmax_vpd.RData")
-# 
-# load(file = "DATA/K_PROFITMAX_meta-analysis_kmax_vpd.RData")
+save(res,file = "DATA/K_PROFITMAX_meta-analysis_kmax.RData")
+# # 
+load(file = "DATA/K_PROFITMAX_meta-analysis_kmax.RData")
 
 K_PROFITMAX <- res %>% 
-  select(Species,K_PROFITMAX = K.scale,dpsi,acclimation,source) %>% 
+  dplyr::select(Species,K_PROFITMAX = K.scale,dpsi,acclimation,source) %>% 
   group_by(Species,dpsi, acclimation,source) %>% 
   summarise_all(unique)
 
 #Compute the rest of the models
 template %>% 
-  filter(!scheme %in% c("PROFITMAX")#,Species %in% c("Sequoia sempervirens")
-         # Species %in% c(
-         #                # "Rosa cymosa",
-         #                # "Broussonetia papyrifera",
-         #                # "Cinnamomum bodinieri",
-         #                # "Platycarya longipes",
-         #                # "Pteroceltis tatarinowii"
-         #                # "Picea abies",
-         #                # "Betula pendula",
-         #                # "Pinus sylvestris",
-         #                # "Populus tremula"
-         #                )
+  filter(!scheme %in% c("PROFITMAX")#,scheme %in% c("PHYDRO"),
+         # Species %in% c("Sequoia sempervirens")#>6
          ) %>%
   # filter(scheme %in% c("PHYDRO")) %>%
   # filter(scheme %in% c("SOX"), Species == "Pteroceltis tatarinowii") %>%

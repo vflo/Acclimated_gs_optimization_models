@@ -408,15 +408,15 @@ get_parameters_kmax_no_alpha <- function(x){
 
 ##### COMPUTE PARAMETERS #####
 #First compute PROFITMAX model to obtain Kmax for CMAX. CGAIN, WUE and PHYDRO models
-# K_PROFITMAX <- NULL
-# template %>% filter(scheme == "PROFITMAX",
-#                     # Species == "Helianthus annuus"
-#                     # source == "Epron and Dreyer (1990)"
-#                     ) %>%
-#   group_split(scheme, dpsi, Species,source) %>%
-#   purrr::map_df(get_parameters_kmax_no_alpha)->res
-# 
-# save(res,file = "DATA/Kmax_PROFITMAX_kmax_no_alpha.RData")
+K_PROFITMAX <- NULL
+template %>% filter(scheme == "PROFITMAX",
+                    # Species == "Helianthus annuus"
+                    # source == "Epron and Dreyer (1990)"
+                    ) %>%
+  group_split(scheme, dpsi, Species,source) %>%
+  purrr::map_df(get_parameters_kmax_no_alpha)->res
+
+save(res,file = "DATA/Kmax_PROFITMAX_kmax_no_alpha.RData")
 
 load(file = "DATA/Kmax_PROFITMAX_kmax_no_alpha.RData")
 
@@ -427,7 +427,7 @@ K_PROFITMAX <- res %>%
 
 #Compute the other models
 template %>% 
-  filter(!scheme %in% c("PROFITMAX","PROFITMAX2","SOX"), #scheme == "CGAIN",Species == "Diplotaxis ibicensis"
+  filter(!scheme %in% c("PROFITMAX")#,"PROFITMAX2","SOX"), #scheme == "CGAIN",Species == "Diplotaxis ibicensis"
          # Species %in% c(
          #   # "Rosa cymosa",
          #   # "Broussonetia papyrifera",

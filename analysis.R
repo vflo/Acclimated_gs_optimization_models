@@ -133,8 +133,7 @@ par_data_kmax_no_alpha <- list.files(path_par_kmax_no_alpha) %>%
   })
 
 df_param_kmax_no_alpha <- par_data_kmax_no_alpha %>% 
-  mutate(stomatal_model = scheme,
-         acclimation = factor(acclimation, 
+  mutate(acclimation = factor(acclimation, 
                               levels = c('TRUE','FALSE'),
                               labels = c("Acclimated", "Not acclimated")),
          scheme = fct_recode(scheme, "PMAX" = "PROFITMAX","PMAX2"="PROFITMAX2")
@@ -160,37 +159,31 @@ df_param_kmax_alpha <- par_data_kmax_alpha %>%
   left_join(vcmax_jmax_ww) %>% 
   filter(K.scale > 1e-04)
 
-# df_param_kmax_alpha[which(df_param_kmax_alpha$Species %in% 
-#                  c("Olea europaea var. Chemlali","Olea europaea var. Meski")),
-#          "Huber.value"] <- olea_hv$Huber.value
-# df_param_kmax_alpha[which(df_param_kmax_alpha$Species %in% 
-#                  c("Olea europaea var. Chemlali","Olea europaea var. Meski")),
-#          "KL..kg.m.1.MPa.1.s.1."] <- olea_kl$KL..kg.m.1.MPa.1.s.1.
 
 df_param_kmax_alpha <- df_param_kmax_alpha %>% 
-  left_join(df_a_fix %>% 
+  left_join(df_a_fix %>%
               dplyr::select(scheme,source,Species,Iabs_growth,D,T,ca) %>%
               group_by(scheme,source,Species) %>%  
-              summarise_all(mean,na.rm=TRUE)
+              summarise_all(mean,na.rm=TRUE) 
             ) %>% 
   left_join(df_a_fix_n) %>%
   left_join(lifeform) %>% 
   mutate(var = 0,
-         psi0 = purrr::pmap(list(var, T,Iabs_growth,D,ca,K.scale,P50,b,alpha,gamma,stomatal_model), 
-                            ~model_numerical(tc =..2, ppfd = ..3, 
-                                          vpd = ..4*101325, co2 = ..5, 
-                                          elv = 0, fapar = .99, kphio = 0.087, 
-                                          psi_soil = ..1, rdark = 0.02, 
+         psi0 = purrr::pmap(list(var, T,Iabs_growth,D,ca,K.scale,p50_opt,b_opt,alpha,gamma,stomatal_model),
+                            ~model_numerical(tc =..2, ppfd = ..3,
+                                          vpd = ..4*101325, co2 = ..5,
+                                          elv = 0, fapar = .99, kphio = 0.087,
+                                          psi_soil = ..1, rdark = 0.02,
                                           par_plant=list(conductivity = ..6*1e-16,
                                                          psi50 = ..7%>% unique(),
-                                                         b = ..8%>% unique()), 
+                                                         b = ..8%>% unique()),
                                           par_cost = list(
                                             alpha = ..9,
                                             gamma = ..10
-                                          ), stomatal_model = ..11 %>% unique())))%>% 
-  unnest_wider(psi0,names_sep = ".") %>% 
+                                          ), stomatal_model = ..11 %>% unique())))%>%
+  unnest_wider(psi0,names_sep = ".") %>%
   mutate(var = LWP_ww,
-         psi_ww = purrr::pmap(list(var, T,Iabs_growth,D,ca,K.scale,P50,b,alpha,gamma,stomatal_model), 
+         psi_ww = purrr::pmap(list(var, T,Iabs_growth,D,ca,K.scale,p50_opt,b_opt,alpha,gamma,stomatal_model), 
                             ~model_numerical(tc =..2, ppfd = ..3, 
                                              vpd = ..4*101325, co2 = ..5, 
                                              elv = 0, fapar = .99, kphio = 0.087, 
@@ -204,6 +197,47 @@ df_param_kmax_alpha <- df_param_kmax_alpha %>%
                                              ), stomatal_model = ..11 %>% unique())))%>% 
   unnest_wider(psi_ww,names_sep = ".")
 
+
+#### KMAX ALPHA PMODEL DATASET ####
+path_par_kmax_alpha_pmodel <- "DATA/parameters_kmax_alpha_pmodel/"
+par_data_kmax_alpha_pmodel <- list.files(path_par_kmax_alpha_pmodel) %>% 
+  purrr::map_df(function(x){
+    readr::read_csv(paste0(path_par_kmax_alpha_pmodel,x))
+  })
+
+df_param_kmax_alpha_pmodel <- par_data_kmax_alpha_pmodel %>% 
+  mutate(stomatal_model = scheme,
+         acclimation = factor(acclimation, 
+                              levels = c('TRUE','FALSE'),
+                              labels = c("Acclimated", "Not acclimated")),
+         scheme = fct_recode(scheme, "PMAX" = "PROFITMAX","PMAX2"="PROFITMAX2")
+  )%>% 
+  filter(!(scheme %in% c("SOX")&Species %in%c("Broussonetia papyrifera"))) %>% ### Broussonetia papyrifera did not converged in SOX !!!!!!%>%
+  left_join(vcmax_jmax_ww) %>% 
+  filter(K.scale > 1e-04)%>% 
+  left_join(df_a_fix %>%
+              dplyr::select(scheme,source,Species,Iabs_growth,D,T,ca) %>%
+              group_by(scheme,source,Species) %>%  
+              summarise_all(mean,na.rm=TRUE) 
+  ) %>% 
+  left_join(df_a_fix_n) %>%
+  left_join(lifeform)
+
+#### SIMULATIONS KMAX ALPHA ####
+load(file = "DATA/simulations_kmax_alpha.RData")
+df_kmax_alpha <- df %>% 
+  mutate(chi = Ciest/ca,
+         acclimation = factor(acclimation, 
+                              levels = c('TRUE','FALSE'),
+                              labels = c("Acclimated", "Not acclimated")),
+         scheme = fct_recode(scheme, "PMAX" = "PROFITMAX","PMAX2"="PROFITMAX2")) 
+
+df_kmax_alpha_n <- df_kmax_alpha %>% 
+  group_by(scheme,acclimation,Species,source) %>% 
+  filter(!is.na(A)) %>% 
+  summarise(n_dist = n())
+
+
 #### SIMULATIONS KMAXWW ALPHA ####
 load(file = "DATA/simulations_kmax_alpha.RData")
 df_kmax_alpha <- df %>% 
@@ -215,11 +249,16 @@ df_kmax_alpha <- df %>%
 
 
 
+
+
+
+
+
 #### Jmax vs alpha and Jmax vs Jmax ####
 
 ## jmax0
 jmax0_alpha_mod <- lmerTest::lmer(alpha~log(psi0.jmax)+  
-                                    (1|scheme) + (1|source/Species), 
+                                    (1|scheme) + (1|source) + (1|Species), 
                                   data = df_param_kmax_alpha, weights = log(n_dist))
 anova(jmax0_alpha_mod)
 summary(jmax0_alpha_mod)
@@ -255,7 +294,7 @@ resume_jmax0_alpha <- df_param_kmax_alpha %>%
   geom_line(aes(x = jmax0_sim, y = alpha_sd_max_jmax0),color = "grey20",linetype=2)+
   geom_line(aes(x = jmax0_sim, y = alpha_sd_min_jmax0),color = "grey20",linetype=2)+
   annotate(geom = "text",x=5,y=0.155,hjust=0,vjust=0, parse = TRUE,
-           label=as.character(as.expression("***"~~italic(R)^2~"="~0.33)),size=4)+
+           label=as.character(as.expression("***"~~italic(R)^2~"="~0.41)),size=4)+
   # stat_summary(data = df_param_kmax_alpha,
   #              mapping=aes(log(jmax_ww),alpha,group=interaction(species,source)),fun.data=mean_sdl, fun.args = list(mult=1),
   # geom="pointrange", color="blue")+
@@ -271,7 +310,7 @@ df_params_kmax_alpha_filtered <- df_param_kmax_alpha %>%
   mutate(ln_psi_ww.jmax = log(psi_ww.jmax))%>% 
   filter(ln_psi_ww.jmax>0)
 jmax_ww_alpha_mod <- lmerTest::lmer(alpha~ln_psi_ww.jmax+I(ln_psi_ww.jmax^2)+ 
-                                    (1|scheme) + (1|source/Species), 
+                                    (1|scheme) + (1|source) + (1|Species), 
                                   data = df_params_kmax_alpha_filtered,weights = log(n_dist))
 anova(jmax_ww_alpha_mod)
 summary(jmax_ww_alpha_mod)
@@ -339,7 +378,7 @@ resume_jmax_ww_alpha <- df_param_kmax_alpha %>%
 #   mutate(ln_psi_ww.jmax = log(psi_ww.jmax))%>% 
 #   filter(ln_psi_ww.jmax>0)
 jmax_ww_alpha_mod <- lmerTest::lmer(alpha~log(jmax_ww)+ 
-                                      (1|scheme) + (1|source/Species), 
+                                      (1|scheme) + (1|source) + (1|Species), 
                                     data = df_param_kmax_alpha, weights = log(n_dist))
 anova(jmax_ww_alpha_mod)
 summary(jmax_ww_alpha_mod)
@@ -378,7 +417,7 @@ resume_jmax_ww_alpha <- df_param_kmax_alpha %>%
   geom_line(aes(x = jmax_ww_sim, y = alpha_sd_max_jmax_ww),color = "grey20",linetype=2)+
   geom_line(aes(x = jmax_ww_sim, y = alpha_sd_min_jmax_ww),color = "grey20",linetype=2)+
   annotate(geom = "text",x=4.5,y=0.155,hjust=0,vjust=0, parse = TRUE,
-           label=as.character(as.expression("***"~~italic(R)^2~"="~0.39)),size=5)+
+           label=as.character(as.expression("***"~~italic(R)^2~"="~0.38)),size=5)+
   # stat_summary(data = df_param_kmax_alpha,
   #              mapping=aes(log(jmax_ww),alpha,group=interaction(species,source)),fun.data=mean_sdl, fun.args = list(mult=1),
   # geom="pointrange", color="blue")+
@@ -428,14 +467,17 @@ ggsave("PLOTS/alpha_jmax_jmax_model.png",jmax_jmax_plot, width = 14, height = 28
 
 library(psych)
 pairs.panels(df_param_kmax_alpha %>%
-        mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
-               hv = log(Huber.value),
-               lk.scale =log(K.scale),
-               l_b = log(b),
-               l_b_opt = log(b_opt),
-               l_p50_opt = log(-p50_opt),
-               D = D*101325/1000) %>% 
-        dplyr::select(SLA..cm2.g.1.,
+               mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
+                      hv = log(Huber.value*1e4),
+                      lk.scale =log(K.scale),
+                      Height.max..m. = log( Height.max..m.),
+                      l_b = log(b),
+                      l_b_opt = log(b_opt),
+                      l_p50_opt = log(-p50_opt),
+                      D = D*101325/1000,
+                      jmax_ww = log(jmax_ww),
+                      Ta = T) %>% 
+        dplyr::select(SLA..cm2.g.1.,jmax_ww, KL,ca,Ta,
                       Iabs_growth,D, l_b , lk.scale,P50,
                       hv, l_b_opt, l_p50_opt,
                       Height.max..m.))
@@ -473,17 +515,89 @@ pairs.panels(df_param_kmax_alpha %>%
 # emmeans::contrast(emm_alpha, method="pairwise") #%>% plot()
 # emmeans::contrast(emm_alpha) %>% plot()
 
-#l_b and P50 are moderately-strongly correlated (we use only P50)
+# ##mean alpha across schemes
+# df_param_kmax_alpha_summary <- df_param_kmax_alpha %>% 
+#   group_by(Species,source) %>% 
+#   summarise(SLA..cm2.g.1. = mean(SLA..cm2.g.1.),
+#             Iabs_growth = mean(Iabs_growth),
+#             KL = mean(log(KL..kg.m.1.MPa.1.s.1.*55.5)),
+#             hv =  mean(log(Huber.value*1e4)),
+#             lk.scale = mean(log(K.scale)),
+#             Height.max..m. =  mean(log( Height.max..m.)),
+#             l_b =  mean(log(b)),
+#             l_b_opt =  mean(log(b_opt)),
+#             l_p50_opt =  mean(log(-p50_opt)),
+#             P50 = mean(P50),
+#             D =  mean(D*101325/1000),
+#             jmax_ww =  mean(log(jmax_ww)),
+#             Ta =  mean(T),
+#             ca = mean(ca),
+#             alpha = mean(alpha),
+#             n_dist = mean(n_dist))
+# alpha_mod <- lmerTest::lmer(alpha~ SLA..cm2.g.1.+ KL+ #lifeform +
+#                               Iabs_growth+#K.scale+
+#                               jmax_ww+hv+# p50_opt + l_b_opt +
+#                               Ta + D+ ca+P50+  Height.max..m.+
+#                               (1|source),# +(1|lifeform), 
+#                             data = df_param_kmax_alpha_summary, 
+#                             weights = log(n_dist)
+# )
+# summary(alpha_mod)
+# step(alpha_mod)
+# # alpha_mod2 <- lmerTest::lmer(
+# #   # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + MATbest + P50 + (1 | source) + (1 | scheme),
+# #   # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + p50_opt + l_b_opt + Ta + P50 + Height.max..m. + (1 | source) + (1 | scheme) + (1 | lifeform),
+# #   alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + Ta + P50 + (1 | source) + (1 | scheme),
+# #   data = df_param_kmax_alpha %>%
+# #     mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
+# #            hv = log(Huber.value*1e4),
+# #            lk.scale =log(K.scale),
+# #            Height.max..m. = log( Height.max..m.),
+# #            l_b = log(b),
+# #            l_b_opt = log(b_opt),
+# #            l_p50_opt = log(-p50_opt),
+# #            D = D*101325/1000,
+# #            jmax_ww = log(jmax_ww),
+# #            Ta = T), 
+# #   weights = log(n_dist)
+# # )
+# alpha_mod <- lmerTest::lmer(
+#   # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + MATbest + P50 + (1 | source) + (1 | scheme),
+#   # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + p50_opt + l_b_opt + Ta + P50 + Height.max..m. + (1 | source) + (1 | scheme) + (1 | lifeform),
+#   alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + D + ca + (1 | source),
+#   data = df_param_kmax_alpha %>%
+#     mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
+#            hv = log(Huber.value*1e4),
+#            lk.scale =log(K.scale),
+#            Height.max..m. = log( Height.max..m.),
+#            l_b = log(b),
+#            l_b_opt = log(b_opt),
+#            l_p50_opt = log(-p50_opt),
+#            D = D*101325/1000,
+#            jmax_ww = log(jmax_ww),
+#            Ta = T), 
+#   weights = log(n_dist)
+# )
+# # anova(alpha_mod,alpha_mod2)
+# summary(alpha_mod)
+# car::vif(alpha_mod)
+# performance::check_collinearity(alpha_mod)
+# confint(alpha_mod)
+# MuMIn::r.squaredGLMM(alpha_mod)
 
-alpha_mod <- lmerTest::lmer(alpha~ SLA..cm2.g.1.+ KL+ #lifeform +
-                              Iabs_growth+jmax_ww+hv+ #p50_opt + l_b_opt +
-                              Ta + D+ ca+
-                              #MATbest + PPTbest +
-                              # l_b+
-                              P50+  Height.max..m.+(1|source)+ (1|scheme), 
+
+## FINAL alpha-traits ANALYSIS ##
+#l_b and P50 are moderately-strongly correlated (we use only P50)
+df_param_kmax_alpha[is.na(df_param_kmax_alpha$lifeform),"lifeform"] <- "Evergreen needleleaf gymnosperm"
+df_param_kmax_alpha[is.na(df_param_kmax_alpha$lifeform_comp),"lifeform_comp"] <- "Evergreen"
+alpha_mod <- lmerTest::lmer(alpha~ SLA..cm2.g.1.+ #KL+ #lifeform_comp +
+                              Iabs_growth+
+                              jmax_ww+hv+ #p50_opt + l_b_opt +
+                              Ta + ca+ P50+  Height.max..m.+
+                              (1|source)+ (1|scheme) + (1|Species),# +(1|lifeform), 
                             data = df_param_kmax_alpha %>%
                               mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
-                                     hv = log(Huber.value),
+                                     hv = log(Huber.value*1e4),
                                      lk.scale =log(K.scale),
                                      Height.max..m. = log( Height.max..m.),
                                      l_b = log(b),
@@ -496,36 +610,40 @@ alpha_mod <- lmerTest::lmer(alpha~ SLA..cm2.g.1.+ KL+ #lifeform +
                             )
 summary(alpha_mod)
 step(alpha_mod)
-# alpha_mod <- lmerTest::lmer(
-#                             # alpha~ Iabs_growth + jmax_ww + hv + l_b +
-#                             #   P50 + Height.max..m. +
-#                             #   (1 | source/Species) + (1 | scheme),
-#                             alpha ~ jmax_ww + l_b + P50 + (1 |source/Species) + (1 | scheme),
-#                             data = df_param_kmax_alpha %>%
-#                               mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
-#                                      hv = log(Huber.value),
-#                                      lk.scale =log(K.scale),
-#                                      Height.max..m. = log( Height.max..m.),
-#                                      l_b = log(b),
-#                                      D = D*101325/1000,
-#                                      jmax_ww = jmax_ww),
-#                             weights = log(n_dist)
-#                             )
 alpha_mod <- lmerTest::lmer(
   # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + MATbest + P50 + (1 | source) + (1 | scheme),
-  # alpha ~SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + P50 + (1 | source) + (1 | scheme),
-  alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + Ta + P50 + (1 | source) + (1 | scheme),
+  # alpha ~ Iabs_growth + K.scale + jmax_ww + p50_opt + l_b_opt + D + (1 | source) + (1 | scheme) + (1 | Species),
+  alpha ~ Iabs_growth + jmax_ww + Ta + P50 + Height.max..m. + (1 | source) + (1 | scheme) + (1 | Species),
   data = df_param_kmax_alpha %>%
     mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
-           hv = log(Huber.value),
+           hv = log(Huber.value*1e4),
            lk.scale =log(K.scale),
            Height.max..m. = log( Height.max..m.),
            l_b = log(b),
+           l_b_opt = log(b_opt),
+           l_p50_opt = log(-p50_opt),
            D = D*101325/1000,
-           Ta = T,
-           jmax_ww = log(jmax_ww)), 
+           jmax_ww = log(jmax_ww),
+           Ta = T),
   weights = log(n_dist)
 )
+# alpha_mod2 <- lmerTest::lmer(
+#   # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + MATbest + P50 + (1 | source) + (1 | scheme),
+#   # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + p50_opt + l_b_opt + Ta + P50 + Height.max..m. + (1 | source) + (1 | scheme) + (1 | lifeform),
+#   alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + Ta + P50 + (1 | source) + (1 | scheme),
+#   data = df_param_kmax_alpha %>%
+#     mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
+#            hv = log(Huber.value*1e4),
+#            lk.scale =log(K.scale),
+#            Height.max..m. = log( Height.max..m.),
+#            l_b = log(b),
+#            l_b_opt = log(b_opt),
+#            l_p50_opt = log(-p50_opt),
+#            D = D*101325/1000,
+#            jmax_ww = log(jmax_ww),
+#            Ta = T), 
+#   weights = log(n_dist)
+# )
 # anova(alpha_mod,alpha_mod2)
 summary(alpha_mod)
 car::vif(alpha_mod)
@@ -537,23 +655,40 @@ MuMIn::r.squaredGLMM(alpha_mod)
 library(effects)
 closest <- function(x, x0) apply(outer(x, x0, FUN=function(x, x0) abs(x - x0)), 1, which.min)
 
+# 
+# eff<-effect("SLA..cm2.g.1.", partial.residuals=T, alpha_mod)
+# x.fit <- unlist(eff$x.all)
+# trans <- I
+# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, SLA..cm2.g.1. = eff$x$SLA..cm2.g.1.)
+# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$SLA..cm2.g.1.)] + eff$residuals)
+# 
+# g_eff1 <- ggplot(x, aes(x = SLA..cm2.g.1., y = fit)) +
+#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+#   geom_line(size = 1) +
+#   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+#   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+#   geom_smooth(data = xy, aes(x = trans(x), y = y), 
+#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+#   mytheme3()+
+#   ylab(expression(alpha))+
+#   xlab(expression("SLA  [cm"^2~"g"^-1*"]"))
 
-eff<-effect("SLA..cm2.g.1.", partial.residuals=T, alpha_mod)
+eff<-effect("Height.max..m.", partial.residuals=T, alpha_mod)
 x.fit <- unlist(eff$x.all)
 trans <- I
-x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, SLA..cm2.g.1. = eff$x$SLA..cm2.g.1.)
-xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$SLA..cm2.g.1.)] + eff$residuals)
+x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, Height.max..m. = eff$x$Height.max..m.)
+xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$Height.max..m.)] + eff$residuals)
 
-g_eff1 <- ggplot(x, aes(x = SLA..cm2.g.1., y = fit)) +
+g_eff1 <- ggplot(x, aes(x = Height.max..m., y = fit)) +
   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
   geom_line(size = 1) +
   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
-  geom_smooth(data = xy, aes(x = trans(x), y = y), 
+  geom_smooth(data = xy, aes(x = trans(x), y = y),
               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
   mytheme3()+
   ylab(expression(alpha))+
-  xlab(expression("SLA  [cm"^2~"g"^-1*"]"))
+  xlab(expression("Max height [m]"))
 
 eff<-effect("Iabs_growth", partial.residuals=T, alpha_mod)
 # plot(eff)
@@ -574,23 +709,23 @@ g_eff2 <- ggplot(x, aes(x = Iabs_growth, y = fit)) +
   xlab(expression(I[growth]~"["*mu*"mol"~m^-2~s^-1*"]"))
 
 
-eff<-effect("hv", partial.residuals=T, alpha_mod)
-# plot(eff)
-x.fit <- unlist(eff$x.all)
-trans <- I
-x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, hv = eff$x$hv)
-xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$hv)] + eff$residuals)
-
-g_eff3 <- ggplot(x, aes(x = hv, y = fit)) +
-  geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
-  geom_line(size = 1) +
-  geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
-  geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
-  geom_smooth(data = xy, aes(x = trans(x), y = y), 
-              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
-  mytheme3()+
-  ylab(expression(alpha))+
-  xlab(expression("Huber value (ln("*cm[sw]^2~m[leaf]^-2*"))"))
+# eff<-effect("hv", partial.residuals=T, alpha_mod)
+# # plot(eff)
+# x.fit <- unlist(eff$x.all)
+# trans <- I
+# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, hv = eff$x$hv)
+# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$hv)] + eff$residuals)
+# 
+# g_eff3 <- ggplot(x, aes(x = hv, y = fit)) +
+#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+#   geom_line(size = 1) +
+#   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+#   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+#   geom_smooth(data = xy, aes(x = trans(x), y = y), 
+#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+#   mytheme3()+
+#   ylab(expression(alpha))+
+#   xlab(expression("Huber value [ln("*cm[sw]^2~m[leaf]^-2*")]"))
 
 
 eff<-effect("Ta", partial.residuals=T, alpha_mod)
@@ -624,7 +759,7 @@ g_eff5 <- ggplot(x, aes(x = P50, y = fit)) +
   geom_line(size = 1) +
   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
-  geom_smooth(data = xy, aes(x = trans(x), y = y), 
+  geom_smooth(data = xy, aes(x = trans(x), y = y),
               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
   mytheme3()+
   ylab(expression(alpha))+
@@ -649,11 +784,11 @@ g_eff6 <- ggplot(x, aes(x = jmax_ww, y = fit)) +
   ylab(expression(alpha))+
   xlab(expression(J[maxWW]~"[ln("*mu*"mol"~m^-2~s^-1*")]"))
 
-alpha_mod_plot <- ggarrange(g_eff2,g_eff4,g_eff6,g_eff5,g_eff1,g_eff3,
-          align='hv', labels=c('a', 'b','c','d','f','g'),
-          ncol=3, nrow = 2)
+alpha_mod_plot <- ggarrange(g_eff2,g_eff4,g_eff6,g_eff5,g_eff1,#g_eff3,g_eff5,
+          align='hv', labels=c('a', 'b','c','d','e'),
+          ncol=5, nrow = 1)
 
-ggsave("PLOTS/alpha_model.png", plot = alpha_mod_plot, width = 28, height = 15, units = "cm")
+ggsave("PLOTS/alpha_model_3.png", plot = alpha_mod_plot, width = 40, height = 8, units = "cm")
 
 
 
@@ -1281,21 +1416,7 @@ ggsave("PLOTS/gs_metrics.png", width = 20, height = 14, units = "cm")
 
 
 # STOMATAL NON-STOMATAL PARTITION ----------------------------------------------
-get_partition <- function(x){
-  mod_not <- lmer(A~a_pred + (a_pred|Species),
-                  data = x %>% filter(acclimation == "Not acclimated"),
-                  weights = log(n_dist))
-  r2_not <- MuMIn::r.squaredGLMM(mod_not)
-  mod <- lmer(A~a_pred + (a_pred|Species),data = x %>% 
-                filter(acclimation == "Acclimated"),
-              weights = log(n_dist))
-  r2 <- MuMIn::r.squaredGLMM(mod)
-  
-  return(tibble(stomatal_r2 = r2_not[1],
-             non_stomatal_r2 = r2[1]-r2_not[1],
-             species_r2 = r2[2]-r2[1],
-             Residuals = 1-r2[2]))
-}
+
 
 partition_full <- df_kmaxww_a  %>%
   filter(!is.na(A)) %>% 
@@ -1304,7 +1425,7 @@ partition_full <- df_kmaxww_a  %>%
   ungroup() %>% 
   rename(`Stomatal model`=scheme) %>%
   group_by(`Stomatal model`) %>% 
-  do(get_partition(.)) %>% 
+  do(get_partition_a(.)) %>% 
   pivot_longer(2:5) %>% 
   mutate(Partition = factor(name,
                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
@@ -1325,7 +1446,7 @@ partition_dry <- df_kmaxww_a %>%
   ungroup() %>% 
   rename(`Stomatal model`=scheme) %>%
   group_by(`Stomatal model`) %>% 
-  do(get_partition(.)) %>%
+  do(get_partition_a(.)) %>%
   pivot_longer(2:5) %>% 
   mutate(Partition = factor(name,
                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
@@ -1380,7 +1501,7 @@ ggpubr::ggballoonplot(
   # mytheme2()
 x = "scheme", y = "Species",
 size = "r", fill = "r") +
-  scale_fill_viridis_b(name = "r Pearson's") +
+  scale_fill_viridis_c(name = "r Pearson's") +
   guides(size = "none")+scale_y_discrete(limits=rev)+
   theme(axis.text.y = element_text(face = "italic"))
     
@@ -1517,12 +1638,31 @@ ggsave("PLOTS/gs_raw.png", width = 32, height = 40, units = "cm")
 
 
 #### Optimal parameters distributions ####
+df_kmax_alpha %>% 
+  group_by(scheme,acclimation,Species,source) %>% 
+  mutate(n_dist = n())%>%
+  ungroup() %>% 
+  rename(`Stomatal model`=scheme) %>%
+  group_by(`Stomatal model`) %>% 
+  do(get_partition_a(.)) %>% 
+  mutate(total_A_r2 = stomatal_r2+non_stomatal_r2)
+
+df_kmax_alpha %>% 
+  group_by(scheme,acclimation,Species,source) %>% 
+  mutate(n_dist = n())%>%
+  ungroup() %>% 
+  rename(`Stomatal model`=scheme) %>%
+  group_by(`Stomatal model`) %>% 
+  do(get_partition_g(.)) %>% 
+  mutate(total_g_r2 = stomatal_r2+non_stomatal_r2)
+
+
 library(ggh4x)
-actual_dist <- df_param_kmax_alpha %>%
-  bind_rows(df_param_kmax_no_alpha) %>%
+actual_dist <- df_param_kmax_alpha %>% 
+  bind_rows(df_param_kmax_no_alpha) %>% 
   mutate(Kmax1 = KL..kg.m.1.MPa.1.s.1.*55.5,
          Kmax = case_when(Kmax1>0.5~NA_real_,
-                          TRUE~Kmax1)) %>% 
+                          TRUE~Kmax1)) %>%
   group_by(scheme,acclimation) %>% 
   dplyr::select(P50,Kmax,b) %>% 
   pivot_longer(c(P50,Kmax,b)) %>% 
@@ -1533,7 +1673,7 @@ actual_dist <- df_param_kmax_alpha %>%
                            `psi[50]~"(MPa)"`='P50')) 
 
 data_opt <- df_param_kmax_alpha %>%
-  bind_rows(df_param_kmax_no_alpha %>% left_join(df_param_kmax_alpha %>% dplyr::select(Species, scheme,T)))%>%  
+  bind_rows(df_param_kmax_no_alpha %>% left_join(df_param_kmax_alpha %>% dplyr::select(source,Species, scheme,`T`)))%>%  
   dplyr::select(scheme,acclimation,K.scale,gamma,alpha,p50_opt,b_opt,T) %>% 
   rowwise() %>% 
   mutate(Ta = T,
@@ -1569,3 +1709,377 @@ data_opt <- df_param_kmax_alpha %>%
   
   ggsave("PLOTS/param_distri.png", width = 30, height = 30, units = "cm")
   
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+#### Example plots ####
+  
+par_plant1 = list(
+    conductivity = 1e-16,
+    psi50 = -1,                   #
+    b=2
+  )
+  
+par_plant2 = list(
+    conductivity = 1e-16,
+    psi50 = -1.5,                   #
+    b=2
+  )
+  
+  
+
+    
+calc_examples <- function(scheme,par_cost){
+  df1 <- tibble(var=seq(-3,0,length.out=20)) %>% 
+    mutate(out_hydraulics_1 = purrr::map(var, ~model_numerical(tc = 25, ppfd = 600,
+                                                               vpd = 1000, co2 = 400, elv = 0,
+                                                               fapar = 0.99, kphio = 0.087, 
+                                                               psi_soil = ., par_plant = par_plant1, rdark = 0.02,
+                                                               par_cost = list(alpha=par_cost[[1]]+0.02, gamma = par_cost[[2]]),
+                                                               stomatal_model = scheme
+                                                               ))) %>% 
+    unnest_wider(out_hydraulics_1)%>% 
+    bind_cols(stomatal_model = scheme, alpha_mod=1, p50_mod=1)
+  df2 <- tibble(var=seq(-3,0,length.out=20)) %>% 
+    mutate(out_hydraulics_1 = purrr::map(var, ~model_numerical(tc = 25, ppfd = 600,
+                                                               vpd = 1000, co2 = 400, elv = 0,
+                                                               fapar = 0.99, kphio = 0.087, 
+                                                               psi_soil = ., par_plant = par_plant1, rdark = 0.02,
+                                                               par_cost = list(alpha=par_cost[[1]]-0.02, gamma = par_cost[[2]]),
+                                                               stomatal_model = scheme
+    ))) %>% 
+    unnest_wider(out_hydraulics_1)%>% 
+    bind_cols(stomatal_model = scheme, alpha_mod=2, p50_mod=1)
+  df3 <- tibble(var=seq(-3,0,length.out=20)) %>% 
+    mutate(out_hydraulics_1 = purrr::map(var, ~model_numerical(tc = 25, ppfd = 600,
+                                                               vpd = 1000, co2 = 400, elv = 0,
+                                                               fapar = 0.99, kphio = 0.087, 
+                                                               psi_soil = ., par_plant = par_plant2, rdark = 0.02,
+                                                               par_cost = list(alpha=par_cost[[1]]+0.02, gamma = par_cost[[2]]),
+                                                               stomatal_model = scheme
+    ))) %>% 
+    unnest_wider(out_hydraulics_1)%>% 
+    bind_cols(stomatal_model = scheme, alpha_mod=1, p50_mod=2)
+  df4 <- tibble(var=seq(-3,0,length.out=20)) %>% 
+    mutate(out_hydraulics_1 = purrr::map(var, ~model_numerical(tc = 25, ppfd = 600,
+                                                               vpd = 1000, co2 = 400, elv = 0,
+                                                               fapar = 0.99, kphio = 0.087, 
+                                                               psi_soil = ., par_plant = par_plant2, rdark = 0.02,
+                                                               par_cost = list(alpha=par_cost[[1]]-0.02, gamma = par_cost[[2]]),
+                                                               stomatal_model = scheme
+    ))) %>% 
+    unnest_wider(out_hydraulics_1)%>% 
+    bind_cols(stomatal_model = scheme, alpha_mod=2, p50_mod=2)
+
+  bind_rows(df1,df2,df3,df4)
+}
+  
+  
+PMAX <- calc_examples("PROFITMAX", list(0.1,NA))
+PMAX2 <- calc_examples("PROFITMAX2", list(0.1,NA))
+SOX <- calc_examples("SOX", list(0.1,NA))
+PHYDRO <- calc_examples("PHYDRO", list(0.1,1.2))
+CMAX <- calc_examples("CMAX", list(0.1,1.2))
+CGAIN <- calc_examples("CGAIN", list(0.1,7))
+  
+DF_example <- bind_rows(PMAX,PMAX2,SOX,PHYDRO,CMAX,CGAIN)  
+
+DF_example <- DF_example %>% 
+  dplyr::select(var, jmax, vcmax, gs, a, stomatal_model, alpha_mod, p50_mod) %>% 
+  pivot_longer(cols = c('jmax','vcmax','gs','a'))%>% 
+  mutate(alpha_mod = as.factor(alpha_mod),
+         p50_mod = as.factor(p50_mod)) %>% 
+  mutate(name = factor(name, levels = c('gs','a','jmax','vcmax')),
+         name = fct_recode(name,
+                           `g[s]~"(mol"~m^{-2}~s^{-1}*")"`="gs",
+                           `"A ("*mu*"mol"~m^{-2}~s^{-1}~MPa^{-1}*")"`="a",
+                           `J[max]~"("*mu*"mol"~m^{-2}~s^{-1}~MPa^{-1}*")"`="jmax",
+                           `V[cmax]~"("*mu*"mol"~m^{-2}~s^{-1}~MPa^{-1}*")"`="vcmax"),
+         stomatal_model = as.factor(stomatal_model),
+         stomatal_model = fct_recode(stomatal_model, "PMAX" = "PROFITMAX","PMAX2"="PROFITMAX2")) 
+
+# viscosity_water = calc_viscosity_h2o(25, 101325)
+# density_water = calc_density_h2o(25,101325)
+# Kmax = 1e-16/viscosity_water
+# Kmax = Kmax * density_water * 55.5
+# Kmax = Kmax * 1e6
+  
+DF_example %>% 
+  ggplot()+
+  geom_line(aes(var,value,color=alpha_mod,linetype =p50_mod),show.legend = FALSE)+
+  ggh4x::facet_grid2(c("stomatal_model","name"), 
+                     labeller = label_parsed, 
+                     scales = "free", 
+                     independent = "all")+
+  # facet_wrap(stomatal_model~name, scales = "free",ncol = 4)+
+  mytheme5()+
+  scale_color_grey()+
+  theme(legend.position="bottom",
+        legend.title = element_blank())+
+  labs(x=expression(psi[s]~"(MPa)"))
+
+ggsave("PLOTS/example_plot.png", width = 24, height = 30, units = "cm")
+
+
+
+
+
+
+#### Example plot temperature rise #####
+# par_plant1 = list(
+#   conductivity = 1e-16,
+#   psi50 = -1,                   #
+#   b=2
+# )
+# df_T <- tibble(var=seq(20,30,length.out=10) ) %>% 
+#   mutate(
+#     VPD = bigleaf::rH.to.VPD(0.8,var)*1000,
+#     out_hydraulics_1 = purrr::pmap(list(var, VPD),
+#                                    ~model_numerical(tc = ..1, ppfd = 800,
+#                                                     vpd = ..2, co2 = 400, elv = 0,
+#                                                     fapar = 0.99, kphio = 0.087, 
+#                                                     psi_soil = 0, par_plant = par_plant1, rdark = 0.02,
+#                                                     par_cost = list(alpha=0.1, gamma = NA),
+#                                                     stomatal_model = "PROFITMAX"
+#   ))) %>% 
+#   unnest_wider(out_hydraulics_1)
+# 
+# 
+# df_T %>% 
+#   ggplot(aes(var,jmax/vcmax))+
+#   geom_line()
+# 
+# df_T %>% 
+#   ggplot()+
+#   geom_line(aes(var,vcmax))+
+#   geom_line(aes(var,jmax), color = "red")+
+#   geom_line(aes(var,jmax+vcmax), color = "blue")
+# 
+# 
+# df_T %>%
+#   rowwise() %>% 
+#   mutate(visco_25 = calc_viscosity_h2o(25, 101325),
+#          viscosity_water = calc_viscosity_h2o(var, 101325),
+#          visco_star = viscosity_water/visco_25) %>%
+#   ggplot()+
+#   geom_line(aes(var,146*0.0005/visco_star*vcmax + 0.41/4*jmax))+
+#   geom_line(aes(var,0.1*jmax), color = "red")+
+#   geom_line(aes(var,seq(0.11,0.09, length.out=10)*jmax), color = "blue")
+# 
+# 
+# df_T %>%
+#   rowwise() %>% 
+#   mutate(visco_25 = calc_viscosity_h2o(25, 101325),
+#          viscosity_water = calc_viscosity_h2o(var, 101325),
+#          visco_star = viscosity_water/visco_25) %>%
+#   ggplot()+
+#   geom_point(aes(seq(0.11,0.09, length.out=10)*jmax,146*0.001/visco_star*vcmax + 0.41/4*jmax, color =var))+
+#   geom_abline(slope=1, intercept=0)
+
+
+
+
+
+
+
+
+
+#### alpha-traits pmodel ANALYSIS ####
+#l_b and P50 are moderately-strongly correlated (we use only P50)
+# df_param_kmax_alpha[is.na(df_param_kmax_alpha$lifeform),"lifeform"] <- "Evergreen needleleaf gymnosperm"
+# alpha_mod <- lm(b_cost~ SLA..cm2.g.1.+ #KL+ #lifeform_comp +
+#                               Iabs_growth+vcmax_ww+
+#                               jmax_ww+hv+ #p50_opt + l_b_opt +
+#                               Ta + ca+ P50+  Height.max..m.,
+#                             data = df_param_kmax_alpha_pmodel %>%
+#                               rowwise() %>%
+#                               mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
+#                                      hv = log(Huber.value*1e4),
+#                                      lk.scale =log(K.scale),
+#                                      Height.max..m. = log( Height.max..m.),
+#                                      l_b = log(b),
+#                                      l_b_opt = log(b_opt),
+#                                      l_p50_opt = log(-p50_opt),
+#                                      D = D*101325/1000,
+#                                      jmax_ww = log(jmax_ww),
+#                                      Ta = T,
+#                                      visco_25 = calc_viscosity_h2o(25, 101325),
+#                                      viscosity_water = calc_viscosity_h2o(Ta, 101325),
+#                                      visco_star = viscosity_water/visco_25,
+#                                      b_cost = 146*alpha/visco_star),
+#                             weights = log(n_dist)
+# )
+# summary(alpha_mod)
+# step(alpha_mod)
+# alpha_mod <- lm(formula = b_cost ~ Iabs_growth + vcmax_ww + hv + Ta + ca + 
+#                   Height.max..m.,
+#                 data = df_param_kmax_alpha_pmodel %>%
+#                   rowwise() %>%
+#                   mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
+#                          hv = log(Huber.value*1e4),
+#                          lk.scale =log(K.scale),
+#                          Height.max..m. = log( Height.max..m.),
+#                          l_b = log(b),
+#                          l_b_opt = log(b_opt),
+#                          l_p50_opt = log(-p50_opt),
+#                          D = D*101325/1000,
+#                          jmax_ww = log(jmax_ww),
+#                          Ta = T,
+#                          visco_25 = calc_viscosity_h2o(25, 101325),
+#                          viscosity_water = calc_viscosity_h2o(Ta, 101325),
+#                          visco_star = viscosity_water/visco_25,
+#                          b_cost = 146*alpha/visco_star),
+#                 weights = log(n_dist))
+# # anova(alpha_mod,alpha_mod2)
+# summary(alpha_mod)
+# car::vif(alpha_mod)
+# performance::check_collinearity(alpha_mod)
+# confint(alpha_mod)
+# MuMIn::r.squaredGLMM(alpha_mod)
+# 
+# 
+# library(effects)
+# closest <- function(x, x0) apply(outer(x, x0, FUN=function(x, x0) abs(x - x0)), 1, which.min)
+# 
+# 
+# eff<-effect("SLA..cm2.g.1.", partial.residuals=T, alpha_mod)
+# x.fit <- unlist(eff$x.all)
+# trans <- I
+# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, SLA..cm2.g.1. = eff$x$SLA..cm2.g.1.)
+# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$SLA..cm2.g.1.)] + eff$residuals)
+# 
+# g_eff1 <- ggplot(x, aes(x = SLA..cm2.g.1., y = fit)) +
+#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+#   geom_line(size = 1) +
+#   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+#   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+#   geom_smooth(data = xy, aes(x = trans(x), y = y),
+#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+#   mytheme3()+
+#   ylab(expression(alpha))+
+#   xlab(expression("SLA  [cm"^2~"g"^-1*"]"))
+# 
+# eff<-effect("Iabs_growth", partial.residuals=T, alpha_mod)
+# # plot(eff)
+# x.fit <- unlist(eff$x.all)
+# trans <- I
+# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, Iabs_growth = eff$x$Iabs_growth)
+# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$Iabs_growth)] + eff$residuals)
+# 
+# g_eff2 <- ggplot(x, aes(x = Iabs_growth, y = fit)) +
+#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+#   geom_line(size = 1) +
+#   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+#   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+#   geom_smooth(data = xy, aes(x = trans(x), y = y),
+#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+#   mytheme3()+
+#   ylab(expression(alpha))+
+#   xlab(expression(I[growth]~"["*mu*"mol"~m^-2~s^-1*"]"))
+# 
+# 
+# # eff<-effect("hv", partial.residuals=T, alpha_mod)
+# # # plot(eff)
+# # x.fit <- unlist(eff$x.all)
+# # trans <- I
+# # x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, hv = eff$x$hv)
+# # xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$hv)] + eff$residuals)
+# #
+# # g_eff3 <- ggplot(x, aes(x = hv, y = fit)) +
+# #   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+# #   geom_line(size = 1) +
+# #   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+# #   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+# #   geom_smooth(data = xy, aes(x = trans(x), y = y),
+# #               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+# #   mytheme3()+
+# #   ylab(expression(alpha))+
+# #   xlab(expression("Huber value [ln("*cm[sw]^2~m[leaf]^-2*")]"))
+# 
+# 
+# eff<-effect("Ta", partial.residuals=T, alpha_mod)
+# # plot(eff)
+# x.fit <- unlist(eff$x.all)
+# trans <- I
+# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, Ta = eff$x$Ta)
+# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$Ta)] + eff$residuals)
+# 
+# g_eff4 <- ggplot(x, aes(x = Ta, y = fit)) +
+#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+#   geom_line(size = 1) +
+#   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+#   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+#   geom_smooth(data = xy, aes(x = trans(x), y = y),
+#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+#   mytheme3()+
+#   ylab(expression(alpha))+
+#   xlab(expression(T[a]~"[ºC]"))
+# 
+# 
+# # eff<-effect("P50", partial.residuals=T, alpha_mod)
+# # # plot(eff)
+# # x.fit <- unlist(eff$x.all)
+# # trans <- I
+# # x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, P50 = eff$x$P50)
+# # xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$P50)] + eff$residuals)
+# #
+# # g_eff5 <- ggplot(x, aes(x = P50, y = fit)) +
+# #   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+# #   geom_line(size = 1) +
+# #   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+# #   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+# #   geom_smooth(data = xy, aes(x = trans(x), y = y),
+# #               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+# #   mytheme3()+
+# #   ylab(expression(alpha))+
+# #   xlab(expression(psi[50]~"[MPa]"))
+# #
+# 
+# eff<-effect("jmax_ww", partial.residuals=T, alpha_mod)
+# # plot(eff)
+# x.fit <- unlist(eff$x.all)
+# trans <- I
+# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, jmax_ww = eff$x$jmax_ww)
+# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$jmax_ww)] + eff$residuals)
+# 
+# g_eff6 <- ggplot(x, aes(x = jmax_ww, y = fit)) +
+#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+#   geom_line(size = 1) +
+#   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+#   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+#   geom_smooth(data = xy, aes(x = trans(x), y = y),
+#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+#   mytheme3()+
+#   ylab(expression(alpha))+
+#   xlab(expression(J[maxWW]~"[ln("*mu*"mol"~m^-2~s^-1*")]"))
+# 
+# alpha_mod_plot <- ggarrange(g_eff2,g_eff4,g_eff6,g_eff1,#g_eff3,g_eff5,
+#                             align='hv', labels=c('a', 'b','c','d'),
+#                             ncol=2, nrow = 2)
+# 
+# ggsave("PLOTS/alpha_model_2.png", plot = alpha_mod_plot, width = 25, height = 20, units = "cm")
+# 
+# 
+# 
+# 
+
+
+
+
+
+
+#### Actual Jmax estimated Jmax ####
+
+lmer(vcmax_obs~vcmax_pred,df_kmax_alpha %>% 
+  
+       
+df_kmax_alpha %>% select(Species,jmax_obs) %>% unique()
+

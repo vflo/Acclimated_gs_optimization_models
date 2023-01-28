@@ -269,3 +269,35 @@ get_density <- function(x, y, ...) {
   ii <- cbind(ix, iy)
   return(dens$z[ii])
 }
+
+get_partition_a <- function(x){
+  mod_not <- lmer(A~a_pred + (a_pred|Species),
+                  data = x %>% filter(acclimation == "Not acclimated"),
+                  weights = log(n_dist))
+  r2_not <- MuMIn::r.squaredGLMM(mod_not)
+  mod <- lmer(A~a_pred + (a_pred|Species),data = x %>% 
+                filter(acclimation == "Acclimated"),
+              weights = log(n_dist))
+  r2 <- MuMIn::r.squaredGLMM(mod)
+  
+  return(tibble(stomatal_r2 = r2_not[1],
+                non_stomatal_r2 = r2[1]-r2_not[1],
+                species_r2 = r2[2]-r2[1],
+                Residuals = 1-r2[2]))
+}
+
+get_partition_g <- function(x){
+  mod_not <- lmer(gC~g_pred + (g_pred|Species),
+                  data = x %>% filter(acclimation == "Not acclimated"),
+                  weights = log(n_dist))
+  r2_not <- MuMIn::r.squaredGLMM(mod_not)
+  mod <- lmer(gC~g_pred + (g_pred|Species),data = x %>% 
+                filter(acclimation == "Acclimated"),
+              weights = log(n_dist))
+  r2 <- MuMIn::r.squaredGLMM(mod)
+  
+  return(tibble(stomatal_r2 = r2_not[1],
+                non_stomatal_r2 = r2[1]-r2_not[1],
+                species_r2 = r2[2]-r2[1],
+                Residuals = 1-r2[2]))
+}

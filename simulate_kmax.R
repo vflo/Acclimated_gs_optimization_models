@@ -126,6 +126,8 @@ fun_no_accl = function(data, dpsi_calib=T,  k=7,
   a_pred = dat1$a
   g_pred = dat1$gs
   c_pred = dat1$chi
+  jmax_pred = dat1$jmax
+  vcmax_pred = dat1$vcmax
   
   #DPSI
   d_spl = splinefun(lwp, y=dat2$dpsi)
@@ -137,6 +139,8 @@ fun_no_accl = function(data, dpsi_calib=T,  k=7,
           g_pred = g_pred,
           c_pred = c_pred,
           d_pred = d_pred2,
+          jmax_pred = jmax_pred,
+          vcmax_pred = vcmax_pred,
           psi88S = psi88S,
           psiL88S = psiL88S,
           dp88S = dp88S,
@@ -260,6 +264,8 @@ fun_accl = function(data, dpsi_calib=T, inst=F, k=7,
     a_pred = dat1$a
     g_pred = dat1$gs
     c_pred = dat1$chi
+    jmax_pred = dat1$jmax
+    vcmax_pred = dat1$vcmax
     
     #DPSI
     d_spl = splinefun(lwp, y=dat2$dpsi)
@@ -271,6 +277,8 @@ fun_accl = function(data, dpsi_calib=T, inst=F, k=7,
               g_pred = g_pred,
               c_pred = c_pred,
               d_pred = d_pred2,
+              jmax_pred = jmax_pred,
+              vcmax_pred = vcmax_pred,
               psi88S = psi88S,
               psiL88S = psiL88S,
               dp88S = dp88S,

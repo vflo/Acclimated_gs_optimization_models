@@ -92,22 +92,23 @@ vcmax_jmax_ww <- df_a_fix %>%
 
 #### SIMULATIONS KMAXWW ALPHA ####
 load(file = "DATA/simulations_kmaxww_alpha.RData")
-df_kmaxww_a <- df %>% 
+df_kmaxww_a <- df  %>% 
   mutate(chi = Ciest/ca,
          acclimation = factor(acclimation, 
                               levels = c('TRUE','FALSE'),
                               labels = c("Acclimated", "Not acclimated")),
          scheme = fct_recode(scheme, "PMAX" = "PROFITMAX","PMAX2"="PROFITMAX2"))%>% 
-  filter(!(scheme %in% c("SOX")&Species %in%c("Broussonetia papyrifera")))### Broussonetia papyrifera did not converged in SOX !!!!!!
+  filter(!(scheme %in% c("SOX")&Species %in%c("Broussonetia papyrifera")))%>% ### Broussonetia papyrifera did not converged in SOX !!!!!!
+  left_join(df_a_fix_n)
 
-df_kmaxww_a %>% 
-  select(Species, scheme, acclimation, K.scale, gamma,alpha) %>% 
-  group_by(Species, scheme, acclimation) %>% 
-  mutate(FLAG = case_when(any(K.scale>14,gamma>14)~1,
-                          TRUE~2),
-         FLAG2 = case_when(any(K.scale>5.9&K.scale<6,gamma>5.9&gamma<6)~1,
-                           TRUE~2)
-  ) %>% filter(FLAG == 1)
+# df_kmaxww_a %>% 
+#   select(Species, scheme, acclimation, K.scale, gamma,alpha) %>% 
+#   group_by(Species, scheme, acclimation) %>% 
+#   mutate(FLAG = case_when(any(K.scale>14,gamma>14)~1,
+#                           TRUE~2),
+#          FLAG2 = case_when(any(K.scale>5.9&K.scale<6,gamma>5.9&gamma<6)~1,
+#                            TRUE~2)
+#   ) %>% filter(FLAG == 1)
 
 ## PARAMETERS DATA
 path_par <- "DATA/parameters_kmaxww_alpha/"
@@ -230,7 +231,8 @@ df_kmax_alpha <- df %>%
          acclimation = factor(acclimation, 
                               levels = c('TRUE','FALSE'),
                               labels = c("Acclimated", "Not acclimated")),
-         scheme = fct_recode(scheme, "PMAX" = "PROFITMAX","PMAX2"="PROFITMAX2")) 
+         scheme = fct_recode(scheme, "PMAX" = "PROFITMAX","PMAX2"="PROFITMAX2")) %>% 
+  left_join(df_a_fix_n)
 
 df_kmax_alpha_n <- df_kmax_alpha %>% 
   group_by(scheme,acclimation,Species,source) %>% 
@@ -2078,8 +2080,97 @@ ggsave("PLOTS/example_plot.png", width = 24, height = 30, units = "cm")
 
 #### Actual Jmax estimated Jmax ####
 
-lmer(vcmax_obs~vcmax_pred,df_kmax_alpha %>% 
-  
+mod_vcmax <- lmer(vcmax_obs~vcmax_pred*scheme + (vcmax_pred|Species)+(1|source), data=df_kmax_alpha %>%
+                    filter(!is.na(vcmax_obs), acclimation == "Acclimated"),
+                  weights = log(n_dist)# source !="Galmes et al. (2007)")
+                           )
        
-df_kmax_alpha %>% select(Species,jmax_obs) %>% unique()
+summary(mod_vcmax)
+emmeans::emtrends(mod_vcmax, var = "vcmax_pred",specs = "scheme")
+MuMIn::r.squaredGLMM(mod_vcmax)
 
+df_kmax_alpha %>%
+  filter(!is.na(vcmax_obs), acclimation == "Acclimated") %>% 
+  ggplot(aes(vcmax_pred, vcmax_obs,  color = Species))+
+  geom_point(aes(size=log(n_dist)), alpha=0.7, show.legend = FALSE, shape = 21)+
+  geom_smooth(aes(group=interaction(Species,scheme)), method = "lm", se=FALSE)+
+  geom_abline(slope = 1, intercept = 0, linetype = 3)+
+  facet_wrap(~scheme,nrow = 2)+
+  scale_color_viridis_d()+
+  # ylim(0,80)+
+  mytheme4()+
+  xlab(expression("Predicted"~V[cmax]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+  ylab(expression("Observed"~V[cmax]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(face = "italic"))
+
+
+# mod_jmax <- lmer(jmax_obs~jmax_pred*scheme + (jmax_pred|Species), data=df_kmax_alpha %>%
+#                     filter(!is.na(jmax_obs), acclimation == "Acclimated", source !="Galmes et al. (2007)"))
+# 
+# summary(mod_jmax)
+# emmeans::emtrends(mod_jmax, var = "jmax_pred",specs = "scheme")
+# MuMIn::r.squaredGLMM(mod_jmax)
+# 
+# df_kmax_alpha %>%
+#   filter(!is.na(jmax_obs), acclimation == "Acclimated", source !="Galmes et al. (2007)") %>% 
+#   ggplot(aes(jmax_obs, jmax_pred, color = Species))+
+#   geom_point()+
+#   geom_smooth(aes(group=interaction(Species,scheme)), method = "lm")+
+#   geom_abline(slope = 1, intercept = 0)+
+#   facet_grid(~scheme)
+
+
+
+
+
+mod_vcmax <- lmer(vcmax_obs~vcmax_pred*scheme + (vcmax_pred|Species)+(1|source), data=df_kmaxww_a %>%
+                    filter(!is.na(vcmax_obs), acclimation == "Acclimated"),
+                  weights = log(n_dist)# source !="Galmes et al. (2007)")
+)
+
+summary(mod_vcmax)
+emmeans::emtrends(mod_vcmax, var = "vcmax_pred",specs = "scheme")
+MuMIn::r.squaredGLMM(mod_vcmax)
+
+df_kmaxww_a %>%
+  filter(!is.na(vcmax_obs), acclimation == "Acclimated") %>% 
+  ggplot(aes(vcmax_pred, vcmax_obs,  color = Species))+
+  geom_point(aes(size=log(n_dist)), alpha=0.7, show.legend = FALSE, shape = 21)+
+  geom_smooth(aes(group=interaction(Species,scheme)), method = "lm", se=FALSE)+
+  geom_abline(slope = 1, intercept = 0, linetype = 3)+
+  facet_wrap(~scheme,nrow = 2)+
+  scale_color_viridis_d()+
+  # ylim(0,80)+
+  mytheme4()+
+  xlab(expression("Predicted"~V[cmax]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+  ylab(expression("Observed"~V[cmax]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(face = "italic"))
+
+
+
+
+mod_vcmax <- lmer(vcmax_obs~vcmax_pred*scheme + (vcmax_pred|Species)+(1|source), data=df_a_fix %>% left_join(df_a_fix_n) %>% 
+                    filter(!is.na(vcmax_obs), acclimation == "Acclimated"),
+                  weights = log(n_dist)# source !="Galmes et al. (2007)")
+)
+
+summary(mod_vcmax)
+emmeans::emtrends(mod_vcmax, var = "vcmax_pred",specs = "scheme")
+MuMIn::r.squaredGLMM(mod_vcmax)
+
+df_a_fix %>% left_join(df_a_fix_n) %>%
+  filter(!is.na(vcmax_obs), acclimation == "Acclimated") %>% 
+  ggplot(aes(vcmax_pred, vcmax_obs,  color = Species))+
+  geom_point(aes(size=log(n_dist)), alpha=0.7, show.legend = FALSE, shape = 21)+
+  geom_smooth(aes(group=interaction(Species,scheme)), method = "lm", se=FALSE)+
+  geom_abline(slope = 1, intercept = 0, linetype = 3)+
+  facet_wrap(~scheme,nrow = 2)+
+  scale_color_viridis_d()+
+  # ylim(0,80)+
+  mytheme4()+
+  xlab(expression("Predicted"~V[cmax]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+  ylab(expression("Observed"~V[cmax]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+  theme(legend.title = element_blank(),
+        legend.text = element_text(face = "italic"))

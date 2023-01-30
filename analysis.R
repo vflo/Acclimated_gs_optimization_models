@@ -470,138 +470,35 @@ ggsave("PLOTS/alpha_jmax_jmax_model.png",jmax_jmax_plot, width = 14, height = 28
 library(psych)
 pairs.panels(df_param_kmax_alpha %>%
                mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
-                      hv = log(Huber.value*1e4),
+                      # hv = Huber.value*1e4,
                       lk.scale =log(K.scale),
-                      Height.max..m. = log( Height.max..m.),
+                      Height.max..m. = log(Height.max..m.),
                       l_b = log(b),
                       l_b_opt = log(b_opt),
                       l_p50_opt = log(-p50_opt),
                       D = D*101325/1000,
                       jmax_ww = log(jmax_ww),
                       Ta = T) %>% 
-        dplyr::select(SLA..cm2.g.1.,jmax_ww, KL,ca,Ta,
+        dplyr::select(alpha,SLA..cm2.g.1.,jmax_ww, KL,ca,Ta,
                       Iabs_growth,D, l_b , lk.scale,P50,
                       hv, l_b_opt, l_p50_opt,
                       Height.max..m.))
-# 
-# df_param_kmax_alpha %>%
-#   ggplot(aes(lifeform_comp,alpha))+
-#   ggdist::stat_halfeye(
-#     adjust = .5, 
-#     width = .9, 
-#     .width = 0, 
-#     justification = -.3, 
-#     point_colour = NA) + 
-#   geom_boxplot(
-#     width = .25, 
-#     outlier.shape = NA
-#   ) +
-#   geom_point(
-#     size = 1.3,
-#     alpha = .3,
-#     position = position_jitter(
-#       seed = 1, width = .1
-#     )
-#   ) +
-#   facet_wrap(~scheme)+
-#   mytheme()+ 
-#   coord_flip()
-# 
-# alpha_lifeform_mod <- lmerTest::lmer(alpha~ lifeform +(1|Species)+ (1|scheme), 
-#                             data = df_param_kmax_alpha, 
-#                             weights = log(n_dist)
-#                             )
-# summary(alpha_lifeform_mod)
-# step(alpha_lifeform_mod)
-# emm_alpha <- emmeans::emmeans(alpha_lifeform_mod,specs = 'lifeform')
-# emmeans::contrast(emm_alpha, method="pairwise") #%>% plot()
-# emmeans::contrast(emm_alpha) %>% plot()
-
-# ##mean alpha across schemes
-# df_param_kmax_alpha_summary <- df_param_kmax_alpha %>% 
-#   group_by(Species,source) %>% 
-#   summarise(SLA..cm2.g.1. = mean(SLA..cm2.g.1.),
-#             Iabs_growth = mean(Iabs_growth),
-#             KL = mean(log(KL..kg.m.1.MPa.1.s.1.*55.5)),
-#             hv =  mean(log(Huber.value*1e4)),
-#             lk.scale = mean(log(K.scale)),
-#             Height.max..m. =  mean(log( Height.max..m.)),
-#             l_b =  mean(log(b)),
-#             l_b_opt =  mean(log(b_opt)),
-#             l_p50_opt =  mean(log(-p50_opt)),
-#             P50 = mean(P50),
-#             D =  mean(D*101325/1000),
-#             jmax_ww =  mean(log(jmax_ww)),
-#             Ta =  mean(T),
-#             ca = mean(ca),
-#             alpha = mean(alpha),
-#             n_dist = mean(n_dist))
-# alpha_mod <- lmerTest::lmer(alpha~ SLA..cm2.g.1.+ KL+ #lifeform +
-#                               Iabs_growth+#K.scale+
-#                               jmax_ww+hv+# p50_opt + l_b_opt +
-#                               Ta + D+ ca+P50+  Height.max..m.+
-#                               (1|source),# +(1|lifeform), 
-#                             data = df_param_kmax_alpha_summary, 
-#                             weights = log(n_dist)
-# )
-# summary(alpha_mod)
-# step(alpha_mod)
-# # alpha_mod2 <- lmerTest::lmer(
-# #   # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + MATbest + P50 + (1 | source) + (1 | scheme),
-# #   # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + p50_opt + l_b_opt + Ta + P50 + Height.max..m. + (1 | source) + (1 | scheme) + (1 | lifeform),
-# #   alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + Ta + P50 + (1 | source) + (1 | scheme),
-# #   data = df_param_kmax_alpha %>%
-# #     mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
-# #            hv = log(Huber.value*1e4),
-# #            lk.scale =log(K.scale),
-# #            Height.max..m. = log( Height.max..m.),
-# #            l_b = log(b),
-# #            l_b_opt = log(b_opt),
-# #            l_p50_opt = log(-p50_opt),
-# #            D = D*101325/1000,
-# #            jmax_ww = log(jmax_ww),
-# #            Ta = T), 
-# #   weights = log(n_dist)
-# # )
-# alpha_mod <- lmerTest::lmer(
-#   # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + MATbest + P50 + (1 | source) + (1 | scheme),
-#   # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + p50_opt + l_b_opt + Ta + P50 + Height.max..m. + (1 | source) + (1 | scheme) + (1 | lifeform),
-#   alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + D + ca + (1 | source),
-#   data = df_param_kmax_alpha %>%
-#     mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
-#            hv = log(Huber.value*1e4),
-#            lk.scale =log(K.scale),
-#            Height.max..m. = log( Height.max..m.),
-#            l_b = log(b),
-#            l_b_opt = log(b_opt),
-#            l_p50_opt = log(-p50_opt),
-#            D = D*101325/1000,
-#            jmax_ww = log(jmax_ww),
-#            Ta = T), 
-#   weights = log(n_dist)
-# )
-# # anova(alpha_mod,alpha_mod2)
-# summary(alpha_mod)
-# car::vif(alpha_mod)
-# performance::check_collinearity(alpha_mod)
-# confint(alpha_mod)
-# MuMIn::r.squaredGLMM(alpha_mod)
 
 
 ## FINAL alpha-traits ANALYSIS ##
 #l_b and P50 are moderately-strongly correlated (we use only P50)
 df_param_kmax_alpha[is.na(df_param_kmax_alpha$lifeform),"lifeform"] <- "Evergreen needleleaf gymnosperm"
 df_param_kmax_alpha[is.na(df_param_kmax_alpha$lifeform_comp),"lifeform_comp"] <- "Evergreen"
-alpha_mod <- lmerTest::lmer(alpha~ SLA..cm2.g.1.+ #KL+ #lifeform_comp +
+alpha_mod <- lmerTest::lmer(alpha~ SLA..cm2.g.1.+ KL+ #lifeform_comp +
                               Iabs_growth+
-                              jmax_ww+hv+ #p50_opt + l_b_opt +
+                              jmax_ww+#hv+ #p50_opt + l_b_opt +
                               Ta + ca+ P50+  Height.max..m.+
-                              (1|source)+ (1|scheme) + (1|Species),# +(1|lifeform), 
+                              (1|source)+ (1|scheme),# + (1|Species),
                             data = df_param_kmax_alpha %>%
                               mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
-                                     hv = log(Huber.value*1e4),
+                                     # hv = Huber.value*1e4,
                                      lk.scale =log(K.scale),
-                                     Height.max..m. = log( Height.max..m.),
+                                     Height.max..m. =  Height.max..m.,
                                      l_b = log(b),
                                      l_b_opt = log(b_opt),
                                      l_p50_opt = log(-p50_opt),
@@ -614,8 +511,8 @@ summary(alpha_mod)
 step(alpha_mod)
 alpha_mod <- lmerTest::lmer(
   # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + MATbest + P50 + (1 | source) + (1 | scheme),
-  # alpha ~ Iabs_growth + K.scale + jmax_ww + p50_opt + l_b_opt + D + (1 | source) + (1 | scheme) + (1 | Species),
-  alpha ~ Iabs_growth + jmax_ww + Ta + P50 + Height.max..m. + (1 | source) + (1 | scheme) + (1 | Species),
+  alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww +  Ta + P50 + (1 | source) + (1 | scheme),
+  # alpha ~ Iabs_growth + jmax_ww + Ta + P50 + Height.max..m. + (1 | source) + (1 | scheme) + (1 | Species),
   data = df_param_kmax_alpha %>%
     mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
            hv = log(Huber.value*1e4),
@@ -629,11 +526,11 @@ alpha_mod <- lmerTest::lmer(
            Ta = T),
   weights = log(n_dist)
 )
-# alpha_mod2 <- lmerTest::lmer(
+# alpha_mod <- lmerTest::lmer(
 #   # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + MATbest + P50 + (1 | source) + (1 | scheme),
-#   # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + p50_opt + l_b_opt + Ta + P50 + Height.max..m. + (1 | source) + (1 | scheme) + (1 | lifeform),
-#   alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + Ta + P50 + (1 | source) + (1 | scheme),
-#   data = df_param_kmax_alpha %>%
+#   # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + Ta + P50 + (1 | source) + (1 | scheme),
+#   alpha ~ Iabs_growth + jmax_ww + Ta + P50 + Height.max..m. + (1 | source) + (1 | scheme) + (1 | Species),
+#   data = df_param_kmax_alpha %>% 
 #     mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
 #            hv = log(Huber.value*1e4),
 #            lk.scale =log(K.scale),
@@ -643,7 +540,7 @@ alpha_mod <- lmerTest::lmer(
 #            l_p50_opt = log(-p50_opt),
 #            D = D*101325/1000,
 #            jmax_ww = log(jmax_ww),
-#            Ta = T), 
+#            Ta = T),
 #   weights = log(n_dist)
 # )
 # anova(alpha_mod,alpha_mod2)
@@ -658,30 +555,13 @@ library(effects)
 closest <- function(x, x0) apply(outer(x, x0, FUN=function(x, x0) abs(x - x0)), 1, which.min)
 
 # 
-# eff<-effect("SLA..cm2.g.1.", partial.residuals=T, alpha_mod)
-# x.fit <- unlist(eff$x.all)
-# trans <- I
-# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, SLA..cm2.g.1. = eff$x$SLA..cm2.g.1.)
-# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$SLA..cm2.g.1.)] + eff$residuals)
-# 
-# g_eff1 <- ggplot(x, aes(x = SLA..cm2.g.1., y = fit)) +
-#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
-#   geom_line(size = 1) +
-#   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
-#   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
-#   geom_smooth(data = xy, aes(x = trans(x), y = y), 
-#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
-#   mytheme3()+
-#   ylab(expression(alpha))+
-#   xlab(expression("SLA  [cm"^2~"g"^-1*"]"))
-
-eff<-effect("Height.max..m.", partial.residuals=T, alpha_mod)
+eff<-effect("SLA..cm2.g.1.", partial.residuals=T, alpha_mod)
 x.fit <- unlist(eff$x.all)
 trans <- I
-x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, Height.max..m. = eff$x$Height.max..m.)
-xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$Height.max..m.)] + eff$residuals)
+x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, SLA..cm2.g.1. = eff$x$SLA..cm2.g.1.)
+xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$SLA..cm2.g.1.)] + eff$residuals)
 
-g_eff1 <- ggplot(x, aes(x = Height.max..m., y = fit)) +
+g_eff1 <- ggplot(x, aes(x = SLA..cm2.g.1., y = fit)) +
   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
   geom_line(size = 1) +
   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
@@ -690,7 +570,24 @@ g_eff1 <- ggplot(x, aes(x = Height.max..m., y = fit)) +
               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
   mytheme3()+
   ylab(expression(alpha))+
-  xlab(expression("Max height [m]"))
+  xlab(expression("SLA  [cm"^2~"g"^-1*"]"))
+
+# eff<-effect("Height.max..m.", partial.residuals=T, alpha_mod)
+# x.fit <- unlist(eff$x.all)
+# trans <- I
+# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, Height.max..m. = eff$x$Height.max..m.)
+# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$Height.max..m.)] + eff$residuals)
+# 
+# g_eff1 <- ggplot(x, aes(x = Height.max..m., y = fit)) +
+#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+#   geom_line(size = 1) +
+#   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+#   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+#   geom_smooth(data = xy, aes(x = trans(x), y = y),
+#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+#   mytheme3()+
+#   ylab(expression(alpha))+
+#   xlab(expression("Max height [m]"))
 
 eff<-effect("Iabs_growth", partial.residuals=T, alpha_mod)
 # plot(eff)
@@ -719,11 +616,11 @@ g_eff2 <- ggplot(x, aes(x = Iabs_growth, y = fit)) +
 # xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$hv)] + eff$residuals)
 # 
 # g_eff3 <- ggplot(x, aes(x = hv, y = fit)) +
-#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+#   geom_point(data = xy, aes(x = x, y = y, shape = df_param_kmax_alpha$gym_ang), col = "grey60", size = 2, show.legend = FALSE) +
 #   geom_line(size = 1) +
 #   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
 #   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
-#   geom_smooth(data = xy, aes(x = trans(x), y = y), 
+#   geom_smooth(data = xy, aes(x = trans(x), y = y),
 #               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
 #   mytheme3()+
 #   ylab(expression(alpha))+
@@ -786,12 +683,12 @@ g_eff6 <- ggplot(x, aes(x = jmax_ww, y = fit)) +
   ylab(expression(alpha))+
   xlab(expression(J[maxWW]~"[ln("*mu*"mol"~m^-2~s^-1*")]"))
 
-alpha_mod_plot <- ggarrange(g_eff2,g_eff4,g_eff6,g_eff5,g_eff1,#g_eff3,g_eff5,
+alpha_mod_plot <- ggarrange(g_eff2,g_eff4,g_eff6,g_eff5,g_eff1,#g_eff3,#g_eff5,
           align='hv', labels=c('a', 'b','c','d','e'),
           ncol=5, nrow = 1)
 
+# ggsave("PLOTS/alpha_model.png", plot = alpha_mod_plot, width = 30, height = 20, units = "cm")
 ggsave("PLOTS/alpha_model_3.png", plot = alpha_mod_plot, width = 40, height = 8, units = "cm")
-
 
 
 

@@ -1,39 +1,40 @@
-Species,lifeform,lifeform_comp
-Allocasuarina luehmannii,Evergreen sclerophyll angiosperm,Evergreen
-Glycine max,Herbaceous,Herbaceous
-Broussonetia papyrifera,Deciduous broadleaf angiosperm,Deciduous
-Cinnamomum bodinieri,Evergreen broadleaf angiosperm,Evergreen
-Platycarya longipes,Evergreen broadleaf angiosperm,Evergreen
-Pteroceltis tatarinowii,Evergreen broadleaf angiosperm,Evergreen
-Rosa cymosa,Evergreen shrub,Evergreen
-Pyracantha fortuneana,Evergreen shrub,Evergreen
-Ficus tikoua,Evergreen shrub,Evergreen
-Cedrus atlantica,Evergreen needleleaf gymnosperm,Evergreen
-Pseudotsuga menziesii,Evergreen needleleaf gymnosperm,Evergreen
-Pseudotsuga macrocarpa,Evergreen needleleaf gymnosperm,Evergreen
-Cistus albidus,Semi-deciduous sclerophyll shrub,Deciduous
-Hypericum balearicum,Evergreen sclerophyll shrub,Evergreen
-Limonium gibertii,Evergreen sclerophyll shrub,Evergreen
-Limonium magallufianum,Evergreen sclerophyll shrub,Evergreen
-Malva subovata,Semi-deciduous sclerophyll shrub,Deciduous
-Phlomis italica,Semi-deciduous sclerophyll shrub,Deciduous
-Pistacia lentiscus,Evergreen sclerophyll shrub,Evergreen
-Diplotaxis ibicensis,Herbaceous,Herbaceous
-Beta maritima subsp. marcosii,Herbaceous,Herbaceous
-Beta maritima subsp. maritima,Herbaceous,Herbaceous
-Lysimachia minoricensis,Herbaceous,Herbaceous
-Eucalyptus pilularis,Evergreen sclerophyll angiosperm,Evergreen
-Eucalyptus populnea,Evergreen sclerophyll angiosperm,Evergreen
-Helianthus annuus,Herbaceous,Herbaceous
-Olea europaea var. Chemlali,Evergreen sclerophyll angiosperm,Evergreen
-Olea europaea var. Meski,Evergreen sclerophyll angiosperm,Evergreen
-Picea abies,Evergreen needleleaf gymnosperm,Evergreen
-Pinus sylvestris,Evergreen needleleaf gymnosperm,Evergreen
-Betula pendula,Deciduous broadleaf angiosperm,Deciduous
-Populus tremula,Deciduous broadleaf angiosperm,Deciduous
-Quercus coccifera,Evergreen sclerophyll angiosperm,Evergreen
-Quercus suber,Evergreen sclerophyll angiosperm,Evergreen
-Quercus ilex,Evergreen sclerophyll angiosperm,Evergreen
-‍Quercus ilex,Evergreen sclerophyll angiosperm,Evergreen
-Quercus petraea,Deciduous broadleaf angiosperm,Deciduous
-Quercus pubescens,Deciduous broadleaf angiosperm,Deciduous
+Species,lifeform,lifeform_comp,gym_ang
+Allocasuarina luehmannii,Evergreen sclerophyll angiosperm,Evergreen,Angiosperm
+Glycine max,Herbaceous,Herbaceous,Angiosperm
+Broussonetia papyrifera,Deciduous broadleaf angiosperm,Deciduous,Angiosperm
+Cinnamomum bodinieri,Evergreen broadleaf angiosperm,Evergreen,Angiosperm
+Platycarya longipes,Evergreen broadleaf angiosperm,Evergreen,Angiosperm
+Pteroceltis tatarinowii,Evergreen broadleaf angiosperm,Evergreen,Angiosperm
+Rosa cymosa,Evergreen shrub,Evergreen,Angiosperm
+Pyracantha fortuneana,Evergreen shrub,Evergreen,Angiosperm
+Ficus tikoua,Evergreen shrub,Evergreen,Angiosperm
+Cedrus atlantica,Evergreen needleleaf gymnosperm,Evergreen,Gymnosperm
+Pseudotsuga menziesii,Evergreen needleleaf gymnosperm,Evergreen,Gymnosperm
+Pseudotsuga macrocarpa,Evergreen needleleaf gymnosperm,Evergreen,Gymnosperm
+Cistus albidus,Semi-deciduous sclerophyll shrub,Deciduous,Angiosperm
+Hypericum balearicum,Evergreen sclerophyll shrub,Evergreen,Angiosperm
+Limonium gibertii,Evergreen sclerophyll shrub,Evergreen,Angiosperm
+Limonium magallufianum,Evergreen sclerophyll shrub,Evergreen,Angiosperm
+Malva subovata,Semi-deciduous sclerophyll shrub,Deciduous,Angiosperm
+Phlomis italica,Semi-deciduous sclerophyll shrub,Deciduous,Angiosperm
+Pistacia lentiscus,Evergreen sclerophyll shrub,Evergreen,Angiosperm
+Diplotaxis ibicensis,Herbaceous,Herbaceous,Angiosperm
+Beta maritima subsp. marcosii,Herbaceous,Herbaceous,Angiosperm
+Beta maritima subsp. maritima,Herbaceous,Herbaceous,Angiosperm
+Lysimachia minoricensis,Herbaceous,Herbaceous,Angiosperm
+Eucalyptus pilularis,Evergreen sclerophyll angiosperm,Evergreen,Angiosperm
+Eucalyptus populnea,Evergreen sclerophyll angiosperm,Evergreen,Angiosperm
+Helianthus annuus,Herbaceous,Herbaceous,Angiosperm
+Olea europaea var. Chemlali,Evergreen sclerophyll angiosperm,Evergreen,Angiosperm
+Olea europaea var. Meski,Evergreen sclerophyll angiosperm,Evergreen,Angiosperm
+Picea abies,Evergreen needleleaf gymnosperm,Evergreen,Gymnosperm
+Pinus sylvestris,Evergreen needleleaf gymnosperm,Evergreen,Gymnosperm
+Betula pendula,Deciduous broadleaf angiosperm,Deciduous,Angiosperm
+Populus tremula,Deciduous broadleaf angiosperm,Deciduous,Angiosperm
+Quercus coccifera,Evergreen sclerophyll angiosperm,Evergreen,Angiosperm
+Quercus suber,Evergreen sclerophyll angiosperm,Evergreen,Angiosperm
+Quercus ilex,Evergreen sclerophyll angiosperm,Evergreen,Angiosperm
+‍Quercus ilex,Evergreen sclerophyll angiosperm,Evergreen,Angiosperm
+Quercus petraea,Deciduous broadleaf angiosperm,Deciduous,Angiosperm
+Quercus pubescens,Deciduous broadleaf angiosperm,Deciduous,Angiosperm
+Sequoia sempervirens,Evergreen needleleaf gymnosperm,Evergreen,Gymnosperm

@@ -86,7 +86,7 @@ template <- template %>% dplyr::select(-c(species,genus))%>%
   ungroup() 
   
 
-plot_all = function(df_w_vol, varname, species, data, dpsi_data=NULL, analytical=F){
+plot_all <- function(df_w_vol, varname, species, data, dpsi_data=NULL, analytical=F){
   # df_w_vol = df_w_vol[complete.cases(df_w_vol),]
   # View(df_w_vol)
   
@@ -119,18 +119,18 @@ plot_all = function(df_w_vol, varname, species, data, dpsi_data=NULL, analytical
   
   p1 <- df_w_vol %>% 
     ggplot() +
-    geom_line(aes(x = var, y = vcmax), col="green3", size=1) +
+    geom_line(aes(x = var, y = vcmax25), col="green3", linewidth=1) +
     # geom_point(data=filter(dat, Species==species), aes(x=LWP, y=Vcmax))+
     # geom_vline(xintercept = par_plant_std$psi50, col="orange") +
     expand_limits(y=0)+
     xlab(varname)+
     theme_bw()
-  if (analytical) p1 = p1 + geom_line(aes(x = var, y = vcmax ), col="grey", size=1) 
+  if (analytical) p1 = p1 + geom_line(aes(x = var, y = vcmax ), col="grey", linewidth=1) 
   
   p2 <- df_w_vol %>%
     ggplot() +
-    geom_line(aes(x = var, y = dpsi), col="blue", size=1)+
-    # geom_vline(xintercept = psi88S, col="grey", size=0.8)+
+    geom_line(aes(x = var, y = dpsi), col="blue", linewidth=1)+
+    # geom_vline(xintercept = psi88S, col="grey", linewidth=0.8)+
     expand_limits(y=0)+
     xlab(varname)+
     theme_bw()
@@ -142,28 +142,28 @@ plot_all = function(df_w_vol, varname, species, data, dpsi_data=NULL, analytical
   
   p3 <- df_w_vol %>%
     ggplot() +
-    geom_line(aes(x = var, y = gs), col="cyan2", size=1)+
+    geom_line(aes(x = var, y = gs), col="cyan2", linewidth=1)+
     geom_point(data=subdata, aes(x=LWP, y=gC))+
-    # geom_vline(xintercept = psi88S, col="grey", size=0.8)+
+    # geom_vline(xintercept = psi88S, col="grey", linewidth=0.8)+
     expand_limits(y=0)+
     xlab(varname)+
     theme_bw()
-  if (analytical) p3 = p3 + geom_line(aes(x = var, y = gs), col="grey", size=1)
+  if (analytical) p3 = p3 + geom_line(aes(x = var, y = gs), col="grey", linewidth=1)
   
   p4 <- df_w_vol %>%
     # mutate(chi = ci/out_hydraulics_ca) %>% 
     ggplot() +
-    geom_line(aes(x = var, y = chi), col="magenta", size=1)+
+    geom_line(aes(x = var, y = chi), col="magenta", linewidth=1)+
     geom_point(data=subdata, aes(x=LWP, y=1-A/gC/ca))+
-    # geom_vline(xintercept = psi88S, col="grey", size=0.8)+
+    # geom_vline(xintercept = psi88S, col="grey", linewidth=0.8)+
     expand_limits(y=0)+
     xlab(varname)+
     theme_bw()
-  if (analytical) p4 = p4 + geom_line(aes(x = var, y = chi), col="grey", size=1)
+  if (analytical) p4 = p4 + geom_line(aes(x = var, y = chi), col="grey", linewidth=1)
   
   p5 <- df_w_vol %>%
     ggplot() +
-    geom_line(aes(x = var, y = jmax), col="goldenrod1", size=1) +
+    geom_line(aes(x = var, y = jmax25), col="goldenrod1", linewidth=1) +
     # geom_vline(xintercept = par_plant_std$psi50, col="orange")+
     # geom_point(data=filter(dat, Species==species), aes(x=LWP, y=Jmax))+
     expand_limits(y=0)+
@@ -173,13 +173,13 @@ plot_all = function(df_w_vol, varname, species, data, dpsi_data=NULL, analytical
   
   p6 <- df_w_vol %>%
     ggplot() +
-    geom_line(aes(x = var, y = a), col="green4", size=1) +
+    geom_line(aes(x = var, y = a), col="green4", linewidth=1) +
     geom_point(data=subdata, aes(x=LWP, y=A))+
-    # geom_vline(xintercept = psi88S, col="grey", size=0.8)+
+    # geom_vline(xintercept = psi88S, col="grey", linewidth=0.8)+
     expand_limits(y=0)+
     xlab(varname)+
     theme_bw()
-  if (analytical) p6 = p6 + geom_line(aes(x = var, y = gpp), col="grey",size=1) 
+  if (analytical) p6 = p6 + geom_line(aes(x = var, y = gpp), col="grey",linewidth=1) 
   
   grid.arrange(p3,p6,p1,p2,p5,p4, ncol=2)
 }
@@ -187,37 +187,26 @@ plot_all = function(df_w_vol, varname, species, data, dpsi_data=NULL, analytical
 
 ################################################################################
 
-error_fun_kmax_alpha = function(x, data, data_template,  plot=F, 
-                                k=7, stomatal_model = stomatal_model_now, 
-                                Species_now = species,
-                                K_PROFITMAX = K_PROFITMAX_acclimate){
-  # print(x)
-  # parameter_max <- c(20,0.2)
-  # if(stomatal_model %in% c("CGAIN")){
-  #   parameter_max <- c(50,0.2)}
-  # if(stomatal_model %in% c("CMAX")){
-  #   parameter_max <- c(6,0.2)}
-  if(x[1]<=0| x[2]<=0 |x[3]>-0.5| x[4]<1# | x[1]>parameter_max[1] | x[2]>parameter_max[2]
-     ){over <- TRUE}else{over <- FALSE} #set boundaries
+error_fun_kmax_alpha = function(x, 
+                                data, 
+                                data_template, 
+                                plot=F, 
+                                k=7, 
+                                stomatal_model = stomatal_model_now, 
+                                Species_now = species){
+
+  if(x[1]<=0| x[2]<=0 |x[3]>-0.5| x[4]<1){over <- TRUE}else{over <- FALSE} #set boundaries
   
   if(over){
     print(paste("Over-limits"))
     return(1e6)
   }else{
     
+    data = data %>% 
+      mutate(patm = calc_patm(0,T),
+             ca_pa = ca*1e-6 * patm,
+             Ciest = ca_pa-(A*1e-6)/(gC/patm))
 
-  data$Ciest = data$ca-data$A/data$gC
-  if(stomatal_model %in% par_scheme){
-    par_plant_now = list(
-      conductivity = K_PROFITMAX$K_PROFITMAX*1e-16,
-      psi50 = x[3],#data_template$P50%>% unique(),
-      b = x[4]#data_template$b%>% unique()
-    )
-    par_cost_now = list(
-      alpha = x[2],
-      gamma = x[1]
-    )
-  }else{
     par_plant_now = list(
       conductivity = x[1]*1e-16,
       psi50 = x[3],#data_template$P50 %>% unique(),
@@ -226,7 +215,7 @@ error_fun_kmax_alpha = function(x, data, data_template,  plot=F,
     par_cost_now = list(
       alpha  = x[2]
     )
-  }
+
     if (Species_now != ""){
       dpsi_data = dpsi_df %>% filter(Species == Species_now)
     }
@@ -242,7 +231,6 @@ error_fun_kmax_alpha = function(x, data, data_template,  plot=F,
     psi_min = min(data$LWP,na.rm = TRUE) #-6
   }
   psi_max = 0 #max(data$LWP)
-  # cat(ndays,"\n")
   
   lwp = seq(psi_min,0, length.out=20)
   day = ndays * (lwp-psi_max)/(psi_min-psi_max)
@@ -272,15 +260,11 @@ error_fun_kmax_alpha = function(x, data, data_template,  plot=F,
       
         lwp = data$LWP
         dat1 = try(
-          tibble(var = lwp, jmax_a=dat_acc$jmax, vcmax_a=dat_acc$vcmax) %>% 
+          tibble(var = lwp, jmax25_a=dat_acc$jmax25, vcmax25_a=dat_acc$vcmax25) %>% 
             cbind(data %>% select(t=T,Iabs_used, D,ca)) %>% 
             mutate(var = case_when(var>0~0,
                                    TRUE~var),
-                   # jmax_a = case_when(jmax_a>0~1e-3*1.6,
-                   #                     TRUE~jmax_a),
-                   # vcmax_a = case_when(vcmax_a>0~1e-3,
-                   #                     TRUE~vcmax_a),
-                   p = purrr::pmap(list(var, jmax_a, vcmax_a,t,Iabs_used,D,ca), 
+                   p = purrr::pmap(list(var, jmax25_a, vcmax25_a,t,Iabs_used,D,ca), 
                                    ~model_numerical_instantaneous(tc = ..4, 
                                                                   ppfd = ..5, 
                                                                   vpd = ..6*101325, 
@@ -289,58 +273,157 @@ error_fun_kmax_alpha = function(x, data, data_template,  plot=F,
                                                                   psi_soil = ..1, rdark = 0.02, 
                                                                   par_plant=par_plant_now, 
                                                                   par_cost = par_cost_now, 
-                                                                  jmax = ..2, vcmax = ..3, 
+                                                                  jmax25 = ..2, vcmax25 = ..3, 
                                                                   stomatal_model = stomatal_model)) ) %>% 
             unnest_wider(p),
           silent = TRUE)
-        # }
         
         if(any(class(dat1) %in% "try-error")){
           print(paste("error try"))
           return(1e6)
         }else{
-          if(plot==T) dat1 %>% plot_all(varname = "psi_soil", species=species, data = data, dpsi_data=dpsi_data)
-          
-          dat2 <- dat1 %>% filter(gs>=1e-40)
-          gx = log(dat2$gs)
-          gy = dat2$var
-          fpsi = splinefun(x = gx, y=gy, method = "natural")
-          gs0 = dat2$gs[which(dat2$var==0)]
-          psi88S = fpsi(log(gs0*0.12))
-          dpx = dat2$var
-          dpy = dat2$dpsi
-          f1 = splinefun(dpy~dpx)
-          dp88S = f1(psi88S)
-          psiL88S = psi88S-dp88S
-            
-          data_f <- data #%>% filter(LWP >= psi88S) #use only values over Psi88S
-          y2 = mean((dat1$gs - data_f$gC)^2,na.rm  = TRUE)/mean(data_f$gC,na.rm  = TRUE)^2
-          y1 = mean((dat1$a - data_f$A)^2,na.rm  = TRUE)/mean(data_f$A,na.rm  = TRUE)^2
-          y4 = mean((dat1$chi - (data_f$Ciest/data_f$ca))^2,na.rm  = TRUE)/mean((data_f$Ciest/data_f$ca),na.rm  = TRUE)^2
-      
-          if (!is.null(dpsi_data)){
-            d_spl = splinefun(lwp, y=dat1$dpsi)
-            dpsi_data_f <- dpsi_data #%>% filter(SWP >= psi88S) #use only values over Psi88S
-            y3 = mean((d_spl(dpsi_data_f$SWP) - dpsi_data_f$Dpsi)^2,na.rm  = TRUE)/mean(dpsi_data_f$Dpsi,na.rm  = TRUE)^2 #*40
-            # cat("d_spl:", d_spl(dpsi_data_f$SWP), "\n")
-          }else{
-            y3=0
-          }
+          if(plot==T) dat1 %>% plot_all(varname = "psi_soil", species=species, 
+                                        data = data, dpsi_data=dpsi_data)
+
+          y2 = mean((dat1$gs - data$gC)^2,na.rm  = TRUE)/mean(data$gC,na.rm  = TRUE)^2
+          y1 = mean((dat1$a - data$A)^2,na.rm  = TRUE)/mean(data$A,na.rm  = TRUE)^2
+          y4 = mean((dat1$chi - (data$Ciest/data$ca_pa))^2,na.rm  = TRUE)/
+            mean((data$Ciest/data$ca_pa),na.rm  = TRUE)^2
             
           y=y2+y1+y4
             
-            # cat(x, "|", y2, " / ", y1, " / ", y4, " / ",y, "\n")
-            cat(x, "|", y, "\n")
+          cat(x, "|", y, "\n")
             
-            y
+          y
+            
         }
       }
   }
 }
 
 
-par_scheme <- list("PHYDRO","CGAIN","WUE", "CMAX")
-par_scheme_no_alpha <- list("PROFITMAX2","SOX","PROFITMAX")
+
+error_fun_kmax_alpha_gamma = function(x, 
+                                      data, 
+                                      data_template, 
+                                      plot=F, 
+                                      k=7, 
+                                      stomatal_model = stomatal_model_now, 
+                                      Species_now = species){
+
+  if(x[1]<=0| x[2]<=0| x[3]<=0 |x[4]>-0.5| x[5]<1
+  ){over <- TRUE}else{over <- FALSE} #set boundaries
+  
+  if(over){
+    print(paste("Over-limits"))
+    return(1e6)
+  }else{
+    
+    data = data %>% 
+      mutate(  patm = calc_patm(0,T),
+               ca_pa = ca*1e-6 * patm,
+               Ciest = ca_pa-(A*1e-6)/(gC/patm))
+
+      par_plant_now = list(
+        conductivity =x[1]*1e-16,
+        psi50 = x[4],#data_template$P50%>% unique(),
+        b = x[5]#data_template$b%>% unique()
+      )
+      
+      par_cost_now = list(
+        alpha = x[3],
+        gamma = x[2]
+      )
+
+    if (Species_now != ""){
+      dpsi_data = dpsi_df %>% filter(Species == Species_now)
+    }
+    else{
+      dpsi_data=NULL
+    }
+    
+    ndays = mean(data$Drydown.days)
+    psi_crit = data_template$P50 * (log(1000)/log(2)) ^ ( 1/data_template$b)
+    if(min(data$LWP,na.rm = TRUE)<psi_crit){
+      psi_min = psi_crit
+    }else{
+      psi_min = min(data$LWP,na.rm = TRUE) #-6
+    }
+    psi_max = 0 #max(data$LWP)
+
+    lwp = seq(psi_min,0, length.out=20)
+    day = ndays * (lwp-psi_max)/(psi_min-psi_max)
+    actual_day = ndays * (data$LWP-psi_max)/(psi_min-psi_max)
+    lwp_day = function(day_num){
+      psi_max + day_num/ndays * (psi_min-psi_max)
+    }
+    
+    lwp_week = rollmean(x = lwp_day(c(max(day):0, rep(0,k-1))), k = k, align = "right")
+    spl = splinefun(x = max(day):0, y=lwp_week)
+    dat_acc = try(
+      tibble(var = spl(actual_day)) %>% 
+        mutate(var = case_when(var>0~0,
+                               TRUE~var),
+               pmod = map(var, ~model_numerical(tc = mean(data$T,na.rm = TRUE), ppfd = mean(data$Iabs_growth,na.rm = TRUE), 
+                                                vpd = mean(data$D*101325,na.rm = TRUE), co2 = mean(data$ca,na.rm = TRUE), 
+                                                elv = 0, fapar = .99, kphio = 0.087, 
+                                                psi_soil = ., rdark = 0.02, par_plant=par_plant_now, 
+                                                par_cost = par_cost_now, stomatal_model = stomatal_model))) %>% 
+        unnest_wider(pmod),
+      silent = TRUE)
+    
+    if(any(class(dat_acc) %in% "try-error")){
+      print(paste("error try"))
+      return(1e6)
+    }else{
+      
+      lwp = data$LWP
+      dat1 = try(
+        tibble(var = lwp, jmax25_a=dat_acc$jmax25, vcmax25_a=dat_acc$vcmax25) %>% 
+          cbind(data %>% select(t=T,Iabs_used, D,ca)) %>% 
+          mutate(var = case_when(var>0~0,
+                                 TRUE~var),
+                 p = purrr::pmap(list(var, jmax25_a, vcmax25_a,t,Iabs_used,D,ca), 
+                                 ~model_numerical_instantaneous(tc = ..4, 
+                                                                ppfd = ..5, 
+                                                                vpd = ..6*101325, 
+                                                                co2 = ..7, elv = 0, 
+                                                                fapar = .99, kphio = 0.087, 
+                                                                psi_soil = ..1, rdark = 0.02, 
+                                                                par_plant=par_plant_now, 
+                                                                par_cost = par_cost_now, 
+                                                                jmax25 = ..2, vcmax25 = ..3, 
+                                                                stomatal_model = stomatal_model)) ) %>% 
+          unnest_wider(p),
+        silent = TRUE)
+      
+      if(any(class(dat1) %in% "try-error")){
+        print(paste("error try"))
+        return(1e6)
+      }else{
+        if(plot==T) dat1 %>% plot_all(varname = "psi_soil", species=species, data = data, dpsi_data=dpsi_data)
+
+        y2 = mean((dat1$gs - data$gC)^2,na.rm  = TRUE)/mean(data$gC,na.rm  = TRUE)^2
+        y1 = mean((dat1$a - data$A)^2,na.rm  = TRUE)/mean(data$A,na.rm  = TRUE)^2
+        y4 = mean((dat1$chi - (data$Ciest/data$ca_pa))^2,na.rm  = TRUE)/
+          mean((data$Ciest/data$ca_pa),na.rm  = TRUE)^2
+
+        y=y2+y1+y4
+
+        cat(x, "|", y, "\n")
+        
+        y
+        
+      }
+    }
+  }
+}
+
+
+
+
+par_scheme_gamma <- list("PHYDRO","CGAIN", "CMAX", "SOX2")
+par_scheme_no_gamma <- list("PROFITMAX2","SOX","PROFITMAX")
 
 ##### PARAMETERIZATION #####
 get_parameters_kmax_alpha <- function(x){
@@ -350,54 +433,25 @@ get_parameters_kmax_alpha <- function(x){
     data_template_now = x
     
     data1 = filter(dat, Species==species, Source == unique(x$source))
-    
-    if(!is.null(K_PROFITMAX)){
-    K_PROFITMAX_no_acclimate = K_PROFITMAX %>% 
-      filter(Species == species,
-             acclimation == FALSE,
-             source == x$source) %>% 
-      select(K_PROFITMAX) %>% 
-      unique()
-    K_PROFITMAX_acclimate = K_PROFITMAX %>% 
-      filter(Species == species,
-             acclimation == TRUE,
-             source == x$source) %>% 
-      select(K_PROFITMAX) %>% 
-      unique()
-    }
+
     
     ##### PARAMETERIZATION WITH ACCLIMATION #####
     print(stomatal_model_now)
     print(species)
-    parameter_ini <- c(1,0.1,-1,2) #hydraulic parameter and alpha
-    # if(stomatal_model_now %in% c("CGAIN")){
-    #     parameter_ini <- c(5,0.1)}
-    optim(fn = error_fun_kmax_alpha,
-          par = parameter_ini,
-          data=data1,
-          data_template = data_template_now,
-          stomatal_model = stomatal_model_now,
-          Species_now = species,
-          K_PROFITMAX = K_PROFITMAX_acclimate,
-          control = list(maxit = 500,#, maximize = TRUE, 
-                         parscale = c(1,0.01,0.1,0.1),
-                         REPORT=0, trace=0, reltol=1e-4)
-    ) -> opt_accl         
-    x_accl <- opt_accl$par
     
-    error_fun_kmax_alpha(x_accl, data1, data_template = data_template_now,
-              plot=T, stomatal_model = stomatal_model_now, Species_now = species,
-              K_PROFITMAX = K_PROFITMAX_acclimate)
-    
-    if(stomatal_model_now %in% par_scheme){
-      res_accl <- tibble(x,
-                         acclimation = TRUE,
-                         K.scale=K_PROFITMAX_acclimate$K_PROFITMAX,
-                         alpha=x_accl[2],
-                         gamma=x_accl[1],
-                         p50_opt=x_accl[3],
-                         b_opt=x_accl[4])
-    }else{
+    if(stomatal_model_now %in% par_scheme_no_gamma){
+      parameter_ini <- c(1,0.1,-1,2) #hydraulic parameters and alpha
+      optim(fn = error_fun_kmax_alpha,
+            par = parameter_ini,
+            data=data1,
+            data_template = data_template_now,
+            stomatal_model = stomatal_model_now,
+            Species_now = species,
+            control = list(maxit = 500,#, maximize = TRUE, 
+                           parscale = c(1,0.01,0.1,0.1),
+                           REPORT=0, trace=0, reltol=1e-3)
+      ) -> opt_accl         
+      x_accl <- opt_accl$par
       res_accl <- tibble(x,
                          acclimation = TRUE,
                          K.scale=x_accl[1],
@@ -405,7 +459,40 @@ get_parameters_kmax_alpha <- function(x){
                          gamma=NA,
                          p50_opt=x_accl[3],
                          b_opt=x_accl[4])
+      error_fun_kmax_alpha(x_accl, data1, 
+                           data_template = data_template_now,
+                           plot=T, 
+                           stomatal_model = stomatal_model_now, 
+                           Species_now = species)
     }
+    
+    if(stomatal_model_now %in% par_scheme_gamma){
+      parameter_ini <- c(1,1,0.1,-1,2) #hydraulic parameters and alpha
+      optim(fn = error_fun_kmax_alpha_gamma,
+            par = parameter_ini,
+            data=data1,
+            data_template = data_template_now,
+            stomatal_model = stomatal_model_now,
+            Species_now = species,
+            control = list(maxit = 500,#, maximize = TRUE, 
+                           parscale = c(1,1,0.01,0.1,0.1),
+                           REPORT=0, trace=0, reltol=1e-3)
+      ) -> opt_accl         
+      x_accl <- opt_accl$par
+      res_accl <- tibble(x,
+                         acclimation = TRUE,
+                         K.scale=x_accl[1],
+                         alpha=x_accl[3],
+                         gamma=x_accl[2],
+                         p50_opt=x_accl[4],
+                         b_opt=x_accl[5])
+      error_fun_kmax_alpha_gamma(x_accl, data1, 
+                           data_template = data_template_now,
+                           plot=T, 
+                           stomatal_model = stomatal_model_now, 
+                           Species_now = species)
+    }
+    
     
   df <- res_accl
   
@@ -415,41 +502,23 @@ get_parameters_kmax_alpha <- function(x){
 
 }
 
-##### COMPUTE PARAMETERS #####
-#First compute PROFITMAX model to obtain Kmax for CMAX. CGAIN, WUE and PHYDRO models
-K_PROFITMAX <- NULL
-template %>% filter(scheme == "PROFITMAX"
-                    # Species == "Helianthus annuus"
-                    # source == "Epron and Dreyer (1990)"
-                    ) %>%
-  group_split(scheme, dpsi, Species,source) %>%
-  purrr::map_df(get_parameters_kmax_alpha)->res
+##### CALIBRATE PARAMETERS #####
 
-save(res,file = "DATA/Kmax_PROFITMAX_kmax_alpha.RData")
-
-load(file = "DATA/Kmax_PROFITMAX_kmax_alpha.RData")
-
-K_PROFITMAX <- res %>% 
-  select(Species,K_PROFITMAX = K.scale,dpsi,acclimation,source) %>% 
-  group_by(Species,dpsi, acclimation,source) %>% 
-  summarise_all(unique)
-
-#Compute the other models
 template %>% 
-  filter(!scheme %in% c("PROFITMAX")
-         # Species %in% c(
-         #   # "Rosa cymosa",
-         #   # "Broussonetia papyrifera",
-         #   # "Cinnamomum bodinieri",
-         #   # "Platycarya longipes",
-         #   # "Pteroceltis tatarinowii"
-         #   # "Picea abies",
-         #   # "Betula pendula",
-         #   # "Pinus sylvestris",
-         #   # "Populus tremula"
-         # )
-         ) %>%
+  # filter(scheme %in% c("CGAIN")
+  # #        # Species %in% c(
+  # #        #   # "Rosa cymosa",
+  # #        #   # "Broussonetia papyrifera",
+  # #        #   # "Cinnamomum bodinieri",
+  # #        #   # "Platycarya longipes",
+  # #        #   # "Pteroceltis tatarinowii"
+  # #        #   # "Picea abies",
+  # #        #   # "Betula pendula",
+  # #        #   # "Pinus sylvestris",
+  # #        #   # "Populus tremula"
+  # #        # )
+  #        ) %>%
   # filter(scheme %in% c("CGAIN")) %>%
   # filter(Species == "Quercus ilex", source == "Epron and Dreyer (1990)") %>%
-  group_split(scheme, dpsi, Species,source) %>% 
+  group_split(scheme, Species,source) %>% 
   purrr::map_df(get_parameters_kmax_alpha)

@@ -700,11 +700,12 @@ alpha_scheme <- lmerTest::lmer(alpha~ scheme + (1|Species)+ (1|source),
                                                        levels = c("SOX",
                                                                   "PMAX",
                                                                   "PMAX2",
+                                                                  "CGAIN2",
                                                                   "CGAIN",
                                                                   "CMAX",
                                                                   "PHYDRO"))), 
                               weights = log(n_dist))
-alpha_scheme_mean <- lmerTest::lmer(alpha~ (1|Species)+ (1|source), 
+alpha_scheme_mean <- lmerTest::lmer(alpha~ (1|scheme)+ (1|source/Species), 
                                data = df_param_kmax_alpha , weights = log(n_dist))
 summary(alpha_scheme)
 model_means <- emmeans(alpha_scheme, "scheme")
@@ -769,6 +770,7 @@ df_a <- df_a_fix %>%
                          levels = c("SOX",
                                     "PMAX",
                                     "PMAX2",
+                                    "CGAIN2",
                                     "CGAIN",
                                     "CMAX",
                                     "PHYDRO")))%>% 
@@ -1059,6 +1061,7 @@ df_g <- df_a_fix %>%
                          levels = c("SOX",
                                     "PMAX",
                                     "PMAX2",
+                                    "CGAIN2",
                                     "CGAIN",
                                     "CMAX",
                                     "PHYDRO")))%>% 

@@ -220,7 +220,10 @@ error_fun_no_accl = function(x, data, data_template, plot=F,
                              Species_now = species,
                              K_PROFITMAX = K_PROFITMAX_no_acclimate){
   
-  data$Ciest = data$ca-data$A/data$gC
+  data = data %>% 
+    mutate(  patm = calc_patm(0,T),
+             ca_pa = ca*1e-6 * patm,
+             Ciest = ca_pa-(A*1e-6)/(gC/patm))
   
   if(stomatal_model %in% par_scheme){
     
@@ -297,7 +300,10 @@ error_fun = function(x, data, data_template,  plot=F, dpsi_data = dpsi_data,
                      k=7, stomatal_model = stomatal_model_now,
                      K_PROFITMAX = K_PROFITMAX_acclimate){
   
-  data$Ciest = data$ca-data$A/data$gC
+  data = data %>% 
+    mutate(  patm = calc_patm(0,T),
+             ca_pa = ca*1e-6 * patm,
+             Ciest = ca_pa-(A*1e-6)/(gC/patm))
   
   if(stomatal_model %in% par_scheme){
     
@@ -398,7 +404,7 @@ error_fun = function(x, data, data_template,  plot=F, dpsi_data = dpsi_data,
 }
 
 
-par_scheme <- list("PHYDRO","CGAIN","WUE", "CMAX")
+par_scheme <- list("PHYDRO","CGAIN","WUE", "CMAX", "CGAIN2")
 par_scheme_no_alpha <- list("PROFITMAX2","SOX","PROFITMAX")
 
 ##### PARAMETERIZATION #####
@@ -487,7 +493,9 @@ get_parameters <- function(x){
     if(stomatal_model_now %in% c("SOX")&
        species %in%c("Broussonetia papyrifera",
                      "Pteroceltis tatarinowii")){parameter_max <- 300}
+    if(stomatal_model_now %in% c("CGAIN2")){parameter_max <- 3}
 
+    
       optimise(error_fun_no_accl,
                interval = c(0,parameter_max),
                data=data1,
@@ -542,7 +550,9 @@ get_parameters <- function(x){
                      "Pteroceltis tatarinowii")){parameter_max <- 400}
     if(stomatal_model_now %in% c("SOX")&
        species %in%c("Broussonetia papyrifera")){parameter_max <- 115}
-
+    if(stomatal_model_now %in% c("CGAIN2")){parameter_max <- 3}
+    
+    
       optimise(error_fun,
                interval = c(0,parameter_max),
                data=data1,
@@ -586,18 +596,18 @@ get_parameters <- function(x){
 
 ##### COMPUTE PARAMETERS #####
 #First compute PROFITMAX model to obtain Kmax for CMAX. CGAIN, WUE and PHYDRO models
-K_PROFITMAX <- NULL
-template %>% filter(scheme == "PROFITMAX"#,Species %in% c("Pteroceltis tatarinowii")
-                    # Species %in% c("Rosa cymosa",
-                    #                "Broussonetia papyrifera",
-                    #                "Cinnamomum bodinieri",
-                    #                "Platycarya longipes",
-                    #                "Pteroceltis tatarinowii")
-                    ) %>%
-  group_split(scheme, dpsi, Species,source) %>%
-  purrr::map_df(get_parameters)->res
-
-save(res,file = "DATA/K_PROFITMAX_meta-analysis_kmax.RData")
+# K_PROFITMAX <- NULL
+# template %>% filter(scheme == "PROFITMAX"#,Species %in% c("Pteroceltis tatarinowii")
+#                     # Species %in% c("Rosa cymosa",
+#                     #                "Broussonetia papyrifera",
+#                     #                "Cinnamomum bodinieri",
+#                     #                "Platycarya longipes",
+#                     #                "Pteroceltis tatarinowii")
+#                     ) %>%
+#   group_split(scheme, dpsi, Species,source) %>%
+#   purrr::map_df(get_parameters)->res
+# 
+# save(res,file = "DATA/K_PROFITMAX_meta-analysis_kmax.RData")
 # # 
 load(file = "DATA/K_PROFITMAX_meta-analysis_kmax.RData")
 
@@ -608,7 +618,7 @@ K_PROFITMAX <- res %>%
 
 #Compute the rest of the models
 template %>% 
-  filter(!scheme %in% c("PROFITMAX")#,scheme %in% c("PHYDRO"),
+  filter(!scheme %in% c("PROFITMAX"),scheme %in% c("CGAIN2"),
          # Species %in% c("Sequoia sempervirens")#>6
          ) %>%
   # filter(scheme %in% c("PHYDRO")) %>%

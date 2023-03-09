@@ -3,36 +3,6 @@
 ###########################################
 ## PHOTOSYNTHETIC FUNCTIONS
 ###########################################
-
-# calculate jmax from temperature
-GetPhotosyntheticJmax <- function(jmax25, tem){
-  ha=50300.0
-  hd=152044.0
-  sv=495.0
-  t0=298.15
-  r=8.315
-  c = 1.0 + exp((sv*t0 -hd)/(r*t0))
-  t1 = tem + 273.15
-  factor = c * exp(ha/r/t0*(1.0-t0/t1)) / (1.0 + exp((sv*t1-hd)/(r*t1)))
-  jmax = jmax25 * factor
-  return(jmax)
-  }
-
-# calculate vcmax from temperature
-GetPhotosyntheticVcmax <- function(vcmax25, tem){
-  ha=73637.0
-  hd=149252.0
-  sv=486.0
-  t0=298.15
-  r=8.315
-  c = 1.0 + exp((sv*t0 -hd)/(r*t0))
-  t1 = tem + 273.15
-  factor = c * exp(ha/r/t0*(1.0-t0/t1)) / (1.0 + exp((sv*t1-hd)/(r*t1)))
-  vcmax = vcmax25 * factor
-  return(vcmax)
-  }
-
-
 calc_assimilation_limiting = function(vcmax, jmax, gs, par_photosynth){
   # gs = calc_gs(dpsi, psi_soil, par_plant = par_plant, par_env = par_env)
   
@@ -111,12 +81,12 @@ calc_vcmax_coordinated_numerical <-  function(aj, ci, par_photosynth){
 }
 
 
-calc_vcmax_no_acclimated_ww <- function(A, ci, tc, patm, rdark = 0.02){
+calc_vcmax_no_acclimated_ww <- function(A, ci, tc, patm, rdark = 0.015){
   gammastar <- calc_gammastar(tc,patm)
   rd <- calc_ftemp_inst_rd(tc)*rdark
   kmm <- calc_kmm(tc,patm)
   vcmax <- (A+rd) * (ci+kmm)/(ci-gammastar) # from eqn no 2.20 de von Caemmerer - Biochemical models of leaf photosynthesis
-  # vcmax <- A*(ci + kmm)/(ci*(1-rd) - (gammastar+kmm*rd)) #calculate vcmax using Ac formulation
+  # vcmax <- A*(ci + kmm)/(ci - gammastar- rd*(ci + kmm)) #calculate vcmax using Ac formulation
   return(vcmax)
 }
 
@@ -129,6 +99,8 @@ calc_jmax_no_acclimated_ww <- function(A, vcmax, ci, I, tc, patm, kphio = 0.087)
   # jmax <- 4*phi0*I/(sqrt((4*phi0*I/j)^2-1)) #calculate jmax as the inversion of the j saturation with I
   m <- (ci-gammastar)/( ci+2*gammastar)
   jmax <- 4*phi0*I* (1/sqrt(  (phi0 * I * m/A)^2 -1 )) #eq. 13  inversion from https://doi.org/10.5194/gmd-13-1545-2020
+
+  # jmax <- (4*phi0*I)/(sqrt(((phi0*I*(ci+kmm))/(vcmax*(ci+2*gammastar)))^2-1))
   
   return(jmax)
 }
@@ -203,4 +175,22 @@ calc_ftemp_arrh <- function( tk, dha, tkref = 298.15 ){
   ftemp <- exp( dha * (tk - tkref) / (tkref * kR * tk) )
   
   return(ftemp)
+}
+
+
+calc_vcmax_arrhenius <- function(vcmaxT1, T1, T2=298.15){
+  # The Arrhenius equation constants:
+  Ha = 65330# [J mol-1]
+  Rgas = 8.314 # [J mol-1 K-1]
+  
+  vcmaxT1 * exp((Ha/Rgas)*(1/T1 - 1/T2))
+}
+
+calc_jmax_arrhenius <- function(jmaxT1, T1, T2=298.15){
+  # The Arrhenius equation constants:
+  Haj = 43900 # [J mol-1]
+  Rgas = 8.314 # [J mol-1 K-1]
+
+  jmaxT1 * exp((Haj/Rgas)*(1/T1 - 1/T2))
+  
 }

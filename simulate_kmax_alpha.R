@@ -310,7 +310,7 @@ fun_accl = function(data, dpsi_calib=T, inst=F, k=7,
     return(res)
     }
 
-par_scheme <- list("PHYDRO","CGAIN","WUE", "CMAX")
+par_scheme <- list("PHYDRO","CGAIN","WUE", "CMAX","CGAIN2")
 
 ##### SIMULATION #####
 get_simulations <- function(x){

@@ -2,9 +2,9 @@
 
 rm(list=ls())
 
-library(dplyr)
+# library(dplyr)
 library(purrr)
-library(tidyr)
+# library(tidyr)
 library(ggplot2)
 library(gridExtra)
 library(scales)
@@ -12,6 +12,8 @@ library(zoo)
 library(stringr)
 library(rphydro)
 library(DEoptim)
+library(tidyverse)
+# library(rvalues)
 # library(furrr)
 # plan('multisession', workers = 6)
 # options('future.global.maxsize'=2*1024*1024^2)
@@ -19,6 +21,7 @@ source("stomatal_optimization_functions.R")
 source('hydraulic_functions.R')
 source('photosynthetic_functions.R')
 source("QUADP.R")
+select = dplyr::select
 
 #Convenience functions
 opt_curve_param_vc <- function(par,p88,p50,p12){
@@ -284,7 +287,7 @@ error_fun_no_accl = function(x, data, data_template, plot=F,
 
 ################################################################################
 
-error_fun_kmax_alpha = function(x, data, data_template,  plot=F, 
+error_fun_kmax_alpha = function(x, data_all, data_ww, data_template,  plot=F, 
                                 k=7, stomatal_model = stomatal_model_now, 
                                 dpsi_data = dpsi_data, Species_now = species,
                                 res_ww =res_ww, K_PROFITMAX = K_PROFITMAX_acclimate){
@@ -297,7 +300,7 @@ error_fun_kmax_alpha = function(x, data, data_template,  plot=F,
   #   return(1e6)
   # }else{
 
-  data = data %>% 
+  data = data_ww %>% 
     mutate(  patm = calc_patm(0,T),
              ca_pa = ca*1e-6 * patm,
              Ciest = ca_pa-(A*1e-6)/(gC/patm))
@@ -323,12 +326,12 @@ error_fun_kmax_alpha = function(x, data, data_template,  plot=F,
     )
   }
 
-  ndays = mean(data$Drydown.days)
+  ndays = mean(data_all$Drydown.days)
   psi_crit = data_template$P50 * (log(1000)/log(2)) ^ ( 1/data_template$b)
   if(min(data$LWP,na.rm = TRUE)<psi_crit){
     psi_min = psi_crit
   }else{
-    psi_min = min(data$LWP,na.rm = TRUE) #-6
+    psi_min = min(data_all$LWP,na.rm = TRUE) #-6
   }
   psi_max = 0 #max(data$LWP)
   # cat(ndays,"\n")
@@ -342,7 +345,8 @@ error_fun_kmax_alpha = function(x, data, data_template,  plot=F,
 
     lwp_week = rollmean(x = lwp_day(c(max(day):0, rep(0,k-1))), k = k, align = "right")
     spl = splinefun(x = max(day):0, y=lwp_week)
-      dat_acc = tibble(var = spl(actual_day)) %>% 
+      dat_acc = try(
+        tibble(var = spl(actual_day)) %>% 
         mutate(var = case_when(var>0~0,
                                TRUE~var),
                pmod = map(var, ~model_numerical(tc = mean(data$T,na.rm = TRUE), ppfd = mean(data$Iabs_growth,na.rm = TRUE), 
@@ -350,9 +354,17 @@ error_fun_kmax_alpha = function(x, data, data_template,  plot=F,
                                                 elv = 0, fapar = .99, kphio = 0.087, 
                                                 psi_soil = ., rdark = 0.02, par_plant=par_plant_now, 
                                                 par_cost = par_cost_now, stomatal_model = stomatal_model))) %>% 
-        unnest_wider(pmod)
+        unnest_wider(pmod),
+        silent = TRUE)
+      
+      if(any(class(dat_acc) %in% "try-error")){
+        print(paste("error try"))
+        return(1e6)
+      }else{
+        
       lwp = data$LWP
-      dat1 = tibble(var = lwp, jmax25_a=dat_acc$jmax25, vcmax25_a=dat_acc$vcmax25) %>% 
+      dat1 = try(
+        tibble(var = lwp, jmax25_a=dat_acc$jmax25, vcmax25_a=dat_acc$vcmax25) %>% 
         cbind(data %>% select(t=T,Iabs_used, D,ca)) %>% 
         mutate(var = case_when(var>0~0,
                                TRUE~var),
@@ -367,43 +379,29 @@ error_fun_kmax_alpha = function(x, data, data_template,  plot=F,
                                                               par_cost = par_cost_now, 
                                                               jmax25 = ..2, vcmax25 = ..3, 
                                                               stomatal_model = stomatal_model)) ) %>% 
-        unnest_wider(p)
-      # }
+        unnest_wider(p),
+        silent = TRUE)
+      
+      if(any(class(dat1) %in% "try-error")){
+        print(paste("error try"))
+        return(1e6)
+      }else{
     if(plot==T) dat1 %>% plot_all(varname = "psi_soil", species=species, data = data, dpsi_data=dpsi_data)
-    
-    # dat2 <- dat1 %>% filter(gs>=1e-40)
-    # gx = log(dat2$gs)
-    # gy = dat2$var
-    # fpsi = splinefun(x = gx, y=gy, method = "natural")
-    # gs0 = dat2$gs[which(dat2$var==0)]
-    # psi88S = fpsi(log(gs0*0.12))
-    # dpx = dat2$var
-    # dpy = dat2$dpsi
-    # f1 = splinefun(dpy~dpx)
-    # dp88S = f1(psi88S)
-    # psiL88S = psi88S-dp88S
+
       
     data_f <- data #%>% filter(LWP >= psi88S) #use only values over Psi88S
     y2 = mean((dat1$gs - data_f$gC)^2,na.rm  = TRUE)/mean(data_f$gC,na.rm  = TRUE)^2
     y1 = mean((dat1$a - data_f$A)^2,na.rm  = TRUE)/mean(data_f$A,na.rm  = TRUE)^2
     y4 = mean((dat1$chi - (data_f$Ciest/data_f$ca_pa))^2,na.rm  = TRUE)/mean((data_f$Ciest/data_f$ca_pa),na.rm  = TRUE)^2
 
-    # if (!is.null(dpsi_data)){
-    #   d_spl = splinefun(lwp, y=dat1$dpsi)
-    #   dpsi_data_f <- dpsi_data #%>% filter(SWP >= psi88S) #use only values over Psi88S
-    #   y3 = mean((d_spl(dpsi_data_f$SWP) - dpsi_data_f$Dpsi)^2,na.rm  = TRUE)/mean(dpsi_data_f$Dpsi,na.rm  = TRUE)^2 #*40
-    #   cat("d_spl:", d_spl(dpsi_data_f$SWP), "\n")
-    # }else{
-    #   y3=0
-    # }
-    #   
     y=y2+y1+y4
       
       cat(x, "|", y2, " / ", y1, " / ", y4, " / ",y, "\n")
       cat(x, "|", y, "\n")
       
       y
-  # }
+    }
+  }
 }
 
 
@@ -429,14 +427,14 @@ get_parameters_kmaxww_alpha <- function(x){
       filter(Species == species,
              acclimation == FALSE,
              source == x$source) %>% 
-      select(K_PROFITMAX) %>% 
+      dplyr::select(K_PROFITMAX) %>% 
       unique()
-    K_PROFITMAX_acclimate = K_PROFITMAX %>% 
-      filter(Species == species,
-             acclimation == TRUE,
-             source == x$source) %>% 
-      select(K_PROFITMAX) %>% 
-      unique()
+    # K_PROFITMAX_acclimate = K_PROFITMAX %>% 
+    #   filter(Species == species,
+    #          acclimation == TRUE,
+    #          source == x$source) %>% 
+    #   dplyr::select(K_PROFITMAX) %>% 
+    #   unique()
     }
     
     ##### PARAMETERIZATION WITHOUT ACCLIMATION WW #####
@@ -476,13 +474,13 @@ get_parameters_kmaxww_alpha <- function(x){
     print(stomatal_model_now)
     print(species)
     parameter_max <- 60
-    if(stomatal_model_now %in% c("CMAX")){parameter_max <- 6}
+    if(stomatal_model_now %in% c("CMAX")){parameter_max <- 60}
     if(stomatal_model_now %in% c("CMAX")&
-       species %in%c("Pteroceltis tatarinowii")){parameter_max <- 30}
+       species %in%c("Pteroceltis tatarinowii")){parameter_max <- 40}
     if(stomatal_model_now %in% c("CMAX") &
        species %in% c("Pyracantha fortuneana")){parameter_max <- 3}
-    if(stomatal_model_now %in% c("CMAX") &
-       species %in% c("Broussonetia papyrifera")){parameter_max <- 100}
+    # if(stomatal_model_now %in% c("CMAX") &
+    #    species %in% c("Broussonetia papyrifera")){parameter_max <- 200}
     if(!stomatal_model_now %in% c("CMAX")&
        species %in%c("Broussonetia papyrifera")){parameter_max <- 200}
     if(stomatal_model_now %in% c("PHYDRO")&
@@ -542,25 +540,27 @@ get_parameters_kmaxww_alpha <- function(x){
     print(species)
     # parameter_ini <- c(0.1) #hydraulic parameter and alpha
     optimise(error_fun_kmax_alpha,
-                     interval = c(0.000001,0.2),
-                     data = data_ww,
-                     data_template = data_template_now,
-                     dpsi_data = dpsi_data,
-                     stomatal_model = stomatal_model_now,
-                     Species_now = species,
-                     K_PROFITMAX = K_PROFITMAX_acclimate,
-                     res_ww = res_ww#,
+             interval = c(0.000001,0.2),
+             data_all = data1,
+             data_ww = data_ww,
+             data_template = data_template_now,
+             dpsi_data = dpsi_data,
+             stomatal_model = stomatal_model_now,
+             Species_now = species,
+             K_PROFITMAX = K_PROFITMAX_no_acclimate,
+             res_ww = res_ww#,
                      # control = list(maxit = 500, maximize = TRUE,
                      #                REPORT=0, trace=0, reltol=1e-4)
-                     ) -> opt_accl
+             ) -> opt_accl
       # x_accl <- opt_accl$par
       x_accl <- opt_accl$minimum
     
-    error_fun_kmax_alpha(x_accl, data1, data_template = data_template_now,
+    error_fun_kmax_alpha(x_accl, data_all = data1,
+                         data1, data_template = data_template_now,
                          dpsi_data = dpsi_data, plot=T, 
                          stomatal_model = stomatal_model_now, 
-                         Species_now = species,res_ww =res_ww,
-                         K_PROFITMAX = K_PROFITMAX_acclimate)
+                         Species_now = species, res_ww =res_ww,
+                         K_PROFITMAX = K_PROFITMAX_no_acclimate)
     
     if(stomatal_model_now %in% par_scheme_gamma){
       res_accl <- tibble(x,
@@ -597,14 +597,14 @@ save(res,file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
 load(file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
 
 K_PROFITMAX <- res %>% 
-  select(Species,K_PROFITMAX = K.scale,dpsi,acclimation,source) %>% 
+  dplyr::select(Species,K_PROFITMAX = K.scale,dpsi,acclimation,source) %>% 
   group_by(Species,dpsi, acclimation,source) %>% 
   summarise_all(unique)
 
 #Compute the other models
 template %>% 
-  filter(!scheme %in% c("PROFITMAX")#,scheme %in% c("CGAIN2")
-         # Species %in% c("Diplotaxis ibicensis")
+  filter(!scheme %in% c("PROFITMAX"),scheme %in% c("CMAX"),
+         Species %in% c("Olea europaea var. Meski")
          #   "Ficus tikoua"
            # "Malva subovata"
          #   # "Rosa cymosa",

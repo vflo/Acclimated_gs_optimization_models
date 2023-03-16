@@ -75,7 +75,7 @@ mytheme7 = function(){
   
 }
 
-col_df <- tibble(scheme = factor(c('CMAX','CGAIN','PHYDRO','PMAX2','SOX','PMAX')),
+col_df <- tibble(scheme = factor(c('PHYDRO','CGAIN','PMAX','PMAX2','SOX','SOX2')),
                  col = brewer_pal(palette = "Dark2")(6)
 )
 
@@ -84,28 +84,37 @@ col_df <- tibble(scheme = factor(c('CMAX','CGAIN','PHYDRO','PMAX2','SOX','PMAX')
 get_vcmax_jmax_ww <- function(x){
   data_ww <- x %>% 
     filter(!is.na(gC)) %>% 
-    mutate(LWP_q90 = case_when(source == "Galmes et al. (2007)"~quantile(LWP, 0.5,na.rm = TRUE), # we consider quantile 0.5 because there is only 4 data points
-                               TRUE~quantile(LWP, 0.9,na.rm = TRUE)),
-           ci = ca-A/gC) %>% 
-    filter(LWP>=LWP_q90) %>% 
-    dplyr::select(LWP,A,gC,T,ci,Iabs_growth) %>% 
-    dplyr::summarise_all(mean, na.rm = TRUE)
-  
+    mutate(LWP_q90 = quantile(LWP, 0.8, na.rm = TRUE),
+           patm = calc_patm(0,T),
+           ca_pa = ca*1e-6 * patm,
+           ci = ca_pa-(A*1e-6)/(gC/patm)) %>% 
+    filter(LWP >= LWP_q90) 
   
   vcmax <- calc_vcmax_no_acclimated_ww(A = data_ww$A,
                                        ci = data_ww$ci,
                                        tc = data_ww$T,
                                        patm = calc_patm(0,data_ww$T),
-                                       rdark = 0.02
+                                       rdark = 0.020
   )
+  
+  vcmax25 = calc_vcmax_arrhenius(vcmaxT1 = vcmax, T1 = (273.15+data_ww$T),
+                                 T2 = 298.15)
+  vcmax = mean(vcmax)
+  vcmax25 = mean(vcmax25)
   jmax <- calc_jmax_no_acclimated_ww(A = data_ww$A,
                                      vcmax = vcmax,
                                      ci = data_ww$ci,
                                      I = data_ww$Iabs_growth,
                                      tc = data_ww$T,
                                      patm = calc_patm(0,data_ww$T),
-                                     kphio = 0.087)
-  return(tibble(vcmax_ww = vcmax,jmax_ww = jmax,LWP_ww = data_ww$LWP))
+                                     kphio = 0.087
+  )
+  jmax25 = calc_jmax_arrhenius(jmaxT1 = jmax, T1 = (273.15+data_ww$T),
+                               T2 = 298.15)
+  jmax25 = mean(jmax25)
+  if(is.na(jmax25)){jmax25 = 1.6*vcmax25} #some Jmax calculation may fail using 1.6 relation
+  
+  return(tibble(vcmaxww25 = vcmax25, jmaxww25 = jmax25, LWPww = data_ww$LWP))
 }
 
 get_no_acclimated_response <- function(x,tc_now,ppfd_now,vpd_now,co2_now){
@@ -270,7 +279,43 @@ get_density <- function(x, y, ...) {
   return(dens$z[ii])
 }
 
+
+
 get_partition_a <- function(x){
+  mod_not <- lmer(A~a_pred + (a_pred|Species),
+                  data = x %>% filter(calibration_type == "Not acclimated"),
+                  weights = log(n_dist))
+  r2_not <- MuMIn::r.squaredGLMM(mod_not)
+  mod <- lmer(A~a_pred + (a_pred|Species),data = x %>% 
+                filter(calibration_type == "Calibrated α"),
+              weights = log(n_dist))
+  r2 <- MuMIn::r.squaredGLMM(mod)
+  
+  return(tibble(stomatal_r2 = r2_not[1],
+                non_stomatal_r2 = r2[1]-r2_not[1],
+                species_r2 = r2[2]-r2[1],
+                Residuals = 1-r2[2]))
+}
+
+
+get_partition_g <- function(x){
+  mod_not <- lmer(gC~g_pred + (g_pred|Species),
+                  data = x %>% filter(calibration_type == "Not acclimated"),
+                  weights = log(n_dist))
+  r2_not <- MuMIn::r.squaredGLMM(mod_not)
+  mod <- lmer(gC~g_pred + (g_pred|Species),data = x %>% 
+                filter(calibration_type == "Calibrated α"),
+              weights = log(n_dist))
+  r2 <- MuMIn::r.squaredGLMM(mod)
+  
+  return(tibble(stomatal_r2 = r2_not[1],
+                non_stomatal_r2 = r2[1]-r2_not[1],
+                species_r2 = r2[2]-r2[1],
+                Residuals = 1-r2[2]))
+}
+
+
+get_partition_a_accl <- function(x){
   mod_not <- lmer(A~a_pred + (a_pred|Species),
                   data = x %>% filter(acclimation == "Not acclimated"),
                   weights = log(n_dist))
@@ -286,7 +331,8 @@ get_partition_a <- function(x){
                 Residuals = 1-r2[2]))
 }
 
-get_partition_g <- function(x){
+
+get_partition_g_accl <- function(x){
   mod_not <- lmer(gC~g_pred + (g_pred|Species),
                   data = x %>% filter(acclimation == "Not acclimated"),
                   weights = log(n_dist))

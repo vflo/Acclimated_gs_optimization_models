@@ -408,7 +408,7 @@ get_simulations <- function(x){
     b= x[1,"b"][[1]]
   ))
   par_cost_acclimation = as.list(data.frame(
-    alpha  = 0.1, 
+    alpha  = 0.0913, 
     gamma = x[1,"gamma"][[1]]
   ))
   
@@ -424,7 +424,8 @@ get_simulations <- function(x){
     left_join(x %>% filter(acclimation == TRUE)) %>% 
     cbind(calibration_type = 'alpha_fix',
           jmaxww25 = jmax25,
-          vcmaxww25 = vcmax)
+          vcmaxww25 = vcmax25) %>% 
+    mutate(alpha = 0.0913)
 
 
   
@@ -436,7 +437,7 @@ get_simulations <- function(x){
 
 
 df <- par_data %>% 
-  # filter(scheme %in% c("PHYDRO"), Species=="Malva subovata") %>%
+  filter(!scheme %in% c("CMAX")) %>%
   # rbind(par_data_extra) %>%
   group_split(Species,scheme,dpsi,source) %>%
   purrr::map(get_simulations) %>%

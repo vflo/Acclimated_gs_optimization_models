@@ -2,7 +2,7 @@
 
 rm(list=ls())
 
-library(dplyr)
+
 library(purrr)
 library(tidyr)
 library(ggplot2)
@@ -12,6 +12,8 @@ library(zoo)
 library(stringr)
 library(rphydro)
 library(DEoptim)
+library(dplyr)
+select = dplyr::select 
 # library(furrr)
 # plan('multisession', workers = 6)
 # options('future.global.maxsize'=2*1024*1024^2)
@@ -386,6 +388,7 @@ get_parameters_kmax_no_alpha <- function(x){
     jmax25 = calc_jmax_arrhenius(jmaxT1 = jmax, T1 = (273.15+data_ww$T),
                                  T2 = 298.15)
     jmax25 = mean(jmax25)
+    if(is.na(jmax25)){jmax25 = 1.6*vcmax25} #some Jmax calculation may fail using 1.6 relation
     
     ##### PARAMETERIZATION WITHOUT ACCLIMATION #####
     print(stomatal_model_now)
@@ -462,8 +465,10 @@ get_parameters_kmax_no_alpha <- function(x){
 
 ##### CALIBRATE PARAMETERS #####
 template %>% 
-  # filter(!scheme %in% c("PROFITMAX"),scheme %in% c("CGAIN2") #scheme == "CGAIN",Species == "Diplotaxis ibicensis"
-  #        # Species %in% c(
+  filter(!scheme %in% c("CMAX"),#scheme %in% c("CGAIN2") #scheme == "CGAIN",Species == "Diplotaxis ibicensis"
+         Species %in% c( "Diplotaxis ibicensis",
+                         'Helianthus annuus',
+                         "Malva subovata"
   #        #   # "Rosa cymosa",
   #        #   # "Broussonetia papyrifera",
   #        #   # "Cinnamomum bodinieri",
@@ -473,8 +478,8 @@ template %>%
   #        #   # "Betula pendula",
   #        #   # "Pinus sylvestris",
   #        #   # "Populus tremula"
-  #        # )
-  #        ) %>%
+         )
+         ) %>%
   # filter(scheme %in% c("CGAIN")) %>%
   # filter(Species == "Quercus ilex", source == "Epron and Dreyer (1990)") %>%
   group_split(scheme, Species, source) %>% 

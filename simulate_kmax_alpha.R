@@ -12,6 +12,7 @@ library(zoo)
 library(stringr)
 library(rphydro)
 library(DEoptim)
+select=dplyr::select
 source("stomatal_optimization_functions.R")
 source('hydraulic_functions.R')
 source('photosynthetic_functions.R')
@@ -62,8 +63,8 @@ par_data_full <- par_data %>%
 ################################################################################
 
 fun_no_accl = function(data, dpsi_calib=T,  k=7,
-                       vcmax = vcmax,
-                       jmax = jmax,
+                       vcmax25 = vcmax25,
+                       jmax25 = jmax25,
                        stomatal_model = stomatal_model_now,
                        par_plant_acclimation = par_plant_acclimation,
                        par_cost_acclimation = par_cost_acclimation,
@@ -71,15 +72,18 @@ fun_no_accl = function(data, dpsi_calib=T,  k=7,
                        par_cost_now = par_cost,
                        Species_now = species){
 
-  data$Ciest = data$ca-data$A/data$gC
+  data = data %>% 
+    mutate(  patm = calc_patm(0,T),
+             ca_pa = ca*1e-6 * patm,
+             Ciest = ca_pa-(A*1e-6)/(gC/patm))
   dpsi_data = dpsi_df %>% filter(Species == Species_now)
 
   lwp_actual = data$LWP
-  dat1 = tibble(var = lwp_actual, jmax_a=jmax, vcmax_a=vcmax) %>% 
+  dat1 = tibble(var = lwp_actual, jmax25_a=jmax25, vcmax25_a=vcmax25) %>% 
     cbind(data %>% select(t=T,Iabs_used, D,ca)) %>% 
     mutate(var = case_when(var>0~0,
                            TRUE~var),
-           p = purrr::pmap(list(var, jmax_a, vcmax_a,t,Iabs_used,D,ca), 
+           p = purrr::pmap(list(var, jmax25_a, vcmax25_a,t,Iabs_used,D,ca), 
                            ~model_numerical_instantaneous(tc = ..4, 
                                                           ppfd = ..5, 
                                                           vpd = ..6*101325, 
@@ -88,7 +92,7 @@ fun_no_accl = function(data, dpsi_calib=T,  k=7,
                                                           psi_soil = ..1, rdark = 0.02, 
                                                           par_plant=par_plant_now, 
                                                           par_cost = par_cost_now, 
-                                                          jmax = ..2, vcmax = ..3, 
+                                                          jmax25 = ..2, vcmax25 = ..3, 
                                                           stomatal_model = stomatal_model)) ) %>% 
     unnest_wider(p)
 
@@ -102,10 +106,10 @@ fun_no_accl = function(data, dpsi_calib=T,  k=7,
   psi_max = 0
   
   lwp = seq(psi_min,0, length.out=20)
-  dat2 = tibble(var = lwp, jmax_a=jmax, vcmax_a=vcmax) %>%
+  dat2 = tibble(var = lwp, jmax25_a=jmax25, vcmax25_a=vcmax25) %>%
     mutate(var = case_when(var>0~0,
                            TRUE~var),
-           p = purrr::pmap(list(var, jmax_a, vcmax_a), 
+           p = purrr::pmap(list(var, jmax25_a, vcmax25_a), 
                            ~model_numerical_instantaneous(tc = mean(data$T,na.rm = TRUE), 
                                                           ppfd = mean(data$Iabs_used,na.rm = TRUE), 
                                                           vpd = mean(data$D*101325,na.rm = TRUE), 
@@ -114,7 +118,7 @@ fun_no_accl = function(data, dpsi_calib=T,  k=7,
                                                           psi_soil = ..1, rdark = 0.02, 
                                                           par_plant = par_plant_now, 
                                                           par_cost = par_cost_now, 
-                                                          jmax = ..2, vcmax = ..3, 
+                                                          jmax25 = ..2, vcmax25 = ..3, 
                                                           stomatal_model = stomatal_model)) ) %>% 
     unnest_wider(p)
   
@@ -137,8 +141,8 @@ fun_no_accl = function(data, dpsi_calib=T,  k=7,
   a_pred = dat1$a
   g_pred = dat1$gs
   c_pred = dat1$chi
-  jmax_pred = dat1$jmax
-  vcmax_pred = dat1$vcmax
+  jmax25_pred = dat1$jmax25
+  vcmax25_pred = dat1$vcmax25
   
   #DPSI
   d_spl = splinefun(lwp, y=dat2$dpsi)
@@ -150,8 +154,8 @@ fun_no_accl = function(data, dpsi_calib=T,  k=7,
           g_pred = g_pred,
           c_pred = c_pred,
           d_pred = d_pred2,
-          jmax_pred = jmax_pred,
-          vcmax_pred = vcmax_pred,
+          jmax25_pred = jmax25_pred,
+          vcmax25_pred = vcmax25_pred,
           psi88S = psi88S,
           psiL88S = psiL88S,
           dp88S = dp88S,
@@ -182,7 +186,10 @@ fun_accl = function(data, dpsi_calib=T, inst=F, k=7,
                     par_cost_now = par_cost,
                     Species_now = species){
 
-  data$Ciest = data$ca-data$A/data$gC
+  data = data %>% 
+    mutate(  patm = calc_patm(0,T),
+             ca_pa = ca*1e-6 * patm,
+             Ciest = ca_pa-(A*1e-6)/(gC/patm))
   dpsi_data = dpsi_df %>% filter(Species == Species_now)
 
   
@@ -215,11 +222,11 @@ fun_accl = function(data, dpsi_calib=T, inst=F, k=7,
   lwp_actual = data$LWP
   
   #INSTANTANEOUS
-  dat1 = tibble(var = lwp_actual, jmax_a=dat_acc$jmax, vcmax_a=dat_acc$vcmax) %>% 
+  dat1 = tibble(var = lwp_actual, jmax25_a=dat_acc$jmax25, vcmax25_a=dat_acc$vcmax25) %>% 
     cbind(data %>% select(t=T,Iabs_used, D,ca)) %>% 
     mutate(var = case_when(var>0~0,
                            TRUE~var),
-           p = purrr::pmap(list(var, jmax_a, vcmax_a,t,Iabs_used,D,ca), 
+           p = purrr::pmap(list(var, jmax25_a, vcmax25_a,t,Iabs_used,D,ca), 
                            ~model_numerical_instantaneous(tc = ..4, 
                                                           ppfd = ..5, 
                                                           vpd = ..6*101325, 
@@ -228,7 +235,7 @@ fun_accl = function(data, dpsi_calib=T, inst=F, k=7,
                                                           psi_soil = ..1, rdark = 0.02, 
                                                           par_plant=par_plant_now, 
                                                           par_cost = par_cost_now, 
-                                                          jmax = ..2, vcmax = ..3, 
+                                                          jmax25 = ..2, vcmax25 = ..3, 
                                                           stomatal_model = stomatal_model)) ) %>% 
     unnest_wider(p)
 
@@ -244,8 +251,8 @@ fun_accl = function(data, dpsi_calib=T, inst=F, k=7,
                                             psi_soil = ., rdark = 0.02, par_plant=par_plant_now, 
                                             par_cost = par_cost_now, stomatal_model = stomatal_model))) %>% 
     unnest_wider(pmod)
-  dat2 = tibble(var = lwp, jmax_a=dat_acc$jmax, vcmax_a=dat_acc$vcmax) %>%
-    mutate(p = purrr::pmap(list(var, jmax_a, vcmax_a), 
+  dat2 = tibble(var = lwp, jmax25_a=dat_acc$jmax25, vcmax25_a=dat_acc$vcmax25) %>%
+    mutate(p = purrr::pmap(list(var, jmax25_a, vcmax25_a), 
                            ~model_numerical_instantaneous(tc = mean(data$T,na.rm = TRUE), 
                                                           ppfd = mean(data$Iabs_used,na.rm = TRUE), 
                                                           vpd = mean(data$D*101325,na.rm = TRUE), 
@@ -254,7 +261,7 @@ fun_accl = function(data, dpsi_calib=T, inst=F, k=7,
                                                           psi_soil = ..1, rdark = 0.02, 
                                                           par_plant=par_plant_now, 
                                                           par_cost = par_cost_now, 
-                                                          jmax = ..2, vcmax = ..3, 
+                                                          jmax25 = ..2, vcmax25 = ..3, 
                                                           stomatal_model = stomatal_model)) ) %>% 
     unnest_wider(p)
 
@@ -275,8 +282,8 @@ fun_accl = function(data, dpsi_calib=T, inst=F, k=7,
     a_pred = dat1$a
     g_pred = dat1$gs
     c_pred = dat1$chi
-    jmax_pred = dat1$jmax
-    vcmax_pred = dat1$vcmax
+    jmax25_pred = dat1$jmax25
+    vcmax25_pred = dat1$vcmax25
     
     #DPSI
     d_spl = splinefun(lwp, y=dat2$dpsi)
@@ -288,8 +295,8 @@ fun_accl = function(data, dpsi_calib=T, inst=F, k=7,
               g_pred = g_pred,
               c_pred = c_pred,
               d_pred = d_pred2,
-              jmax_pred = jmax_pred,
-              vcmax_pred = vcmax_pred,
+              jmax25_pred = jmax25_pred,
+              vcmax25_pred = vcmax25_pred,
               psi88S = psi88S,
               psiL88S = psiL88S,
               dp88S = dp88S,
@@ -310,7 +317,7 @@ fun_accl = function(data, dpsi_calib=T, inst=F, k=7,
     return(res)
     }
 
-par_scheme <- list("PHYDRO","CGAIN","WUE", "CMAX","CGAIN2")
+# par_scheme <- list("PHYDRO","CGAIN","WUE", "CMAX","CGAIN2")
 
 ##### SIMULATION #####
 get_simulations <- function(x){
@@ -354,32 +361,25 @@ get_simulations <- function(x){
     gamma = x[2,"gamma"][[1]]
   )
 
-  if(unique(data1$Source) == "Galmes et al. (2007)"){
-    data_ww <- data1 %>% 
-      filter(!is.na(gC)) %>% 
-      mutate(LWP_q90 = quantile(LWP, 0.5,na.rm = TRUE),
-             ci = ca-A/gC) %>% 
-      filter(LWP>=LWP_q90) %>% 
-      dplyr::select(LWP,A,gC,T,ci,Iabs_growth) %>% 
-      dplyr::summarise_all(mean, na.rm = TRUE)
-  }else{
-    data_ww <- data1 %>% 
-      filter(!is.na(gC)) %>% 
-      mutate(LWP_q90 = quantile(LWP, 0.9,na.rm = TRUE),
-             ci = ca-A/gC) %>% 
-      filter(LWP>=LWP_q90) %>% 
-      dplyr::select(LWP,A,gC,T,ci,Iabs_growth) %>% 
-      dplyr::summarise_all(mean, na.rm = TRUE)
-    
-  }
+  data_ww <- data1 %>% 
+    filter(!is.na(gC)) %>% 
+    mutate(LWP_q90 = quantile(LWP, 0.8, na.rm = TRUE),
+           patm = calc_patm(0,T),
+           ca_pa = ca*1e-6 * patm,
+           ci = ca_pa-(A*1e-6)/(gC/patm)) %>% 
+    filter(LWP >= LWP_q90) 
   
   vcmax <- calc_vcmax_no_acclimated_ww(A = data_ww$A,
                                        ci = data_ww$ci,
                                        tc = data_ww$T,
                                        patm = calc_patm(0,data_ww$T),
-                                       rdark = 0.02
+                                       rdark = 0.020
   )
   
+  vcmax25 = calc_vcmax_arrhenius(vcmaxT1 = vcmax, T1 = (273.15+data_ww$T),
+                                 T2 = 298.15)
+  vcmax = mean(vcmax)
+  vcmax25 = mean(vcmax25)
   jmax <- calc_jmax_no_acclimated_ww(A = data_ww$A,
                                      vcmax = vcmax,
                                      ci = data_ww$ci,
@@ -388,13 +388,15 @@ get_simulations <- function(x){
                                      patm = calc_patm(0,data_ww$T),
                                      kphio = 0.087
   )
-  
-  # jmax <-  vcmax*1.67
+  jmax25 = calc_jmax_arrhenius(jmaxT1 = jmax, T1 = (273.15+data_ww$T),
+                               T2 = 298.15)
+  jmax25 = mean(jmax25)
+  if(is.na(jmax25)){jmax25 = 1.6*vcmax25} #some Jmax calculation may fail using 1.6 relation
   
   no_accl <- fun_no_accl(data1,
                     dpsi_calib = dpsi_calib,
-                    vcmax = vcmax,
-                    jmax = jmax,
+                    vcmax25 = vcmax25,
+                    jmax25 = jmax25,
                     stomatal_model = stomatal_model_now,
                     par_plant_acclimation = par_plant_acclimation,
                     par_cost_acclimation = par_cost_acclimation,
@@ -406,13 +408,16 @@ get_simulations <- function(x){
   
   ##### RETURN #####
   
-  return(bind_rows(accl,no_accl))
+  return(bind_rows(accl,no_accl) %>% 
+           cbind(LWP_q_90 = unique(data_ww$LWP_q90), 
+                 vcmaxww25 = vcmax25,
+                 jmaxww25 = jmax25))
   
 }
 
 
 df <- par_data_full %>%
-  # filter(scheme %in% c("PHYDRO"), Species=="Malva subovata") %>%
+  filter(!scheme %in% c("CMAX")) %>%
   # rbind(par_data_extra) %>%
   group_split(Species,scheme,source) %>%
   purrr::map(get_simulations) %>%

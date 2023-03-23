@@ -282,19 +282,34 @@ get_density <- function(x, y, ...) {
 
 
 get_partition_a <- function(x){
-  mod_not <- lmer(A~a_pred + (a_pred|Species),
+  mod_not <- lmer(A~a_pred + (1|Species),#(a_pred|Species),
                   data = x %>% filter(calibration_type == "Not acclimated"),
                   weights = log(n_dist))
+  conv_1 = performance::check_convergence(mod_not)[1]
+  # if(!conv_1){
+  #   mod_not <- lmer(A~a_pred + (1|Species),
+  #                   data = x %>% filter(calibration_type == "Not acclimated"),
+  #                   weights = log(n_dist))
+  # }
   r2_not <- MuMIn::r.squaredGLMM(mod_not)
-  mod <- lmer(A~a_pred + (a_pred|Species),data = x %>% 
+  mod <- lmer(A~a_pred + (1|Species),#(a_pred|Species),
+              data = x %>% 
                 filter(calibration_type == "Calibrated α"),
               weights = log(n_dist))
+  conv_2 = performance::check_convergence(mod)[1]
+  # if(!conv_2){
+  #   mod <- lmer(A~a_pred + (1|Species),
+  #               data = x %>% filter(calibration_type == "Calibrated α"),
+  #               weights = log(n_dist))
+  # }
   r2 <- MuMIn::r.squaredGLMM(mod)
   
   return(tibble(stomatal_r2 = r2_not[1],
                 non_stomatal_r2 = r2[1]-r2_not[1],
                 species_r2 = r2[2]-r2[1],
-                Residuals = 1-r2[2]))
+                Residuals = 1-r2[2],
+                conv_1 = conv_1,
+                conv_2 = conv_2))
 }
 
 

@@ -102,7 +102,7 @@ df_kmaxww_a <- df  %>%
          calibration_type = as_factor(calibration_type),
          calibration_type = fct_recode(calibration_type, 
                                        "Calibrated \u03B1" = "alpha",
-                                       "Mean \u03B1"="alpha_fix",
+                                       "Average \u03B1"="alpha_fix",
                                        "Not acclimated"="no_alpha"))#%>% 
   # filter(!(scheme %in% c("SOX")&Species %in%c("Broussonetia papyrifera")))%>% ### Broussonetia papyrifera did not converged in SOX !!!!!!
 df_kmaxww_a_n <- df_kmaxww_a %>%
@@ -517,21 +517,21 @@ df_param_kmax_no_alpha <- df_kmax_alpha %>%
 #### Alpha multivariate analysis ####
 
 library(psych)
-pairs.panels(df_param_kmax_alpha %>%
-               mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
-                      # hv = Huber.value*1e4,
-                      lk.scale =log(K.scale),
-                      Height.max..m. = log(Height.max..m.),
-                      l_b = log(b),
-                      l_b_opt = log(b_opt),
-                      l_p50_opt = log(-p50_opt),
-                      D = D*101325/1000,
-                      jmax_ww = log(jmax_ww),
-                      Ta = T) %>% 
-        dplyr::select(alpha,SLA..cm2.g.1.,jmax_ww, KL,ca,Ta,
-                      Iabs_growth,D, l_b , lk.scale,P50,
-                      hv, l_b_opt, l_p50_opt,
-                      Height.max..m.))
+# pairs.panels(df_param_kmax_alpha %>%
+#                mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
+#                       # hv = Huber.value*1e4,
+#                       lk.scale =log(K.scale),
+#                       Height.max..m. = log(Height.max..m.),
+#                       l_b = log(b),
+#                       l_b_opt = log(b_opt),
+#                       l_p50_opt = log(-p50_opt),
+#                       D = D*101325/1000,
+#                       jmax_ww = log(jmax_ww),
+#                       Ta = T) %>% 
+#         dplyr::select(alpha,SLA..cm2.g.1.,jmax_ww, KL,ca,Ta,
+#                       Iabs_growth,D, l_b , lk.scale,P50,
+#                       hv, l_b_opt, l_p50_opt,
+#                       Height.max..m.))
 
 
 ## FINAL alpha-traits ANALYSIS ##
@@ -729,7 +729,7 @@ g_eff5 <- ggplot(x, aes(x = KL, y = fit)) +
               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
   mytheme3()+
   ylab(expression(alpha))+
-  xlab(expression(K[L]~"[mol "~m^{-1}~MPa^{-1}~s^{-1}~"]"))
+  xlab(expression(K[L]~"[log(mol "~m^{-1}~MPa^{-1}~s^{-1}~")]"))
 
 eff<-effect("jmax_ww", partial.residuals=T, alpha_mod)
 # plot(eff)
@@ -754,7 +754,7 @@ alpha_mod_plot <- ggarrange(g_eff2,g_eff6,g_eff5,g_eff1,#g_eff3,#g_eff5,
           ncol=4, nrow = 1)
 
 # ggsave("PLOTS/alpha_model.png", plot = alpha_mod_plot, width = 30, height = 20, units = "cm")
-ggsave("PLOTS/alpha_model_4.png", plot = alpha_mod_plot, width = 40, height = 8, units = "cm")
+ggsave("PLOTS/alpha_model_4.png", plot = alpha_mod_plot, width = 40, height = 10, units = "cm")
 
 
 
@@ -842,7 +842,8 @@ df_a <- df_kmaxww_a %>%
                                     "CGAIN2",
                                     "CGAIN",
                                     # "CMAX",
-                                    "PHYDRO")))%>% 
+                                    "PHYDRO")),
+         calibration_type = as_factor(calibration_type))%>% 
   mutate(diff_a = a_pred - A) %>% 
   summarise(n_dist = n(),
             r = cor(A, a_pred, use = "pairwise.complete.obs"),
@@ -856,7 +857,11 @@ df_a %>%
   summarise(r_median = median(r),
             bias_median = median(bias),
             rmse_median = median(rmse),
-            beta_median = median(beta))
+            beta_median = median(beta),
+            r_mean = mean(r),
+            bias_mean = mean(bias),
+            rmse_mean = mean(rmse),
+            beta_mean = mean(beta))->foo
 
 r_a <- lmerTest::lmer(r~scheme*calibration_type + (1|source)+ (1|Species), data = df_a, weights = log(n_dist)
                       )
@@ -864,13 +869,15 @@ r_a <- lmerTest::lmer(r~scheme*calibration_type + (1|source)+ (1|Species), data 
 r_a_p <- pairs(emmeans(r_a, "calibration_type",by='scheme'), simple = "each")$`simple contrasts for calibration_type`%>% 
   broom::tidy() %>% 
   separate(contrast,into = c('calibration_type',"contrast"),sep = " - ") %>% 
-  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Mean α"~ "Not acclimated",
+  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Average α"~ "Not acclimated",
                                       TRUE~calibration_type),
          adj.p.value = case_when(calibration_type == "Not acclimated"~1,
-                                 TRUE~adj.p.value)) %>% 
+                                 TRUE~adj.p.value),
+         calibration_type = as_factor(calibration_type)) %>% 
   dplyr::select(scheme, calibration_type,adj.p.value)
 r_a <- emmeans(r_a,~calibration_type*scheme) %>% 
   broom::tidy(conf.int = TRUE)%>% 
+  mutate(calibration_type = as_factor(calibration_type)) %>% 
   left_join(r_a_p) %>% 
   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
                          TRUE~"YES")) 
@@ -889,8 +896,8 @@ p1 <- df_a %>%
   theme(legend.title = element_blank())+
   xlab("")+
   ylab(expression(A[net]~" r Pearson's correlation"))+
-  scale_color_manual(values = c("#A6611A","#1AA661","#611AA6"))+
-  scale_fill_manual(values =c("#C9751F","#1FC975","#751FC9"))+
+  scale_color_manual(values = c("#FFC20A","#0C7BDC","#A2B56F"))+
+  scale_fill_manual(values =c("#FFC20A","#0C7BDC","#A2B56F"))+
   scale_shape_manual(values = c(1, 19))+
   guides(colour = guide_legend(override.aes = list(size=4)))+
   coord_flip()
@@ -905,13 +912,15 @@ test(emmeans::emmeans(beta_a, "calibration_type",by='scheme'),1)
 beta_a_p <- pairs(emmeans(beta_a, "calibration_type",by='scheme'), simple = "each")$`simple contrasts for calibration_type`%>% 
   broom::tidy() %>% 
   separate(contrast,into = c('calibration_type',"contrast"),sep = " - ") %>% 
-  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Mean α"~ "Not acclimated",
+  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Average α"~ "Not acclimated",
                                       TRUE~calibration_type),
          adj.p.value = case_when(calibration_type == "Not acclimated"~1,
-                                 TRUE~adj.p.value)) %>% 
+                                 TRUE~adj.p.value)) %>%
+  mutate(calibration_type = as_factor(calibration_type)) %>%
   dplyr::select(scheme, calibration_type,adj.p.value)
 beta_a <- emmeans(beta_a,~calibration_type*scheme) %>% 
   broom::tidy(conf.int = TRUE)%>% 
+  mutate(calibration_type = as_factor(calibration_type)) %>%
   left_join(beta_a_p) %>% 
   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
                          TRUE~"YES")) 
@@ -932,9 +941,9 @@ p2 <- df_a%>%
   theme(legend.title = element_blank())+
   xlab("")+
   # ylim(-10,30)+
-  ylab(expression(A[net]~m))+
-  scale_color_manual(values = c("#A6611A","#1AA661","#611AA6"))+
-  scale_fill_manual(values =c("#C9751F","#1FC975","#751FC9"))+
+  ylab(expression(A[net]~italic(m)))+
+  scale_color_manual(values = c("#FFC20A","#0C7BDC","#A2B56F"))+
+  scale_fill_manual(values =c("#FFC20A","#0C7BDC","#A2B56F"))+
   scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
   guides(colour = guide_legend(override.aes = list(size=4)))+
   coord_flip()+
@@ -945,22 +954,24 @@ p2 <- df_a%>%
 ##RMSE
 rmse_a <- lmerTest::lmer(rmse~scheme*calibration_type + (1|source)+ (1|Species), data = df_a, weights = log(n_dist)
                          )
-# emmeans(rmse_a, "acclimation",by='scheme')
+# emmeans(rmse_a, "calibration_type",by='scheme')
 model_rmse <- emmeans::emmeans(rmse_a, "scheme",by='calibration_type')
-# cld(object = model_rmse,
-#     adjust = "sidak",
-#     Letters = letters,
-#     alpha = 0.05)
+cld(object = model_rmse,
+    adjust = "sidak",
+    Letters = letters,
+    alpha = 0.05) %>% broom::tidy()
 rmse_a_p <- pairs(emmeans(rmse_a, "calibration_type",by='scheme'), simple = "each")$`simple contrasts for calibration_type`%>% 
   broom::tidy() %>% 
   separate(contrast,into = c('calibration_type',"contrast"),sep = " - ") %>% 
-  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Mean α"~ "Not acclimated",
+  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Average α"~ "Not acclimated",
                                       TRUE~calibration_type),
          adj.p.value = case_when(calibration_type == "Not acclimated"~1,
                                  TRUE~adj.p.value)) %>% 
+  mutate(calibration_type = as_factor(calibration_type)) %>%
   dplyr::select(scheme, calibration_type,adj.p.value)
 rmse_a <- emmeans(rmse_a,~calibration_type*scheme) %>% 
   broom::tidy(conf.int = TRUE)%>% 
+  mutate(calibration_type = as_factor(calibration_type)) %>%
   left_join(rmse_a_p) %>% 
   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
                          TRUE~"YES")) 
@@ -983,24 +994,27 @@ p3 <- df_a %>%
   theme(legend.title = element_blank())+
   xlab("")+
   ylab(expression(A[net]~" RMSE  ("*mu*"mol m"^-2~"s"^-1*")"))+
-  scale_color_manual(values = c("#A6611A","#1AA661","#611AA6"))+
-  scale_fill_manual(values =c("#C9751F","#1FC975","#751FC9"))+
+  scale_color_manual(values = c("#FFC20A","#0C7BDC","#A2B56F"))+
+  scale_fill_manual(values =c("#FFC20A","#0C7BDC","#A2B56F"))+
   scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
   guides(colour = guide_legend(override.aes = list(size=4)))+
   coord_flip()
 
 bias_a <- lmerTest::lmer(bias~scheme*calibration_type + (1|source)+ (1|Species), data = df_a, weights = log(n_dist)
                          )
+test(emmeans(bias_a, "calibration_type",by='scheme'))
 bias_a_p <- pairs(emmeans(bias_a, "calibration_type",by='scheme'), simple = "each")$`simple contrasts for calibration_type`%>% 
   broom::tidy() %>% 
   separate(contrast,into = c('calibration_type',"contrast"),sep = " - ") %>% 
-  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Mean α"~ "Not acclimated",
+  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Average α"~ "Not acclimated",
                                       TRUE~calibration_type),
          adj.p.value = case_when(calibration_type == "Not acclimated"~1,
                                  TRUE~adj.p.value)) %>% 
+  mutate(calibration_type = as_factor(calibration_type)) %>%
   dplyr::select(scheme, calibration_type,adj.p.value)
 bias_a <- emmeans(bias_a,~calibration_type*scheme) %>% 
   broom::tidy(conf.int = TRUE)%>% 
+  mutate(calibration_type = as_factor(calibration_type)) %>%
   left_join(bias_a_p) %>% 
   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
                          TRUE~"YES")) 
@@ -1019,8 +1033,8 @@ p4 <- df_a %>%
   theme(legend.title = element_blank())+
   xlab("")+
   ylab(expression(A[net]~" Bias"))+
-  scale_color_manual(values = c("#A6611A","#1AA661","#611AA6"))+
-  scale_fill_manual(values =c("#C9751F","#1FC975","#751FC9"))+
+  scale_color_manual(values = c("#FFC20A","#0C7BDC","#A2B56F"))+
+  scale_fill_manual(values =c("#FFC20A","#0C7BDC","#A2B56F"))+
   scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
   guides(colour = guide_legend(override.aes = list(size=4)))+
   coord_flip()
@@ -1048,7 +1062,7 @@ ggsave("PLOTS/A_metrics.png", width = 20, height = 14, units = "cm")
 #   theme(legend.title = element_blank(),
 #         legend.position="top",
 #         plot.title = element_text(vjust = -10))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_color_manual(values = c("#FFC20A","#018571"))+
 #   xlab(expression(textstyle("Predicted A")))+
 #   ylab(expression(textstyle("Observed A")))+
 #   ggtitle(expression(atop("PROFITMAX Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
@@ -1064,7 +1078,7 @@ ggsave("PLOTS/A_metrics.png", width = 20, height = 14, units = "cm")
 #   theme(legend.title = element_blank(),
 #         legend.position="top",
 #         plot.title = element_text(vjust = -10))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_color_manual(values = c("#FFC20A","#018571"))+
 #   xlab(expression(textstyle("Predicted A")))+
 #   ylab(expression(textstyle("Observed A")))+
 #   ggtitle(expression(atop("PROFITMAX2 Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
@@ -1080,7 +1094,7 @@ ggsave("PLOTS/A_metrics.png", width = 20, height = 14, units = "cm")
 #   theme(legend.title = element_blank(),
 #         legend.position="top",
 #         plot.title = element_text(vjust = -10))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_color_manual(values = c("#FFC20A","#018571"))+
 #   xlab(expression(textstyle("Predicted A")))+
 #   ylab(expression(textstyle("Observed A")))+
 #   ggtitle(expression(atop("SOX Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
@@ -1096,7 +1110,7 @@ ggsave("PLOTS/A_metrics.png", width = 20, height = 14, units = "cm")
 #   theme(legend.title = element_blank(),
 #         legend.position="top",
 #         plot.title = element_text(vjust = -10))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_color_manual(values = c("#FFC20A","#018571"))+
 #   xlab(expression(textstyle("Predicted A")))+
 #   ylab(expression(textstyle("Observed A")))+
 #   ggtitle(expression(atop("PHYDRO Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
@@ -1113,7 +1127,7 @@ ggsave("PLOTS/A_metrics.png", width = 20, height = 14, units = "cm")
 #   theme(legend.title = element_blank(),
 #         legend.position="top",
 #         plot.title = element_text(vjust = -10))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_color_manual(values = c("#FFC20A","#018571"))+
 #   xlab(expression(textstyle("Predicted A")))+
 #   ylab(expression(textstyle("Observed A")))+
 #   ggtitle(expression(atop("CMAX Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
@@ -1130,7 +1144,7 @@ ggsave("PLOTS/A_metrics.png", width = 20, height = 14, units = "cm")
 #   theme(legend.title = element_blank(),
 #         legend.position="top",
 #         plot.title = element_text(vjust = -10))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_color_manual(values = c("#FFC20A","#018571"))+
 #   xlab(expression(textstyle("Predicted A")))+
 #   ylab(expression(textstyle("Observed A")))+
 #   ggtitle(expression(atop("CMAX Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
@@ -1152,6 +1166,7 @@ df_g <- df_kmaxww_a %>%
                                     "CGAIN",
                                     # "CMAX",
                                     "PHYDRO")))%>% 
+  mutate(calibration_type = as_factor(calibration_type)) %>%
   mutate(diff_g =  g_pred-gC) %>% 
   summarise(n_dist = n(),
             r = cor(gC, g_pred, use = "pairwise.complete.obs"),
@@ -1174,13 +1189,15 @@ r_a <- lmerTest::lmer(r~scheme*calibration_type + (1|source)+ (1|Species), data 
 r_a_p <- pairs(emmeans(r_a, "calibration_type",by='scheme'), simple = "each")$`simple contrasts for calibration_type`%>% 
   broom::tidy() %>% 
   separate(contrast,into = c('calibration_type',"contrast"),sep = " - ") %>% 
-  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Mean α"~ "Not acclimated",
+  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Average α"~ "Not acclimated",
                                       TRUE~calibration_type),
          adj.p.value = case_when(calibration_type == "Not acclimated"~1,
-                                 TRUE~adj.p.value)) %>% 
+                                 TRUE~adj.p.value),
+         calibration_type = as_factor(calibration_type)) %>% 
   dplyr::select(scheme, calibration_type,adj.p.value)
 r_a <- emmeans(r_a,~calibration_type*scheme) %>% 
   broom::tidy(conf.int = TRUE)%>% 
+  mutate(calibration_type = as_factor(calibration_type)) %>%
   left_join(r_a_p) %>% 
   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
                          TRUE~"YES")) 
@@ -1199,8 +1216,8 @@ p1 <- df_g %>%
   theme(legend.title = element_blank())+
   xlab("")+
   ylab(expression(g[s]~" r Pearson's correlation"))+
-  scale_color_manual(values = c("#A6611A","#1AA661","#611AA6"))+
-  scale_fill_manual(values =c("#C9751F","#1FC975","#751FC9"))+
+  scale_color_manual(values = c("#FFC20A","#0C7BDC","#A2B56F"))+
+  scale_fill_manual(values =c("#FFC20A","#0C7BDC","#A2B56F"))+
   scale_shape_manual(values = c(1, 19))+
   guides(colour = guide_legend(override.aes = list(size=4)))+
   coord_flip()
@@ -1215,13 +1232,15 @@ test(emmeans::emmeans(beta_a, "calibration_type",by='scheme'),1)
 beta_a_p <- pairs(emmeans(beta_a, "calibration_type",by='scheme'), simple = "each")$`simple contrasts for calibration_type`%>% 
   broom::tidy() %>% 
   separate(contrast,into = c('calibration_type',"contrast"),sep = " - ") %>% 
-  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Mean α"~ "Not acclimated",
+  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Average α"~ "Not acclimated",
                                       TRUE~calibration_type),
          adj.p.value = case_when(calibration_type == "Not acclimated"~1,
                                  TRUE~adj.p.value)) %>% 
+  mutate(calibration_type = as_factor(calibration_type)) %>%
   dplyr::select(scheme, calibration_type,adj.p.value)
 beta_a <- emmeans(beta_a,~calibration_type*scheme) %>% 
-  broom::tidy(conf.int = TRUE)%>% 
+  broom::tidy(conf.int = TRUE)%>%
+  mutate(calibration_type = as_factor(calibration_type)) %>%
   left_join(beta_a_p) %>% 
   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
                          TRUE~"YES")) 
@@ -1242,9 +1261,9 @@ p2 <- df_g%>%
   theme(legend.title = element_blank())+
   xlab("")+
   # ylim(-10,30)+
-  ylab(expression(g[s]~m))+
-  scale_color_manual(values = c("#A6611A","#1AA661","#611AA6"))+
-  scale_fill_manual(values =c("#C9751F","#1FC975","#751FC9"))+
+  ylab(expression(g[s]~italic(m)))+
+  scale_color_manual(values = c("#FFC20A","#0C7BDC","#A2B56F"))+
+  scale_fill_manual(values =c("#FFC20A","#0C7BDC","#A2B56F"))+
   scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
   guides(colour = guide_legend(override.aes = list(size=4)))+
   coord_flip()+
@@ -1264,13 +1283,15 @@ model_rmse <- emmeans::emmeans(rmse_a, "scheme",by='calibration_type')
 rmse_a_p <- pairs(emmeans(rmse_a, "calibration_type",by='scheme'), simple = "each")$`simple contrasts for calibration_type`%>% 
   broom::tidy() %>% 
   separate(contrast,into = c('calibration_type',"contrast"),sep = " - ") %>% 
-  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Mean α"~ "Not acclimated",
+  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Average α"~ "Not acclimated",
                                       TRUE~calibration_type),
          adj.p.value = case_when(calibration_type == "Not acclimated"~1,
                                  TRUE~adj.p.value)) %>% 
+  mutate(calibration_type = as_factor(calibration_type)) %>%
   dplyr::select(scheme, calibration_type,adj.p.value)
 rmse_a <- emmeans(rmse_a,~calibration_type*scheme) %>% 
   broom::tidy(conf.int = TRUE)%>% 
+  mutate(calibration_type = as_factor(calibration_type)) %>%
   left_join(rmse_a_p) %>% 
   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
                          TRUE~"YES")) 
@@ -1293,8 +1314,8 @@ p3 <- df_g %>%
   theme(legend.title = element_blank())+
   xlab("")+
   ylab(expression(g[s]~" RMSE  ("*mu*"mol m"^-2~"s"^-1*")"))+
-  scale_color_manual(values = c("#A6611A","#1AA661","#611AA6"))+
-  scale_fill_manual(values =c("#C9751F","#1FC975","#751FC9"))+
+  scale_color_manual(values = c("#FFC20A","#0C7BDC","#A2B56F"))+
+  scale_fill_manual(values =c("#FFC20A","#0C7BDC","#A2B56F"))+
   scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
   guides(colour = guide_legend(override.aes = list(size=4)))+
   coord_flip()
@@ -1304,13 +1325,15 @@ bias_a <- lmerTest::lmer(bias~scheme*calibration_type + (1|source)+ (1|Species),
 bias_a_p <- pairs(emmeans(bias_a, "calibration_type",by='scheme'), simple = "each")$`simple contrasts for calibration_type`%>% 
   broom::tidy() %>% 
   separate(contrast,into = c('calibration_type',"contrast"),sep = " - ") %>% 
-  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Mean α"~ "Not acclimated",
+  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Average α"~ "Not acclimated",
                                       TRUE~calibration_type),
          adj.p.value = case_when(calibration_type == "Not acclimated"~1,
                                  TRUE~adj.p.value)) %>% 
+  mutate(calibration_type = as_factor(calibration_type)) %>%
   dplyr::select(scheme, calibration_type,adj.p.value)
 bias_a <- emmeans(bias_a,~calibration_type*scheme) %>% 
   broom::tidy(conf.int = TRUE)%>% 
+  mutate(calibration_type = as_factor(calibration_type)) %>%
   left_join(bias_a_p) %>% 
   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
                          TRUE~"YES")) 
@@ -1329,8 +1352,8 @@ p4 <- df_g %>%
   theme(legend.title = element_blank())+
   xlab("")+
   ylab(expression(g[s]~" Bias"))+
-  scale_color_manual(values = c("#A6611A","#1AA661","#611AA6"))+
-  scale_fill_manual(values =c("#C9751F","#1FC975","#751FC9"))+
+  scale_color_manual(values = c("#FFC20A","#0C7BDC","#A2B56F"))+
+  scale_fill_manual(values =c("#FFC20A","#0C7BDC","#A2B56F"))+
   scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
   guides(colour = guide_legend(override.aes = list(size=4)))+
   coord_flip()
@@ -1354,7 +1377,7 @@ ggsave("PLOTS/gs_metrics.png", width = 20, height = 14, units = "cm")
 #   theme(legend.title = element_blank(),
 #         legend.position="top",
 #         plot.title = element_text(vjust = -10))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_color_manual(values = c("#FFC20A","#018571"))+
 #   xlab(expression("Predicted g"[s]))+
 #   ylab(expression("Observed g"[s]))+
 #   ggtitle(expression(atop("Stomatal conductance,","g"[s]~"(mol m"^-2~"s"^-1*")")))
@@ -1370,7 +1393,7 @@ ggsave("PLOTS/gs_metrics.png", width = 20, height = 14, units = "cm")
 #   theme(legend.title = element_blank(),
 #         legend.position="top",
 #         plot.title = element_text(vjust = -10))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_color_manual(values = c("#FFC20A","#018571"))+
 #   xlab(expression("Predicted g"[s]))+
 #   ylab(expression("Observed g"[s]))+
 #   ggtitle(expression(atop(" PROFITMAX2 Stomatal conductance,","g"[s]~"(mol m"^-2~"s"^-1*")")))
@@ -1386,7 +1409,7 @@ ggsave("PLOTS/gs_metrics.png", width = 20, height = 14, units = "cm")
 #   theme(legend.title = element_blank(),
 #         legend.position="top",
 #         plot.title = element_text(vjust = -10))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_color_manual(values = c("#FFC20A","#018571"))+
 #   xlab(expression("Predicted g"[s]))+
 #   ylab(expression("Observed g"[s]))+
 #   ggtitle(expression(atop("SOX Stomatal conductance,","g"[s]~"(mol m"^-2~"s"^-1*")")))
@@ -1402,7 +1425,7 @@ ggsave("PLOTS/gs_metrics.png", width = 20, height = 14, units = "cm")
 #   theme(legend.title = element_blank(),
 #         legend.position="top",
 #         plot.title = element_text(vjust = -10))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_color_manual(values = c("#FFC20A","#018571"))+
 #   xlab(expression("Predicted g"[s]))+
 #   ylab(expression("Observed g"[s]))+
 #   ggtitle(expression(atop("PHYDRO Stomatal conductance,","g"[s]~"(mol m"^-2~"s"^-1*")")))
@@ -1419,7 +1442,7 @@ ggsave("PLOTS/gs_metrics.png", width = 20, height = 14, units = "cm")
 #   theme(legend.title = element_blank(),
 #         legend.position="top",
 #         plot.title = element_text(vjust = -10))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_color_manual(values = c("#FFC20A","#018571"))+
 #   xlab(expression("Predicted g"[s]))+
 #   ylab(expression("Observed g"[s]))+
 #   ggtitle(expression(atop("CGAIN Stomatal conductance,","g"[s]~"(mol m"^-2~"s"^-1*")")))
@@ -1435,7 +1458,7 @@ ggsave("PLOTS/gs_metrics.png", width = 20, height = 14, units = "cm")
 #   theme(legend.title = element_blank(),
 #         legend.position="top",
 #         plot.title = element_text(vjust = -10))+
-#   scale_color_manual(values = c("#A6611A","#018571"))+
+#   scale_color_manual(values = c("#FFC20A","#018571"))+
 #   xlab(expression("Predicted g"[s]))+
 #   ylab(expression("Observed g"[s]))+
 #   ggtitle(expression(atop("CMAX Stomatal conductance,","g"[s]~"(mol m"^-2~"s"^-1*")")))
@@ -1462,7 +1485,8 @@ partition_full <- df_kmaxww_a  %>%
   ylab(expression(R^2))+
   mytheme7()+
   ylim(0,1)+
-  scale_fill_manual(values = c("#d2d2d2","#ffae49","#44b7c2","#024b7a"))+
+  # scale_fill_manual(values = c("#d2d2d2","#ffae49","#44b7c2","#024b7a"))+
+  scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
   theme(legend.title = element_blank())
 
 partition_dry <- df_kmaxww_a %>% 
@@ -1477,13 +1501,13 @@ partition_dry <- df_kmaxww_a %>%
   pivot_longer(2:5) %>% 
   mutate(Partition = factor(name,
                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
-                            labels = c("Residuals","Species", "Non-stomatal","Stomatal"))) %>%
+                            labels = c("Residuals","Species", "Non-stomatal","Stomatal"))) %>% 
   ggplot()+
   geom_col(aes(x = `Stomatal model`,y=value,fill=Partition))+
   ylab(expression(R^2~"dry conditions"))+
   mytheme7()+
   ylim(0,1)+
-  scale_fill_manual(values = c("#d2d2d2","#ffae49","#44b7c2","#024b7a"))+
+  scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
   theme(legend.title = element_blank())
 
 
@@ -1528,7 +1552,8 @@ ggpubr::ggballoonplot(
   # mytheme2()
 x = "scheme", y = "Species",
 size = "r", fill = "r") +
-  scale_fill_viridis_c(name = "r Pearson's") +
+  # scale_fill_viridis_c(name = "r Pearson's") +
+  scale_fill_gradient(low = '#FFC20A', high = '#0C7BDC', name = "r Pearson's")+
   guides(size = "none")+scale_y_discrete(limits=rev)+
   theme(axis.text.y = element_text(face = "italic"))
     
@@ -1604,6 +1629,8 @@ df_kmax_alpha %>%
 
 
 
+
+
 #### Supplementary row data ####
 df_kmaxww_a %>%
   dplyr::filter(scheme == "PMAX", calibration_type == "Calibrated α") %>% 
@@ -1672,7 +1699,7 @@ df_kmax_alpha %>%
   ungroup() %>% 
   rename(`Stomatal model`=scheme) %>%
   group_by(`Stomatal model`) %>% 
-  do(get_partition_g(.)) %>% 
+  do(get_partition_g_accl(.)) %>% 
   mutate(total_g_r2 = stomatal_r2+non_stomatal_r2)
 
 
@@ -1712,33 +1739,316 @@ data_opt <- df_param_kmax_alpha %>%
                            `K[max]~"(mol"~m^{-2}~s^{-1}~MPa^{-1}*")"`="Kmax",
                            `psi[50]~"(MPa)"`='p50_opt')) 
 
-  ggplot()+
+ggplot()+
   geom_density(data=actual_dist,aes(x=value), linewidth = 1,alpha=0.5)+
   geom_density(data=data_opt,aes(x =value, color = acclimation),alpha=0.5,show.legend = TRUE, linewidth = 1)+
   ggh4x::facet_grid2(c("scheme","name"), 
               labeller = label_parsed, 
               scales = "free", 
               independent = "all")+
-  scale_color_manual(values = c("#A6611A","#018571"))+
+  scale_color_manual(values = c("#FFC20A","#018571"))+
   mytheme5()+
   theme(legend.position="bottom",
         axis.title.x = element_blank(),
         legend.title = element_blank())
   
   
-  ggsave("PLOTS/param_distri.png", width = 30, height = 30, units = "cm")
+ggsave("PLOTS/param_distri.png", width = 30, height = 30, units = "cm")
   
   
+
+#### Optimal parameters boxplots ####
+
+  
+df_param_kmaxww <- df_kmaxww_a %>% 
+    filter(calibration_type == "Calibrated α",
+           !is.na(Iabs_growth)) %>% 
+    rowwise() %>%
+    mutate(Ta = mean(T),
+           viscosity_water = calc_viscosity_h2o(Ta, 101325),
+           density_water = calc_density_h2o(Ta,101325),
+           Kmax = K.scale*1e-16/viscosity_water,
+           Kmax = Kmax * density_water * 55.5,
+           Kmax = Kmax * 1e6,
+           KL = KL..kg.m.1.MPa.1.s.1.*55.5) %>%
+    group_by(scheme,Species,source) %>%
+    dplyr::select(n_dist,Kmax,
+                  gamma,alpha, KL,
+                  P50, b) %>% 
+    summarise_all(mean)
+
+df_param_kmax_no_alpha_comp <- df_param_kmax_no_alpha %>% 
+  filter(!is.na(Iabs_growth)) %>% 
+  rowwise() %>% 
+  mutate(Ta = mean(T),
+         viscosity_water = calc_viscosity_h2o(Ta, 101325),
+         density_water = calc_density_h2o(Ta,101325),
+         Kmax = K.scale*1e-16/viscosity_water,
+         Kmax = Kmax * density_water * 55.5,
+         Kmax = Kmax * 1e6,
+         KL = KL..kg.m.1.MPa.1.s.1.*55.5) %>%  
+  dplyr::select(n_dist,Kmax, p50_opt, b_opt,
+                gamma,alpha, KL,
+                P50, b,source,scheme,Species) %>% 
+  rename(Kmax.cal3 = Kmax,
+         p50_opt.cal3 = p50_opt,
+         b_opt.cal3 = b_opt)
+
+df_param_compar <- df_param_kmax_alpha %>% 
+  filter(!is.na(Iabs_growth)) %>% 
+  rowwise() %>% 
+  mutate(Ta = mean(T),
+         viscosity_water = calc_viscosity_h2o(Ta, 101325),
+         density_water = calc_density_h2o(Ta,101325),
+         Kmax = K.scale*1e-16/viscosity_water,
+         Kmax = Kmax * density_water * 55.5,
+         Kmax = Kmax * 1e6,
+         KL = KL..kg.m.1.MPa.1.s.1.*55.5) %>%  
+  dplyr::select(n_dist,Kmax, p50_opt, b_opt,
+                gamma,alpha, KL,
+                P50, b,source,scheme,Species) %>% 
+  left_join(df_param_kmaxww, by= c('scheme','Species','source', 'n_dist','P50','b','KL'),suffix = c(".cal1",".cal2")) %>% 
+  left_join(df_param_kmax_no_alpha_comp, by= c('scheme','Species','source', 'n_dist','P50','b','KL'))
+
+  
+
+# df_param_compar %>% 
+#   ggplot(aes(log(Kmax.cal1),log(KL), color = scheme))+
+#   geom_point()+
+#   geom_abline(intercept=0,slope=1)+
+#   geom_smooth(method="lm")
+library(ggpubr)
+library(rstatix)
+#KMAX
+df_foo <- df_param_compar %>%
+  pivot_longer(cols = c(Kmax.cal1,Kmax.cal3,Kmax.cal2,KL), names_to = "cal_type") %>%
+  dplyr::select(scheme, value, cal_type,Species) %>%
+  rowwise() %>% 
+  mutate(scheme = as.character(scheme),
+         scheme = case_when(cal_type %in% "KL" ~ "Species",
+                            TRUE ~ scheme),
+         # scheme = as.factor(scheme),
+         cal_type = as.factor(cal_type),
+         cal_type = fct_recode(cal_type,
+             "Species"="KL",
+             "Calibration 1"='Kmax.cal1',
+             "Calibration 1 not acclimated"='Kmax.cal3',
+             "Calibration 2 and 3"='Kmax.cal2'
+             ),
+         log_value = log(value)) %>%
+  dplyr::distinct()
+  
+stat.test <- df_foo %>%
+  filter(scheme != "Species") %>% 
+  group_by(scheme) %>%
+  t_test(log_value ~ cal_type) %>%
+  adjust_pvalue(method = "bonferroni") %>%
+  add_significance("p.adj")%>%
+  add_xy_position(x = "scheme", dodge = 0.9)
+stat.test <- stat.test %>% rbind(data.frame('scheme' = "Species",
+                                 '.y.' = 'log_value',
+                                 'group1' = "Species",
+                                 'group2' = "Species",
+                                 'n1' = 39,
+                                 'n2' = 39,
+                                 'statistic' = NA,
+                                 'df' = NA,
+                                 'p' = 1,
+                                 'p.adj' = 1,
+                                 'p.adj.signif' = "ns",
+                                 'y.position' = 5.5,
+                                 'groups' = "<chr>",
+                                 'x' = 7,
+                                 'xmin' = NA,
+                                 'xmax' = NA))
+
+p1 <- df_foo %>% 
+  ggplot(aes(scheme,log(value), color = cal_type))+
+  geom_violin(width = 1,position=position_dodge(.9))+
+  geom_boxplot(width = 0.3,position=position_dodge(.9))+
+  # geom_signif(comparisons=list(c("CGAIN", "PHYDRO","PMAX","PMAX2","SOX","SOX2")), 
+  #             annotations="***",
+  #             y_position = 0, tip_length = 0, vjust=0.4)+
+  ggpubr:: stat_pvalue_manual(stat.test,  label = "{p.adj.signif}", 
+                              tip.length = 0, hide.ns = FALSE)+
+  mytheme5()+
+  ylab(expression("log("*K[max]*")"~"[log(mol"~m^{-2}~s^{-1}~MPa^{-1}*")]"))+
+  xlab("Stomatal model")+
+  scale_color_manual(values = c("#FFC20A","#A2B56F","#0C7BDC","#AD9E77"))+
+  theme(legend.position="top")+
+  guides(color=guide_legend(title=""))+
+  NULL
+
+  
+
+  
+#P50
+df_foo <- df_param_compar %>%
+    pivot_longer(cols = c(P50,p50_opt,p50_opt.cal3), names_to = "cal_type") %>%
+    dplyr::select(scheme, value, cal_type,Species,source) %>%
+    rowwise() %>% 
+    mutate(scheme = as.character(scheme),
+           scheme = case_when(cal_type %in% "P50" ~ "Species",
+                              TRUE ~ scheme),
+           # scheme = as.factor(scheme),
+           cal_type = as.factor(cal_type),
+           cal_type = fct_recode(cal_type,
+                                 "Species"="P50",
+                                 "Calibration 1"='p50_opt',
+                                 "Calibration 1 not acclimated"='p50_opt.cal3'),
+           value = -value
+           ) %>%
+    dplyr::distinct() %>% 
+  ungroup()
+  
+stat.test <- df_foo %>%
+  filter(scheme != "Species") %>% 
+  group_by(scheme) %>%
+  t_test(value ~ cal_type) %>%
+  adjust_pvalue(method = "bonferroni") %>%
+  add_significance("p.adj")%>%
+  add_xy_position(x = "scheme", dodge = 0.9)
+stat.test <- stat.test %>% rbind(data.frame('scheme' = "Species",
+                                            '.y.' = 'log_value',
+                                            'group1' = "Species",
+                                            'group2' = "Species",
+                                            'n1' = 39,
+                                            'n2' = 39,
+                                            'statistic' = NA,
+                                            'df' = NA,
+                                            'p' = 1,
+                                            'p.adj' = 1,
+                                            'p.adj.signif' = "ns",
+                                            'y.position' = 5.5,
+                                            'groups' = "<chr>",
+                                            'x' = 7,
+                                            'xmin' = NA,
+                                            'xmax' = NA))
+
+  
+p2 <- df_foo %>% 
+    ggplot(aes(scheme, value, color = cal_type))+
+    geom_violin(width = 1,position=position_dodge(.9))+
+    geom_boxplot(width = 0.3,position=position_dodge(.9))+
+    # ggpubr::stat_pvalue_manual(stat.test,  label = "{p.adj.signif}",
+    #                             tip.length = 0, hide.ns = TRUE)+
+    ggpubr:: stat_pvalue_manual(stat.test,  label = "{p.adj.signif}", 
+                              tip.length = 0, hide.ns = FALSE)+
+    mytheme5()+
+    ylab(expression(psi[50]~"[-"*MPa*"]"))+
+    xlab("Stomatal model")+
+    scale_color_manual(values = c("#AD9E77","#FFC20A","#A2B56F"))+
+    theme(legend.position="top")+
+    guides(color=guide_legend(title=""))+
+  NULL
+
+  
+#b
+df_foo <- df_param_compar %>%
+  pivot_longer(cols = c(b,b_opt,b_opt.cal3), names_to = "cal_type") %>%
+  dplyr::select(scheme, value, cal_type,Species,source) %>%
+  rowwise() %>% 
+  mutate(scheme = as.character(scheme),
+         scheme = case_when(cal_type %in% "b" ~ "Species",
+                            TRUE ~ scheme),
+         # scheme = as.factor(scheme),
+         cal_type = as.factor(cal_type),
+         cal_type = fct_recode(cal_type,
+                               "Species"="b",
+                               "Calibration 1"='b_opt',
+                               "Calibration 1 not acclimated"='b_opt.cal3'),
+         value = -value
+  ) %>%
+  dplyr::distinct() %>% 
+  ungroup()
+  
+stat.test <- df_foo %>%
+  filter(scheme != "Species") %>% 
+  group_by(scheme) %>%
+  t_test(value ~ cal_type) %>%
+  adjust_pvalue(method = "bonferroni") %>%
+  add_significance("p.adj")%>%
+  add_xy_position(x = "scheme", dodge = 0.9)
+stat.test <- stat.test %>% rbind(data.frame('scheme' = "Species",
+                                            '.y.' = 'log_value',
+                                            'group1' = "Species",
+                                            'group2' = "Species",
+                                            'n1' = 39,
+                                            'n2' = 39,
+                                            'statistic' = NA,
+                                            'df' = NA,
+                                            'p' = 1,
+                                            'p.adj' = 1,
+                                            'p.adj.signif' = "ns",
+                                            'y.position' = 5.5,
+                                            'groups' = "<chr>",
+                                            'x' = 7,
+                                            'xmin' = NA,
+                                            'xmax' = NA))
   
   
+p3 <- df_foo %>% 
+    ggplot(aes(scheme, value, color = cal_type))+
+    geom_violin(width = 1,position=position_dodge(.9))+
+    geom_boxplot(width = 0.3,position=position_dodge(.9))+
+    ggpubr::stat_pvalue_manual(stat.test,  label = "{p.adj.signif}", y.position = 0,
+                              tip.length = 0, hide.ns = FALSE)+
+    mytheme5()+
+    ylab(expression("b"))+
+    xlab("Stomatal model")+
+    scale_color_manual(values = c("#AD9E77","#FFC20A","#A2B56F"))+
+    theme(legend.position="top")+
+    guides(color=guide_legend(title=""))+
+    NULL
+ 
   
+#alpha
+  df_foo <- df_param_compar %>%
+    pivot_longer(cols = c(alpha.cal1,alpha.cal2), names_to = "cal_type") %>%
+    dplyr::select(scheme, value, cal_type,Species) %>%
+    rowwise() %>% 
+    mutate(scheme = as.character(scheme),
+           # scheme = as.factor(scheme),
+           cal_type = as.factor(cal_type),
+           cal_type = fct_recode(cal_type,
+                                 "Calibration 1"='alpha.cal1',
+                                 "Calibration 2 and 3"='alpha.cal2'),
+           value = value) %>%
+    dplyr::distinct()
   
+  stat.test <- df_foo %>%
+    group_by(scheme) %>%
+    t_test(value ~ cal_type) %>%
+    adjust_pvalue(method = "bonferroni") %>%
+    add_significance("p.adj")%>%
+    add_xy_position(x = "scheme", dodge = 0.9)
+
   
+p4 <- df_foo %>% 
+    ggplot(aes(scheme,value, color = cal_type))+
+    geom_violin(width = 1,position=position_dodge(.9))+
+    geom_boxplot(width = 0.3,position=position_dodge(.9))+
+    # geom_signif(comparisons=list(c("CGAIN", "PHYDRO","PMAX","PMAX2","SOX","SOX2")), 
+    #             annotations="***",
+    #             y_position = 0, tip_length = 0, vjust=0.4)+
+    ggpubr:: stat_pvalue_manual(stat.test,  label = "{p.adj.signif}", 
+                                tip.length = 0, hide.ns = FALSE)+
+    mytheme5()+
+    ylab(expression(alpha))+
+    xlab("Stomatal model")+
+    scale_color_manual(values = c("#FFC20A","#0C7BDC"))+
+    theme(legend.position="top")+
+    guides(color=guide_legend(title=""))+
+    NULL
+
+ggarrange(p1,p2,p3,p4,
+          align='hv', labels=c('a', 'b','c','d'),
+          common.legend = T,ncol=2, nrow = 2)
   
-  
-  
-  
-  
+
+ggsave("PLOTS/par_comp.png", width = 34, height = 25, units = "cm")
+
+
 #### Example plots ####
   
 par_plant1 = list(
@@ -2098,97 +2408,97 @@ ggsave("PLOTS/example_plot.png", width = 24, height = 30, units = "cm")
 
 #### Actual Jmax estimated Jmax ####
 
-mod_vcmax <- lmer(vcmax_obs~vcmax25_pred*scheme + (vcmax25_pred|Species)+(1|source), data=df_kmax_alpha %>%
-                    filter(!is.na(vcmax_obs), acclimation == "Acclimated"),
-                  weights = log(n_dist)# source !="Galmes et al. (2007)")
-                           )
-       
-summary(mod_vcmax)
-emmeans::emtrends(mod_vcmax, var = "vcmax_pred",specs = "scheme")
-MuMIn::r.squaredGLMM(mod_vcmax)
-
-df_kmax_alpha %>%
-  filter(!is.na(vcmax_obs), acclimation == "Acclimated") %>% 
-  ggplot(aes(vcmax25_pred, vcmax_obs,  color = Species))+
-  geom_point(aes(size=log(n_dist)), alpha=0.7, show.legend = FALSE, shape = 21)+
-  geom_smooth(aes(group=interaction(Species,scheme)), method = "lm", se=FALSE)+
-  geom_abline(slope = 1, intercept = 0, linetype = 3)+
-  facet_wrap(~scheme,nrow = 2)+
-  scale_color_viridis_d()+
-  # ylim(0,80)+
-  mytheme4()+
-  xlab(expression("Predicted"~V[cmax]~"["*mu*"mol"~m^-2~s^-1*"]"))+
-  ylab(expression("Observed"~V[cmax]~"["*mu*"mol"~m^-2~s^-1*"]"))+
-  theme(legend.title = element_blank(),
-        legend.text = element_text(face = "italic"))
-
-
-# mod_jmax <- lmer(jmax_obs~jmax_pred*scheme + (jmax_pred|Species), data=df_kmax_alpha %>%
-#                     filter(!is.na(jmax_obs), acclimation == "Acclimated", source !="Galmes et al. (2007)"))
-# 
-# summary(mod_jmax)
-# emmeans::emtrends(mod_jmax, var = "jmax_pred",specs = "scheme")
-# MuMIn::r.squaredGLMM(mod_jmax)
+# mod_vcmax <- lmer(vcmax_obs~vcmax25_pred*scheme + (vcmax25_pred|Species)+(1|source), data=df_kmax_alpha %>%
+#                     filter(!is.na(vcmax_obs), acclimation == "Acclimated"),
+#                   weights = log(n_dist)# source !="Galmes et al. (2007)")
+#                            )
+#        
+# summary(mod_vcmax)
+# emmeans::emtrends(mod_vcmax, var = "vcmax_pred",specs = "scheme")
+# MuMIn::r.squaredGLMM(mod_vcmax)
 # 
 # df_kmax_alpha %>%
-#   filter(!is.na(jmax_obs), acclimation == "Acclimated", source !="Galmes et al. (2007)") %>% 
-#   ggplot(aes(jmax_obs, jmax_pred, color = Species))+
-#   geom_point()+
-#   geom_smooth(aes(group=interaction(Species,scheme)), method = "lm")+
-#   geom_abline(slope = 1, intercept = 0)+
-#   facet_grid(~scheme)
-
-
-
-
-
-mod_vcmax <- lmer(vcmax_obs~vcmax_pred*scheme + (vcmax_pred|Species)+(1|source), data=df_kmaxww_a %>%
-                    filter(!is.na(vcmax_obs), acclimation == "Acclimated"),
-                  weights = log(n_dist)# source !="Galmes et al. (2007)")
-)
-
-summary(mod_vcmax)
-emmeans::emtrends(mod_vcmax, var = "vcmax_pred",specs = "scheme")
-MuMIn::r.squaredGLMM(mod_vcmax)
-
-df_kmaxww_a %>%
-  filter(!is.na(vcmax_obs), acclimation == "Acclimated") %>% 
-  ggplot(aes(vcmax_pred, vcmax_obs,  color = Species))+
-  geom_point(aes(size=log(n_dist)), alpha=0.7, show.legend = FALSE, shape = 21)+
-  geom_smooth(aes(group=interaction(Species,scheme)), method = "lm", se=FALSE)+
-  geom_abline(slope = 1, intercept = 0, linetype = 3)+
-  facet_wrap(~scheme,nrow = 2)+
-  scale_color_viridis_d()+
-  # ylim(0,80)+
-  mytheme4()+
-  xlab(expression("Predicted"~V[cmax]~"["*mu*"mol"~m^-2~s^-1*"]"))+
-  ylab(expression("Observed"~V[cmax]~"["*mu*"mol"~m^-2~s^-1*"]"))+
-  theme(legend.title = element_blank(),
-        legend.text = element_text(face = "italic"))
-
-
-
-
-mod_vcmax <- lmer(vcmax_obs~vcmax_pred*scheme + (vcmax_pred|Species)+(1|source), data=df_a_fix %>% left_join(df_a_fix_n) %>% 
-                    filter(!is.na(vcmax_obs), acclimation == "Acclimated"),
-                  weights = log(n_dist)# source !="Galmes et al. (2007)")
-)
-
-summary(mod_vcmax)
-emmeans::emtrends(mod_vcmax, var = "vcmax_pred",specs = "scheme")
-MuMIn::r.squaredGLMM(mod_vcmax)
-
-df_a_fix %>% left_join(df_a_fix_n) %>%
-  filter(!is.na(vcmax_obs), acclimation == "Acclimated") %>% 
-  ggplot(aes(vcmax_pred, vcmax_obs,  color = Species))+
-  geom_point(aes(size=log(n_dist)), alpha=0.7, show.legend = FALSE, shape = 21)+
-  geom_smooth(aes(group=interaction(Species,scheme)), method = "lm", se=FALSE)+
-  geom_abline(slope = 1, intercept = 0, linetype = 3)+
-  facet_wrap(~scheme,nrow = 2)+
-  scale_color_viridis_d()+
-  # ylim(0,80)+
-  mytheme4()+
-  xlab(expression("Predicted"~V[cmax]~"["*mu*"mol"~m^-2~s^-1*"]"))+
-  ylab(expression("Observed"~V[cmax]~"["*mu*"mol"~m^-2~s^-1*"]"))+
-  theme(legend.title = element_blank(),
-        legend.text = element_text(face = "italic"))
+#   filter(!is.na(vcmax_obs), acclimation == "Acclimated") %>% 
+#   ggplot(aes(vcmax25_pred, vcmax_obs,  color = Species))+
+#   geom_point(aes(size=log(n_dist)), alpha=0.7, show.legend = FALSE, shape = 21)+
+#   geom_smooth(aes(group=interaction(Species,scheme)), method = "lm", se=FALSE)+
+#   geom_abline(slope = 1, intercept = 0, linetype = 3)+
+#   facet_wrap(~scheme,nrow = 2)+
+#   scale_color_viridis_d()+
+#   # ylim(0,80)+
+#   mytheme4()+
+#   xlab(expression("Predicted"~V[cmax]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+#   ylab(expression("Observed"~V[cmax]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+#   theme(legend.title = element_blank(),
+#         legend.text = element_text(face = "italic"))
+# 
+# 
+# # mod_jmax <- lmer(jmax_obs~jmax_pred*scheme + (jmax_pred|Species), data=df_kmax_alpha %>%
+# #                     filter(!is.na(jmax_obs), acclimation == "Acclimated", source !="Galmes et al. (2007)"))
+# # 
+# # summary(mod_jmax)
+# # emmeans::emtrends(mod_jmax, var = "jmax_pred",specs = "scheme")
+# # MuMIn::r.squaredGLMM(mod_jmax)
+# # 
+# # df_kmax_alpha %>%
+# #   filter(!is.na(jmax_obs), acclimation == "Acclimated", source !="Galmes et al. (2007)") %>% 
+# #   ggplot(aes(jmax_obs, jmax_pred, color = Species))+
+# #   geom_point()+
+# #   geom_smooth(aes(group=interaction(Species,scheme)), method = "lm")+
+# #   geom_abline(slope = 1, intercept = 0)+
+# #   facet_grid(~scheme)
+# 
+# 
+# 
+# 
+# 
+# mod_vcmax <- lmer(vcmax_obs~vcmax_pred*scheme + (vcmax_pred|Species)+(1|source), data=df_kmaxww_a %>%
+#                     filter(!is.na(vcmax_obs), acclimation == "Acclimated"),
+#                   weights = log(n_dist)# source !="Galmes et al. (2007)")
+# )
+# 
+# summary(mod_vcmax)
+# emmeans::emtrends(mod_vcmax, var = "vcmax_pred",specs = "scheme")
+# MuMIn::r.squaredGLMM(mod_vcmax)
+# 
+# df_kmaxww_a %>%
+#   filter(!is.na(vcmax_obs), acclimation == "Acclimated") %>% 
+#   ggplot(aes(vcmax_pred, vcmax_obs,  color = Species))+
+#   geom_point(aes(size=log(n_dist)), alpha=0.7, show.legend = FALSE, shape = 21)+
+#   geom_smooth(aes(group=interaction(Species,scheme)), method = "lm", se=FALSE)+
+#   geom_abline(slope = 1, intercept = 0, linetype = 3)+
+#   facet_wrap(~scheme,nrow = 2)+
+#   scale_color_viridis_d()+
+#   # ylim(0,80)+
+#   mytheme4()+
+#   xlab(expression("Predicted"~V[cmax]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+#   ylab(expression("Observed"~V[cmax]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+#   theme(legend.title = element_blank(),
+#         legend.text = element_text(face = "italic"))
+# 
+# 
+# 
+# 
+# mod_vcmax <- lmer(vcmax_obs~vcmax_pred*scheme + (vcmax_pred|Species)+(1|source), data=df_a_fix %>% left_join(df_a_fix_n) %>% 
+#                     filter(!is.na(vcmax_obs), acclimation == "Acclimated"),
+#                   weights = log(n_dist)# source !="Galmes et al. (2007)")
+# )
+# 
+# summary(mod_vcmax)
+# emmeans::emtrends(mod_vcmax, var = "vcmax_pred",specs = "scheme")
+# MuMIn::r.squaredGLMM(mod_vcmax)
+# 
+# df_a_fix %>% left_join(df_a_fix_n) %>%
+#   filter(!is.na(vcmax_obs), acclimation == "Acclimated") %>% 
+#   ggplot(aes(vcmax_pred, vcmax_obs,  color = Species))+
+#   geom_point(aes(size=log(n_dist)), alpha=0.7, show.legend = FALSE, shape = 21)+
+#   geom_smooth(aes(group=interaction(Species,scheme)), method = "lm", se=FALSE)+
+#   geom_abline(slope = 1, intercept = 0, linetype = 3)+
+#   facet_wrap(~scheme,nrow = 2)+
+#   scale_color_viridis_d()+
+#   # ylim(0,80)+
+#   mytheme4()+
+#   xlab(expression("Predicted"~V[cmax]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+#   ylab(expression("Observed"~V[cmax]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+#   theme(legend.title = element_blank(),
+#         legend.text = element_text(face = "italic"))

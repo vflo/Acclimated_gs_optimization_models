@@ -17,6 +17,7 @@ library(grid)
 library(ggConvexHull)
 library(rphydro)
 library(ggplot2)
+library(ggpattern)
 library(gridExtra)
 library(scales)
 library(zoo)
@@ -769,7 +770,7 @@ alpha_scheme <- lmerTest::lmer(alpha~ scheme + (1|Species)+ (1|source),
                                                                   "PMAX2",
                                                                   "CGAIN2",
                                                                   "CGAIN",
-                                                                  # "CMAX",
+                                                                  "CMAX",
                                                                   "PHYDRO"))), 
                               weights = log(n_dist))
 alpha_scheme_mean <- lmerTest::lmer(alpha~ (1|scheme)+ (1|source)+(1|Species), 
@@ -841,7 +842,7 @@ df_a <- df_kmaxww_a %>%
                                     "PMAX2",
                                     "CGAIN2",
                                     "CGAIN",
-                                    # "CMAX",
+                                    "CMAX",
                                     "PHYDRO")),
          calibration_type = as_factor(calibration_type))%>% 
   mutate(diff_a = a_pred - A) %>% 
@@ -1046,6 +1047,12 @@ ggarrange(p1,
                                ),
           common.legend = T,ncol=2, nrow = 2)
 
+# ggarrange(p1,
+#           p2,p3,p4, 
+#           align='hv', labels=c('a', 'b','c','d'
+#           ),
+#           common.legend = T,ncol=2, nrow = 1)
+
 ggsave("PLOTS/A_metrics.png", width = 20, height = 14, units = "cm")
 
 
@@ -1164,7 +1171,7 @@ df_g <- df_kmaxww_a %>%
                                     "PMAX2",
                                     "CGAIN2",
                                     "CGAIN",
-                                    # "CMAX",
+                                    "CMAX",
                                     "PHYDRO")))%>% 
   mutate(calibration_type = as_factor(calibration_type)) %>%
   mutate(diff_g =  g_pred-gC) %>% 
@@ -1511,11 +1518,959 @@ partition_dry <- df_kmaxww_a %>%
   theme(legend.title = element_blank())
 
 
-ggarrange(partition_full, partition_dry,
-          align='hv', labels=c('a', 'b'),
-          common.legend = T,ncol=1, nrow = 2)
+partition_wet <- df_kmaxww_a %>% 
+  group_by(scheme,calibration_type,Species,source) %>% 
+  mutate(LWP_q50 = quantile(LWP, 0.5,na.rm = TRUE)) %>%
+  filter(!is.na(A),LWP>=LWP_q50) %>% 
+  mutate(n_dist = n())%>%
+  ungroup() %>%
+  rename(`Stomatal model`=scheme) %>%
+  group_by(`Stomatal model`) %>%
+  do(get_partition_a(.)) %>%
+  mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+                                 TRUE ~stomatal_r2),
+         species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+                               TRUE ~species_r2)
+  ) %>%
+  pivot_longer(2:5) %>%
+  mutate(pattern_1 = case_when(value<0~"stripe",
+                             TRUE ~ "none"),
+         value = case_when(value<0~ -1*value,
+                           TRUE ~ value)) %>%
+  mutate(Partition = factor(name,
+                            levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+                            labels = c("Residuals","Species", "Non-stomatal","Stomatal"))) %>%
+  ggplot()+
+  geom_col_pattern(aes(x = `Stomatal model`,y=value,fill=Partition,pattern = pattern_1),
+                   pattern_color = NA,
+                   pattern_fill = "black",
+                   pattern_angle = 45,
+                   pattern_density = 0.5,
+                   pattern_spacing = 0.025,
+                   pattern_key_scale_factor = 1,
+                   show.legend = FALSE)+
+  scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+  ylab(expression(R^2~"wet conditions"))+
+  mytheme7()+
+  ylim(0,1)+
+  scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+  theme(legend.title = element_blank())
 
-ggsave("PLOTS/partition.png", width = 14, height = 24, units = "cm")
+ggarrange(partition_full, partition_wet,partition_dry,
+          align='hv', labels=c('a', 'b','c'),
+          common.legend = T,ncol=3, nrow = 1)
+
+ggsave("PLOTS/partition.png", width = 40, height = 14, units = "cm")
+
+# 
+# library(ggpattern)
+# partition_dry_80 <- df_kmaxww_a %>% 
+#   group_by(scheme,calibration_type,Species,source) %>% 
+#   mutate(LWP_q80 = quantile(LWP, 0.8,na.rm = TRUE)) %>%
+#   filter(!is.na(A),LWP<=LWP_q80) %>% 
+#   mutate(n_dist = n())%>%
+#   ungroup() %>% 
+#   rename(`Stomatal model`=scheme) %>%
+#   group_by(`Stomatal model`) %>% 
+#   do(get_partition_a(.)) %>%
+#   pivot_longer(2:5) %>% 
+#   mutate(Partition = factor(name,
+#                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+#                             labels = c("Residuals","Species", "Non-stomatal","Stomatal"))) %>% 
+#   ggplot()+
+#   geom_col(aes(x = `Stomatal model`,y=value,fill=Partition))+
+#   ylab(expression(R^2~"80th percentile"))+
+#   mytheme7()+
+#   ylim(0,1)+
+#   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+# 
+# partition_dry_60 <- df_kmaxww_a %>% 
+#   group_by(scheme,calibration_type,Species,source) %>% 
+#   mutate(LWP_q60 = quantile(LWP, 0.6,na.rm = TRUE)) %>%
+#   filter(!is.na(A),LWP<=LWP_q60) %>% 
+#   mutate(n_dist = n())%>%
+#   ungroup() %>% 
+#   rename(`Stomatal model`=scheme) %>%
+#   group_by(`Stomatal model`) %>% 
+#   do(get_partition_a(.)) %>%
+#   pivot_longer(2:5) %>% 
+#   mutate(Partition = factor(name,
+#                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+#                             labels = c("Residuals","Species", "Non-stomatal","Stomatal"))) %>% 
+#   ggplot()+
+#   geom_col(aes(x = `Stomatal model`,y=value,fill=Partition))+
+#   ylab(expression(R^2~"60th percentile"))+
+#   mytheme7()+
+#   ylim(0,1)+
+#   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+# 
+# partition_dry_70 <- df_kmaxww_a %>% 
+#   group_by(scheme,calibration_type,Species,source) %>% 
+#   mutate(LWP_q70 = quantile(LWP, 0.7,na.rm = TRUE)) %>%
+#   filter(!is.na(A),LWP<=LWP_q70) %>% 
+#   mutate(n_dist = n())%>%
+#   ungroup() %>% 
+#   rename(`Stomatal model`=scheme) %>%
+#   group_by(`Stomatal model`) %>% 
+#   do(get_partition_a(.)) %>%
+#   pivot_longer(2:5) %>% 
+#   mutate(Partition = factor(name,
+#                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+#                             labels = c("Residuals","Species", "Non-stomatal","Stomatal"))) %>% 
+#   ggplot()+
+#   geom_col(aes(x = `Stomatal model`,y=value,fill=Partition))+
+#   ylab(expression(R^2~"70th percentile"))+
+#   mytheme7()+
+#   ylim(0,1)+
+#   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+# 
+# partition_dry_40 <- df_kmaxww_a %>% 
+#   group_by(scheme,calibration_type,Species,source) %>% 
+#   mutate(LWP_q40 = quantile(LWP, 0.4,na.rm = TRUE)) %>%
+#   filter(!is.na(A),LWP<=LWP_q40) %>% 
+#   mutate(n_dist = n())%>%
+#   ungroup() %>% 
+#   rename(`Stomatal model`=scheme) %>%
+#   group_by(`Stomatal model`) %>% 
+#   do(get_partition_a(.)) %>%
+#   pivot_longer(2:5) %>% 
+#   mutate(Partition = factor(name,
+#                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+#                             labels = c("Residuals","Species", "Non-stomatal","Stomatal"))) %>% 
+#   ggplot()+
+#   geom_col(aes(x = `Stomatal model`,y=value,fill=Partition))+
+#   ylab(expression(R^2~"40th percentile"))+
+#   mytheme7()+
+#   ylim(0,1)+
+#   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+# 
+# partition_dry_30 <- df_kmaxww_a %>% 
+#   group_by(scheme,calibration_type,Species,source) %>% 
+#   mutate(LWP_q30 = quantile(LWP, 0.3,na.rm = TRUE)) %>%
+#   filter(!is.na(A),LWP<=LWP_q30) %>% 
+#   mutate(n_dist = n())%>%
+#   ungroup() %>% 
+#   rename(`Stomatal model`=scheme) %>%
+#   group_by(`Stomatal model`) %>%
+#   do(get_partition_a(.)) %>%
+#   mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+#                                  TRUE ~stomatal_r2),
+#          species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+#                                TRUE ~species_r2)
+#   ) %>%
+#   pivot_longer(2:5) %>%
+#   mutate(pattern_1 = case_when(value<0~"stripe",
+#                              TRUE ~ "none"),
+#          value = case_when(value<0~ -1*value,
+#                            TRUE ~ value)) %>%
+#   mutate(Partition = factor(name,
+#                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+#                             labels = c("Residuals","Species", "Non-stomatal","Stomatal"))) %>%
+#   ggplot()+
+#   geom_col_pattern(aes(x = `Stomatal model`,y=value,fill=Partition,pattern = pattern_1),
+#                    pattern_color = NA,
+#                    pattern_fill = "black",
+#                    pattern_angle = 45,
+#                    pattern_density = 0.5,
+#                    pattern_spacing = 0.025,
+#                    pattern_key_scale_factor = 1,
+#                    show.legend = FALSE)+
+#   scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+#   ylab(expression(R^2~"30th percentile"))+
+#   mytheme7()+
+#   ylim(0,1)+
+#   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+# 
+# partition_dry_20 <- df_kmaxww_a %>% 
+#   group_by(scheme,calibration_type,Species,source) %>% 
+#   mutate(LWP_q20 = quantile(LWP, 0.2,na.rm = TRUE)) %>%
+#   filter(!is.na(A),LWP<=LWP_q20) %>% 
+#   mutate(n_dist = n())%>%
+#   ungroup() %>% 
+#   rename(`Stomatal model`=scheme) %>%
+#   group_by(`Stomatal model`) %>%
+#   do(get_partition_a(.)) %>%
+#   mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+#                                  TRUE ~stomatal_r2),
+#          species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+#                               TRUE ~species_r2)
+#          ) %>%
+#   pivot_longer(2:5) %>%
+#   mutate(pattern_1 = case_when(value<0~"stripe",
+#                                TRUE ~ "none"),
+#          value = case_when(value<0~ -1*value,
+#                            TRUE ~ value)) %>% 
+#   mutate(Partition = factor(name,
+#                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+#                             labels = c("Residuals","Species", "Non-stomatal","Stomatal"))) %>%
+#   ggplot()+
+#   geom_col_pattern(aes(x = `Stomatal model`,y=value,fill=Partition,pattern = pattern_1),
+#                    pattern_color = NA,
+#                    pattern_fill = "black",
+#                    pattern_angle = 45,
+#                    pattern_density = 0.5,
+#                    pattern_spacing = 0.025,
+#                    pattern_key_scale_factor = 1,
+#                    show.legend = FALSE)+
+#   scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+#   ylab(expression(R^2~"20th percentile"))+
+#   mytheme7()+
+#   ylim(0,1)+
+#   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+
+# library(ggpattern)
+# partition_wet <- df_kmaxww_a %>% 
+#   group_by(scheme,calibration_type,Species,source) %>% 
+#   mutate(LWP_q50 = quantile(LWP, 0.5,na.rm = TRUE)) %>%
+#   filter(!is.na(A),LWP>=LWP_q50) %>% 
+#   mutate(n_dist = n())%>%
+#   ungroup() %>% 
+#   rename(`Stomatal model`=scheme) %>%
+#   group_by(`Stomatal model`) %>% 
+#   do(get_partition_a(.)) %>%
+#   mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+#                                  TRUE ~stomatal_r2),
+#          Residuals= case_when(non_stomatal_r2<0~(Residuals+non_stomatal_r2),
+#                               TRUE ~Residuals)) %>% 
+#   pivot_longer(2:5) %>% 
+#   mutate(pattern_1 = case_when(value<0~"stripe",
+#                              TRUE ~ "none"),
+#          value = case_when(value<0~ -1*value,
+#                            TRUE ~ value)) %>%
+#   mutate(Partition = factor(name,
+#                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+#                             labels = c("Residuals","Species", "Non-stomatal","Stomatal"))) %>% 
+#   ggplot()+
+#   geom_col_pattern(aes(x = `Stomatal model`,y=value,fill=Partition,pattern = pattern_1),
+#                    pattern_color = NA,
+#                    pattern_fill = "black",
+#                    pattern_angle = 45,
+#                    pattern_density = 0.5,
+#                    pattern_spacing = 0.025,
+#                    pattern_key_scale_factor = 1,
+#                    show.legend = FALSE)+
+#   scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+#   ylab(expression(R^2~"wet conditions"))+
+#   mytheme7()+
+#   ylim(0,1)+
+#   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+
+
+
+
+
+ggarrange(partition_dry_80,partition_dry_70,partition_dry_60,partition_dry_40,partition_dry_30,partition_dry_20,
+          align='hv', labels=c('a', 'b','c','d','e','f','g'),
+          common.legend = T,ncol=3, nrow = 2)
+
+ggsave("PLOTS/partition_multiple.png", width = 40, height = 24, units = "cm")
+
+
+
+
+
+
+
+partition_PMAX <- df_kmaxww_a %>% 
+  filter(scheme == "PMAX") %>% 
+  group_by(calibration_type,Species,source) %>% 
+  mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
+         `30th` = quantile(LWP, 0.3,na.rm = TRUE),
+         `40th` = quantile(LWP, 0.4,na.rm = TRUE),
+         `50th` = quantile(LWP, 0.5,na.rm = TRUE),
+         `60th` = quantile(LWP, 0.6,na.rm = TRUE),
+         `70th` = quantile(LWP, 0.7,na.rm = TRUE),
+         `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
+  ungroup() %>% 
+  pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
+  rename(`Drought quantile`=Drought) %>%
+  group_by(`Drought quantile`) %>%
+  do(get_partition_a_multiple(.)) %>%
+  # mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+  #                                TRUE ~stomatal_r2),
+  #        species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+  #                              TRUE ~species_r2)
+  # ) %>%
+  pivot_longer(2:5) %>%
+  mutate(pattern_1 = case_when(value<0~"stripe",
+                               TRUE ~ "none"),
+         value = case_when(value<0~ -1*value,
+                           TRUE ~ value)) %>%
+  mutate(Partition = factor(name,
+                            levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+                            labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
+         `Drought quantile` = factor(`Drought quantile`,
+                                     levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
+  ggplot()+
+  geom_col(aes(x = `Drought quantile`,y=value,fill=Partition))+
+  # geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
+  #                  pattern_color = NA,
+  #                  pattern_fill = "black",
+  #                  pattern_angle = 45,
+  #                  pattern_density = 0.5,
+  #                  pattern_spacing = 0.025,
+  #                  pattern_key_scale_factor = 1,
+  #                  show.legend = TRUE)+
+  # scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+  ylab(expression(R^2~"PMAX"))+
+  xlab(psi[s]~" quantile")+
+  mytheme7()+
+  ylim(0,1)+
+  scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+  theme(legend.title = element_blank())
+
+
+
+partition_PMAX2 <- df_kmaxww_a %>% 
+  filter(scheme == "PMAX2") %>% 
+  group_by(calibration_type,Species,source) %>%
+  mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
+         `30th` = quantile(LWP, 0.3,na.rm = TRUE),
+         `40th` = quantile(LWP, 0.4,na.rm = TRUE),
+         `50th` = quantile(LWP, 0.5,na.rm = TRUE),
+         `60th` = quantile(LWP, 0.6,na.rm = TRUE),
+         `70th` = quantile(LWP, 0.7,na.rm = TRUE),
+         `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
+  ungroup() %>% 
+  pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
+  rename(`Drought quantile`=Drought) %>%
+  group_by(`Drought quantile`) %>%
+  do(get_partition_a_multiple(.)) %>%
+  # mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+  #                                TRUE ~stomatal_r2),
+  #        species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+  #                              TRUE ~species_r2)
+  # ) %>%
+  pivot_longer(2:5) %>%
+  mutate(pattern_1 = case_when(value<0~"stripe",
+                               TRUE ~ "none"),
+         value = case_when(value<0~ -1*value,
+                           TRUE ~ value)) %>%
+  mutate(Partition = factor(name,
+                            levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+                            labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
+         `Drought quantile` = factor(`Drought quantile`,
+                                     levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
+  ggplot()+
+  geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
+                   pattern_color = NA,
+                   pattern_fill = "black",
+                   pattern_angle = 45,
+                   pattern_density = 0.5,
+                   pattern_spacing = 0.025,
+                   pattern_key_scale_factor = 1,
+                   show.legend = FALSE)+
+  scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+  ylab(expression(R^2~"PMAX2"))+
+  xlab(psi[s]~" quantile")+
+  mytheme7()+
+  ylim(0,1)+
+  scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+  theme(legend.title = element_blank())
+
+
+partition_SOX <- df_kmaxww_a %>% 
+  filter(scheme == "SOX") %>% 
+  group_by(calibration_type,Species,source) %>% 
+  mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
+         `30th` = quantile(LWP, 0.3,na.rm = TRUE),
+         `40th` = quantile(LWP, 0.4,na.rm = TRUE),
+         `50th` = quantile(LWP, 0.5,na.rm = TRUE),
+         `60th` = quantile(LWP, 0.6,na.rm = TRUE),
+         `70th` = quantile(LWP, 0.7,na.rm = TRUE),
+         `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
+  ungroup() %>% 
+  pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
+  rename(`Drought quantile`=Drought) %>%
+  group_by(`Drought quantile`) %>%
+  do(get_partition_a_multiple(.)) %>%
+  mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+                                 TRUE ~stomatal_r2),
+         species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+                               TRUE ~species_r2)
+  ) %>%
+  pivot_longer(2:5) %>%
+  mutate(pattern_1 = case_when(value<0~"stripe",
+                               TRUE ~ "none"),
+         value = case_when(value<0~ -1*value,
+                           TRUE ~ value)) %>%
+  mutate(Partition = factor(name,
+                            levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+                            labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
+         `Drought quantile` = factor(`Drought quantile`,
+                                     levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
+  ggplot()+
+  geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
+                   pattern_color = NA,
+                   pattern_fill = "black",
+                   pattern_angle = 45,
+                   pattern_density = 0.5,
+                   pattern_spacing = 0.025,
+                   pattern_key_scale_factor = 1,
+                   show.legend = FALSE)+
+  scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+  ylab(expression(R^2~"SOX"))+
+  xlab(psi[s]~" quantile")+
+  mytheme7()+
+  ylim(0,1)+
+  scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+  theme(legend.title = element_blank())
+
+
+partition_SOX2 <- df_kmaxww_a %>% 
+  filter(scheme == "SOX2") %>% 
+  group_by(calibration_type,Species,source) %>% 
+  mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
+         `30th` = quantile(LWP, 0.3,na.rm = TRUE),
+         `40th` = quantile(LWP, 0.4,na.rm = TRUE),
+         `50th` = quantile(LWP, 0.5,na.rm = TRUE),
+         `60th` = quantile(LWP, 0.6,na.rm = TRUE),
+         `70th` = quantile(LWP, 0.7,na.rm = TRUE),
+         `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
+  ungroup() %>% 
+  pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
+  rename(`Drought quantile`=Drought) %>%
+  group_by(`Drought quantile`) %>%
+  do(get_partition_a_multiple(.)) %>%
+  mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+                                 TRUE ~stomatal_r2),
+         species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+                               TRUE ~species_r2)
+  ) %>%
+  pivot_longer(2:5) %>%
+  mutate(pattern_1 = case_when(value<0~"stripe",
+                               TRUE ~ "none"),
+         value = case_when(value<0~ -1*value,
+                           TRUE ~ value)) %>%
+  mutate(Partition = factor(name,
+                            levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+                            labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
+         `Drought quantile` = factor(`Drought quantile`,
+                                     levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
+  ggplot()+
+  geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
+                   pattern_color = NA,
+                   pattern_fill = "black",
+                   pattern_angle = 45,
+                   pattern_density = 0.5,
+                   pattern_spacing = 0.025,
+                   pattern_key_scale_factor = 1,
+                   show.legend = FALSE)+
+  scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+  ylab(expression(R^2~"SOX2"))+
+  xlab(psi[s]~" quantile")+
+  mytheme7()+
+  ylim(0,1)+
+  scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+  theme(legend.title = element_blank())
+
+
+partition_CGAIN <- df_kmaxww_a %>% 
+  filter(scheme == "CGAIN") %>% 
+  group_by(calibration_type,Species,source) %>% 
+  mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
+         `30th` = quantile(LWP, 0.3,na.rm = TRUE),
+         `40th` = quantile(LWP, 0.4,na.rm = TRUE),
+         `50th` = quantile(LWP, 0.5,na.rm = TRUE),
+         `60th` = quantile(LWP, 0.6,na.rm = TRUE),
+         `70th` = quantile(LWP, 0.7,na.rm = TRUE),
+         `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
+  ungroup() %>% 
+  pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
+  rename(`Drought quantile`=Drought) %>%
+  group_by(`Drought quantile`) %>%
+  do(get_partition_a_multiple(.)) %>%
+  # mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+  #                                TRUE ~stomatal_r2),
+  #        species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+  #                              TRUE ~species_r2)
+  # ) %>%
+  pivot_longer(2:5) %>%
+  mutate(pattern_1 = case_when(value<0~"stripe",
+                               TRUE ~ "none"),
+         value = case_when(value<0~ -1*value,
+                           TRUE ~ value)) %>%
+  mutate(Partition = factor(name,
+                            levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+                            labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
+         `Drought quantile` = factor(`Drought quantile`,
+                                     levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
+  ggplot()+
+  geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
+                   pattern_color = NA,
+                   pattern_fill = "black",
+                   pattern_angle = 45,
+                   pattern_density = 0.5,
+                   pattern_spacing = 0.025,
+                   pattern_key_scale_factor = 1,
+                   show.legend = FALSE)+
+  scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+  ylab(expression(R^2~"CGAIN"))+
+  xlab(psi[s]~" quantile")+
+  mytheme7()+
+  ylim(0,1)+
+  scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+  theme(legend.title = element_blank())
+
+partition_PHYDRO <- df_kmaxww_a %>% 
+  filter(scheme == "PHYDRO") %>% 
+  group_by(calibration_type,Species,source) %>%
+  mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
+         `30th` = quantile(LWP, 0.3,na.rm = TRUE),
+         `40th` = quantile(LWP, 0.4,na.rm = TRUE),
+         `50th` = quantile(LWP, 0.5,na.rm = TRUE),
+         `60th` = quantile(LWP, 0.6,na.rm = TRUE),
+         `70th` = quantile(LWP, 0.7,na.rm = TRUE),
+         `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
+  ungroup() %>%
+  pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
+  rename(`Drought quantile`=Drought) %>%
+  group_by(`Drought quantile`) %>%
+  do(get_partition_a_multiple(.)) %>%
+  # mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+  #                                TRUE ~stomatal_r2),
+  #        species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+  #                              TRUE ~species_r2)
+  # ) %>%
+  pivot_longer(2:5) %>%
+  mutate(pattern_1 = case_when(value<0~"stripe",
+                               TRUE ~ "none"),
+         value = case_when(value<0~ -1*value,
+                           TRUE ~ value)) %>%
+  mutate(Partition = factor(name,
+                            levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+                            labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
+         `Drought quantile` = factor(`Drought quantile`,
+                                     levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
+  ggplot()+
+  # geom_col(aes(x = `Drought quantile`,y=value,fill=Partition))+
+  geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
+                   pattern_color = NA,
+                   pattern_fill = "black",
+                   pattern_angle = 45,
+                   pattern_density = 0.5,
+                   pattern_spacing = 0.025,
+                   pattern_key_scale_factor = 1,
+                   show.legend = FALSE)+
+  scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+  ylab(expression(R^2~"PHYDRO"))+
+  xlab(psi[s]~" quantile")+
+  mytheme7()+
+  ylim(0,1)+
+  scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+  theme(legend.title = element_blank())
+
+partition_CMAX <- df_kmaxww_a %>% 
+  filter(scheme == "CMAX") %>% 
+  group_by(calibration_type,Species,source) %>% 
+  mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
+         `30th` = quantile(LWP, 0.3,na.rm = TRUE),
+         `40th` = quantile(LWP, 0.4,na.rm = TRUE),
+         `50th` = quantile(LWP, 0.5,na.rm = TRUE),
+         `60th` = quantile(LWP, 0.6,na.rm = TRUE),
+         `70th` = quantile(LWP, 0.7,na.rm = TRUE),
+         `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
+  ungroup() %>% 
+  pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
+  rename(`Drought quantile`=Drought) %>%
+  group_by(`Drought quantile`) %>%
+  do(get_partition_a_multiple(.)) %>%
+  mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+                                 TRUE ~stomatal_r2),
+         species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+                               TRUE ~species_r2)
+  ) %>%
+  pivot_longer(2:5) %>%
+  mutate(pattern_1 = case_when(value<0~"stripe",
+                               TRUE ~ "none"),
+         value = case_when(value<0~ -1*value,
+                           TRUE ~ value)) %>%
+  mutate(Partition = factor(name,
+                            levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+                            labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
+         `Drought quantile` = factor(`Drought quantile`,
+                                     levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
+  ggplot()+
+  geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
+                   pattern_color = NA,
+                   pattern_fill = "black",
+                   pattern_angle = 45,
+                   pattern_density = 0.5,
+                   pattern_spacing = 0.025,
+                   pattern_key_scale_factor = 1,
+                   show.legend = FALSE)+
+  scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+  ylab(expression(R^2~"CMAX"))+
+  xlab(psi[s]~" quantile")+
+  mytheme7()+
+  ylim(0,1)+
+  scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+  theme(legend.title = element_blank())
+
+leg <- get_legend(partition_PMAX)
+
+partition_PMAX <- partition_PMAX+ theme(legend.position = "none")
+
+ggarrange(partition_PHYDRO,partition_CMAX,partition_CGAIN,
+          partition_PMAX,partition_PMAX2,partition_SOX,partition_SOX2,leg,
+          align='hv', labels=c('a', 'b','c','d','e','f',"g",""),
+          common.legend = FALSE,ncol=4, nrow = 2)
+
+ggsave("PLOTS/partition_multiple_model.png", width = 40, height = 24, units = "cm")
+
+
+
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# partition_PMAX <- df_kmaxww_a %>% 
+#   filter(scheme == "PMAX", !is.na(A)) %>% 
+#   group_by(calibration_type,Species,source) %>% 
+#   dplyr::select(A,a_pred,LWP) %>% 
+#   # mutate(percentiles = binr::bins.quantiles(LWP,5,6)) %>% View()
+#   mutate(`1` = quantile(LWP, 0,na.rm = TRUE),
+#          `2` = quantile(LWP, 0.2,na.rm = TRUE),
+#          `3` = quantile(LWP, 0.4,na.rm = TRUE),
+#          `4` = quantile(LWP, 0.6,na.rm = TRUE),
+#          `5` = quantile(LWP, 1,na.rm = TRUE),
+#          `6` = quantile(LWP, 1,na.rm = TRUE),
+#          q1 = "0th-20th",
+#          q2 = "20th-40th",
+#          q3 = "40th-60th",
+#          q4 = "60th-100th",
+#          q5 = "80th-100th"
+#   ) %>%
+#   ungroup() %>% 
+#   pivot_longer(13:17, names_to = 'bins', values_to = 'Bin') %>%
+#   rename(`Quantile bins`=bins) %>%
+#   group_by(`Quantile bins`) %>%
+#   do(get_partition_a_multiple_bin(.)) %>%
+#   mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+#                                  TRUE ~stomatal_r2),
+#          species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+#                                TRUE ~species_r2)
+#   ) %>%
+#   pivot_longer(2:5) %>%
+#   mutate(pattern_1 = case_when(value<0~"stripe",
+#                                TRUE ~ "none"),
+#          value = case_when(value<0~ -1*value,
+#                            TRUE ~ value)) %>%
+#   mutate(Partition = factor(name,
+#                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+#                             labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
+#          `Quantile bins` = factor(`Quantile bins`,
+#                                   levels = c('q5','q4','q3', 'q2', 'q1'),
+#                                   labels = c("80th-100th","60th-80th","40th-60th","20th-40th","0th-20th"))) %>%
+#   ggplot()+
+#   # geom_col(aes(x = `Quantile bins`,y=value,fill=Partition))+
+#   geom_col_pattern(aes(x = `Quantile bins`,y=value,fill=Partition,pattern = pattern_1),
+#                    pattern_color = NA,
+#                    pattern_fill = "black",
+#                    pattern_angle = 45,
+#                    pattern_density = 0.5,
+#                    pattern_spacing = 0.025,
+#                    pattern_key_scale_factor = 1,
+#                    show.legend = FALSE)+
+#   scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+#   ylab(expression(R^2~"PMAX"))+
+#   xlab(psi[s]~" quantile bins")+
+#   mytheme7()+
+#   ylim(0,1)+
+#   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+# 
+# 
+# 
+# partition_PMAX2 <- df_kmaxww_a %>% 
+#   filter(scheme == "PMAX2", !is.na(A)) %>% 
+#   group_by(calibration_type,Species,source) %>% 
+#   dplyr::select(A,a_pred,LWP) %>% 
+#   # mutate(percentiles = binr::bins.quantiles(LWP,5,6)) %>% View()
+#   mutate(`1` = quantile(LWP, 0,na.rm = TRUE),
+#          `2` = quantile(LWP, 0.2,na.rm = TRUE),
+#          `3` = quantile(LWP, 0.4,na.rm = TRUE),
+#          `4` = quantile(LWP, 0.6,na.rm = TRUE),
+#          `5` = quantile(LWP, 1,na.rm = TRUE),
+#          `6` = quantile(LWP, 1,na.rm = TRUE),
+#          q1 = "0th-20th",
+#          q2 = "20th-40th",
+#          q3 = "40th-60th",
+#          q4 = "60th-100th",
+#          q5 = "80th-100th"
+#   ) %>%
+#   ungroup() %>% 
+#   pivot_longer(13:17, names_to = 'bins', values_to = 'Bin') %>%
+#   rename(`Quantile bins`=bins) %>%
+#   group_by(`Quantile bins`) %>%
+#   do(get_partition_a_multiple_bin(.)) %>%
+#   mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+#                                  TRUE ~stomatal_r2),
+#          species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+#                                TRUE ~species_r2)
+#   ) %>%
+#   pivot_longer(2:5) %>%
+#   mutate(pattern_1 = case_when(value<0~"stripe",
+#                                TRUE ~ "none"),
+#          quite a lot of  scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+# 
+# 
+# partition_SOX <- df_kmaxww_a %>% 
+#   filter(scheme == "SOX", !is.na(A)) %>% 
+#   group_by(calibration_type,Species,source) %>% 
+#   dplyr::select(A,a_pred,LWP) %>% 
+#   # mutate(percentiles = binr::bins.quantiles(LWP,5,6)) %>% View()
+#   mutate(`1` = quantile(LWP, 0,na.rm = TRUE),
+#          `2` = quantile(LWP, 0.2,na.rm = TRUE),
+#          `3` = quantile(LWP, 0.4,na.rm = TRUE),
+#          `4` = quantile(LWP, 0.6,na.rm = TRUE),
+#          `5` = quantile(LWP, 1,na.rm = TRUE),
+#          `6` = quantile(LWP, 1,na.rm = TRUE),
+#          q1 = "0th-20th",
+#          q2 = "20th-40th",
+#          q3 = "40th-60th",
+#          q4 = "60th-100th",
+#          q5 = "80th-100th"
+#   ) %>%
+#   ungroup() %>% 
+#   pivot_longer(13:17, names_to = 'bins', values_to = 'Bin') %>%
+#   rename(`Quantile bins`=bins) %>%
+#   group_by(`Quantile bins`) %>%
+#   do(get_partition_a_multiple_bin(.)) %>%
+#   mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+#                                  TRUE ~stomatal_r2),
+#          species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+#                                TRUE ~species_r2)
+#   ) %>%
+#   pivot_longer(2:5) %>%
+#   mutate(pattern_1 = case_when(value<0~"stripe",
+#                                TRUE ~ "none"),
+#          value = case_when(value<0~ -1*value,
+#                            TRUE ~ value)) %>%
+#   mutate(Partition = factor(name,
+#                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+#                             labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
+#          `Quantile bins` = factor(`Quantile bins`,
+#                                   levels = c('q5','q4','q3', 'q2', 'q1'),
+#                                   labels = c("80th-100th","60th-80th","40th-60th","20th-40th","0th-20th"))) %>%
+#   ggplot()+
+#   # geom_col(aes(x = `Quantile bins`,y=value,fill=Partition))+
+#   geom_col_pattern(aes(x = `Quantile bins`,y=value,fill=Partition,pattern = pattern_1),
+#                    pattern_color = NA,
+#                    pattern_fill = "black",
+#                    pattern_angle = 45,
+#                    pattern_density = 0.5,
+#                    pattern_spacing = 0.025,
+#                    pattern_key_scale_factor = 1,
+#                    show.legend = FALSE)+
+#   scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+#   ylab(expression(R^2~"SOX"))+
+#   xlab(psi[s]~" quantile bins")+
+#   mytheme7()+
+#   ylim(0,1)+
+#   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+# 
+# 
+# partition_SOX2 <- df_kmaxww_a %>% 
+#   filter(scheme == "SOX2", !is.na(A)) %>% 
+#   group_by(calibration_type,Species,source) %>% 
+#   dplyr::select(A,a_pred,LWP) %>% 
+#   # mutate(percentiles = binr::bins.quantiles(LWP,5,6)) %>% View()
+#   mutate(`1` = quantile(LWP, 0,na.rm = TRUE),
+#          `2` = quantile(LWP, 0.2,na.rm = TRUE),
+#          `3` = quantile(LWP, 0.4,na.rm = TRUE),
+#          `4` = quantile(LWP, 0.6,na.rm = TRUE),
+#          `5` = quantile(LWP, 1,na.rm = TRUE),
+#          `6` = quantile(LWP, 1,na.rm = TRUE),
+#          q1 = "0th-20th",
+#          q2 = "20th-40th",
+#          q3 = "40th-60th",
+#          q4 = "60th-100th",
+#          q5 = "80th-100th"
+#   ) %>%
+#   ungroup() %>% 
+#   pivot_longer(13:17, names_to = 'bins', values_to = 'Bin') %>%
+#   rename(`Quantile bins`=bins) %>%
+#   group_by(`Quantile bins`) %>%
+#   do(get_partition_a_multiple_bin(.)) %>%
+#   mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+#                                  TRUE ~stomatal_r2),
+#          species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+#                                TRUE ~species_r2)
+#   ) %>%
+#   pivot_longer(2:5) %>%
+#   mutate(pattern_1 = case_when(value<0~"stripe",
+#                                TRUE ~ "none"),
+#          value = case_when(value<0~ -1*value,
+#                            TRUE ~ value)) %>%
+#   mutate(Partition = factor(name,
+#                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+#                             labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
+#          `Quantile bins` = factor(`Quantile bins`,
+#                                   levels = c('q5','q4','q3', 'q2', 'q1'),
+#                                   labels = c("80th-100th","60th-80th","40th-60th","20th-40th","0th-20th"))) %>%
+#   ggplot()+
+#   # geom_col(aes(x = `Quantile bins`,y=value,fill=Partition))+
+#   geom_col_pattern(aes(x = `Quantile bins`,y=value,fill=Partition,pattern = pattern_1),
+#                    pattern_color = NA,
+#                    pattern_fill = "black",
+#                    pattern_angle = 45,
+#                    pattern_density = 0.5,
+#                    pattern_spacing = 0.025,
+#                    pattern_key_scale_factor = 1,
+#                    show.legend = FALSE)+
+#   scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+#   ylab(expression(R^2~"SOX2"))+
+#   xlab(psi[s]~" quantile bins")+
+#   mytheme7()+
+#   ylim(0,1)+
+#   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+# 
+# 
+# partition_CGAIN <- df_kmaxww_a %>% 
+#   filter(scheme == "CGAIN", !is.na(A)) %>% 
+#   group_by(calibration_type,Species,source) %>% 
+#   dplyr::select(A,a_pred,LWP) %>% 
+#   # mutate(percentiles = binr::bins.quantiles(LWP,5,6)) %>% View()
+#   mutate(`1` = quantile(LWP, 0,na.rm = TRUE),
+#          `2` = quantile(LWP, 0.2,na.rm = TRUE),
+#          `3` = quantile(LWP, 0.4,na.rm = TRUE),
+#          `4` = quantile(LWP, 0.6,na.rm = TRUE),
+#          `5` = quantile(LWP, 1,na.rm = TRUE),
+#          `6` = quantile(LWP, 1,na.rm = TRUE),
+#          q1 = "0th-20th",
+#          q2 = "20th-40th",
+#          q3 = "40th-60th",
+#          q4 = "60th-100th",
+#          q5 = "80th-100th"
+#   ) %>%
+#   ungroup() %>% 
+#   pivot_longer(13:17, names_to = 'bins', values_to = 'Bin') %>%
+#   rename(`Quantile bins`=bins) %>%
+#   group_by(`Quantile bins`) %>%
+#   do(get_partition_a_multiple_bin(.)) %>%
+#   mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+#                                  TRUE ~stomatal_r2),
+#          species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+#                                TRUE ~species_r2)
+#   ) %>%
+#   pivot_longer(2:5) %>%
+#   mutate(pattern_1 = case_when(value<0~"stripe",
+#                                TRUE ~ "none"),
+#          value = case_when(value<0~ -1*value,
+#                            TRUE ~ value)) %>%
+#   mutate(Partition = factor(name,
+#                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+#                             labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
+#          `Quantile bins` = factor(`Quantile bins`,
+#                                   levels = c('q5','q4','q3', 'q2', 'q1'),
+#                                   labels = c("80th-100th","60th-80th","40th-60th","20th-40th","0th-20th"))) %>%
+#   ggplot()+
+#   # geom_col(aes(x = `Quantile bins`,y=value,fill=Partition))+
+#   geom_col_pattern(aes(x = `Quantile bins`,y=value,fill=Partition,pattern = pattern_1),
+#                    pattern_color = NA,
+#                    pattern_fill = "black",
+#                    pattern_angle = 45,
+#                    pattern_density = 0.5,
+#                    pattern_spacing = 0.025,
+#                    pattern_key_scale_factor = 1,
+#                    show.legend = FALSE)+
+#   scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+#   ylab(expression(R^2~"CGAIN"))+
+#   xlab(psi[s]~" quantile bins")+
+#   mytheme7()+
+#   ylim(0,1)+
+#   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+# 
+# 
+# 
+# 
+# partition_PHYDRO <- df_kmaxww_a %>% 
+#   filter(scheme == "PHYDRO", !is.na(A)) %>% 
+#   group_by(calibration_type,Species,source) %>% 
+#   dplyr::select(A,a_pred,LWP) %>% 
+#   # mutate(percentiles = binr::bins.quantiles(LWP,5,6)) %>% View()
+#   mutate(`1` = quantile(LWP, 0,na.rm = TRUE),
+#          `2` = quantile(LWP, 0.2,na.rm = TRUE),
+#          `3` = quantile(LWP, 0.4,na.rm = TRUE),
+#          `4` = quantile(LWP, 0.6,na.rm = TRUE),
+#          `5` = quantile(LWP, 1,na.rm = TRUE),
+#          `6` = quantile(LWP, 1,na.rm = TRUE),
+#          q1 = "0th-20th",
+#          q2 = "20th-40th",
+#          q3 = "40th-60th",
+#          q4 = "60th-100th",
+#          q5 = "80th-100th"
+#   ) %>%
+#   ungroup() %>% 
+#   pivot_longer(13:17, names_to = 'bins', values_to = 'Bin') %>%
+#   rename(`Quantile bins`=bins) %>%
+#   group_by(`Quantile bins`) %>%
+#   do(get_partition_a_multiple_bin(.)) %>%
+#   mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+#                                  TRUE ~stomatal_r2),
+#          species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+#                                TRUE ~species_r2)
+#   ) %>%
+#   pivot_longer(2:5) %>%
+#   mutate(pattern_1 = case_when(value<0~"stripe",
+#                                TRUE ~ "none"),
+#          value = case_when(value<0~ -1*value,
+#                            TRUE ~ value)) %>%
+#   mutate(Partition = factor(name,
+#                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+#                             labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
+#          `Quantile bins` = factor(`Quantile bins`,
+#                                   levels = c('q5','q4','q3', 'q2', 'q1'),
+#                                   labels = c("80th-100th","60th-80th","40th-60th","20th-40th","0th-20th"))) %>%
+#   ggplot()+
+#   # geom_col(aes(x = `Quantile bins`,y=value,fill=Partition))+
+#   geom_col_pattern(aes(x = `Quantile bins`,y=value,fill=Partition,pattern = pattern_1),
+#                    pattern_color = NA,
+#                    pattern_fill = "black",
+#                    pattern_angle = 45,
+#                    pattern_density = 0.5,
+#                    pattern_spacing = 0.025,
+#                    pattern_key_scale_factor = 1,
+#                    show.legend = FALSE)+
+#   scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+#   ylab(expression(R^2~"PHYDRO"))+
+#   xlab(psi[s]~" quantile bins")+
+#   mytheme7()+
+#   ylim(0,1)+
+#   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+# 
+# 
+# ggarrange(partition_PHYDRO,partition_CGAIN,partition_PMAX,partition_PMAX2,partition_SOX,partition_SOX2,
+#           align='hv', labels=c('a', 'b','c','d','e','f'),
+#           common.legend = T,ncol=3, nrow = 2)
+# 
+# ggsave("PLOTS/partition_multiple_model_bin.png", width = 40, height = 24, units = "cm")
+# 
+# 
+# 
+# 
+
 
 
 

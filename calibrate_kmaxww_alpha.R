@@ -107,7 +107,7 @@ plot_all = function(df_w_vol, varname, species, data, dpsi_data=NULL, analytical
   
   dpx = df_w_vol$var
   dpy = df_w_vol$dpsi
-  f1 = splinefun(dpy~dpx, method = "monoH.FC")
+  f1 = splinefun(dpy~dpx)
   dpx1 = seq(min(dpx), max(dpx), length.out=100)
   dp88S = f1(psi88S)
   dp50S = f1(psi50S)
@@ -586,13 +586,13 @@ get_parameters_kmaxww_alpha <- function(x){
 
 ##### COMPUTE PARAMETERS #####
 #First compute PROFITMAX model to obtain Kmax for CMAX. CGAIN, WUE and PHYDRO models
-K_PROFITMAX <- NULL
-template %>% filter(scheme == "PROFITMAX"#,Species %in% c("Diplotaxis ibicensis")
-                    ) %>%
-  group_split(scheme, dpsi, Species,source) %>%
-  purrr::map_df(get_parameters_kmaxww_alpha)->res
-#
-save(res,file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
+# K_PROFITMAX <- NULL
+# template %>% filter(scheme == "PROFITMAX"#,Species %in% c("Diplotaxis ibicensis")
+#                     ) %>%
+#   group_split(scheme, dpsi, Species,source) %>%
+#   purrr::map_df(get_parameters_kmaxww_alpha)->res
+# #
+# save(res,file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
 # 
 load(file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
 
@@ -604,7 +604,7 @@ K_PROFITMAX <- res %>%
 #Compute the other models
 template %>% 
   filter(!scheme %in% c("PROFITMAX"),scheme %in% c("CMAX"),
-         Species %in% c("Olea europaea var. Meski")
+         # Species %in% c("Olea europaea var. Meski")
          #   "Ficus tikoua"
            # "Malva subovata"
          #   # "Rosa cymosa",

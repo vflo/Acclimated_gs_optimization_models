@@ -437,7 +437,7 @@ get_simulations <- function(x){
 
 
 df <- par_data %>% 
-  filter(!scheme %in% c("CMAX")) %>%
+  # filter(!scheme %in% c("CMAX")) %>%
   # rbind(par_data_extra) %>%
   group_split(Species,scheme,dpsi,source) %>%
   purrr::map(get_simulations) %>%

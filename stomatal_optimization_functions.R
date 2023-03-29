@@ -57,26 +57,37 @@ fn_profit <- function(par, psi_soil, par_cost, e_crit, p_crit, par_photosynth,
   }
 
   # CMAX
-  # if(stomatal_model == "CMAX"){
-  #   foo <- pracma::grad(f=A_grad,x0=c(dpsi,jmax25),
-  #                      heps = .Machine$double.eps^(1/3),
-  #                      psi_soil, par_cost, par_plant, par_env, par_photosynth)
-  #   # bb = 1
-  #   # dpsi_grad <- (pracma::grad(f=A_grad_dpsi,x0=c(dpsi),
-  #   #               heps = .Machine$double.eps^(1/3),
-  #   #               jmax,psi_soil, par_cost, par_plant,
-  #   #               par_env, par_photosynth)- par_cost$gamma*psi_leaf - bb)
-  #   # jmax_grad <- (pracma::grad(f=A_grad_jmax,x0=c(jmax25),
-  #   #               heps = .Machine$double.eps^(1/3),
-  #   #               dpsi,psi_soil, par_cost, par_plant,
-  #   #               par_env, par_photosynth) -par_cost$alpha)
-  #   dpsi_grad <- foo[1]
-  #   jmax_grad <- foo[2]
-  #   
-  #   
-  #   out <- exp(-1*(abs(dpsi_grad) * abs(jmax_grad)))
-  #   # print(paste("dpsi:",dpsi,'jmax25:',jmax25,"dpsi_grad:",dpsi_grad,"jmax_grad:",jmax_grad,'out:',out))
-  # }
+  if(stomatal_model == "CMAX"){
+    bb = 0
+    out <- exp(a-(1/2*par_cost$gamma*psi_leaf^2)-bb*abs(psi_leaf)-par_cost$alpha*jmax25)
+    # foo <- pracma::grad(f=A_grad,x0=c(psi_leaf,jmax25),
+    #                    heps = .Machine$double.eps^(1/3),
+    #                    psi_soil, par_cost, par_plant, par_env, par_photosynth)
+    # dpsi_grad <- foo[1]
+    # jmax_grad <- foo[2]
+    
+    # dpsi_grad <- (pracma::grad(f=A_grad_dpsi,x0=c(dpsi),
+    #               heps = .Machine$double.eps^(1/3),
+    #               jmax,psi_soil, par_cost, par_plant,
+    #               par_env, par_photosynth))- par_cost$gamma*abs(psi_leaf) - bb
+    # jmax_grad <- (pracma::grad(f=A_grad_jmax,x0=c(jmax25),
+    #               heps = .Machine$double.eps^(1/3),
+    #               dpsi,psi_soil, par_cost, par_plant,
+    #               par_env, par_photosynth) )- par_cost$alpha
+    # dpsi_dp = dpsi+0.00001
+    # gs_dp = calc_gs_phydro(dpsi_dp, psi_soil, par_plant, par_env)+1e-270   # gs in mol/m2ground/s (include residual gs to avoid A calculation error)
+    # a_dp = calc_assim_light_limited(gs_dp, jmax, par_photosynth)$a
+    # dpsi_grad = (a_dp-a)/0.00001 - par_cost$gamma*abs(psi_leaf) - bb
+    # 
+    # jmax_dp = jmax + 0.00001
+    # # gs_dp = calc_gs_phydro(dpsi, psi_soil, par_plant, par_env)+1e-270   # gs in mol/m2ground/s (include residual gs to avoid A calculation error)
+    # a_dp = calc_assim_light_limited(gs, jmax_dp, par_photosynth)$a
+    # jmax_grad = (a_dp-a)/0.00001 - par_cost$alpha
+
+    # out <- abs(jmax_grad) * abs(dpsi_grad)
+    # out <- -out
+    # print(paste("dpsi:",dpsi,'jmax25:',jmax25,"dpsi_grad:",abs(dpsi_grad),"jmax_grad:",abs(jmax_grad),'out:',out))
+  }
 
   
   ## PROFITMAX
@@ -166,8 +177,10 @@ fn_profit_inst_schemes <- function(par, jmax, vcmax, psi_soil, e_crit, p_crit, p
     # profit = -1*((A_dp-A)/(0.0001) - par_cost$gamma*psi_leaf - bb) #calculated using gradient and multiply by -1 to do maximization instead of minimization
     profit =-1*abs(pracma::grad(f=A_grad_dpsi,x0=c(dpsi),
                      heps = .Machine$double.eps^(1/3),
-                     jmax,psi_soil, par_cost, par_plant, 
+                     jmax,psi_soil, par_cost, par_plant,
                      par_env, par_photosynth)- par_cost$gamma*abs(psi_leaf) - bb)
+    
+    
     
   }
   
@@ -295,6 +308,19 @@ optimise_stomata_phydro_schemes <- function(fn_profit, psi_soil, par_cost, e_cri
   itermax = 200
   
 
+  # if(stomatal_model == "CMAX"){
+  #   par2 <- seq(-10,4,0.1)
+  #   par1 <- seq(-10,7,0.1)
+  #   par <- expand_grid(par1,par2)
+  #   par$out <- NA
+  #   for(i in 1:nrow(par)){
+  #     par[i,'out'] <- fn_profit(as.numeric(par[i,]), psi_soil, par_cost, e_crit, p_crit, par_photosynth, 
+  #                               par_plant, par_env, do_optim = FALSE, stomatal_model)
+  #   }
+  #   out <- par[which(par$out == max(par$out)),]
+  # }
+  
+  
     out_optim <- DEoptim::DEoptim(
       lower          = lower,
       upper          = upper,
@@ -316,7 +342,11 @@ optimise_stomata_phydro_schemes <- function(fn_profit, psi_soil, par_cost, e_cri
   if (return_all){
     out_optim
   } else {
+    # if(stomatal_model != "CMAX"){
       return(out_optim$optim$bestmem)
+    # }else{
+    #   return(out[1:2])
+    # }
   }
 }
 
@@ -401,39 +431,39 @@ model_numerical <- function(tc, ppfd, vpd, co2, elv, fapar, kphio, psi_soil,
     #   low_swp  = TRUE
     #   print("WARNING: soil water potential is lower than critical plant water potential.")
     # }
-
-    if(stomatal_model == "CMAX"){
-      dpsi_bounds = calc_dpsi_bound(psi_soil = psi_soil, par_plant = par_plant, 
-                                    par_env = par_env, par_photosynth = par_photosynth, par_cost = par_cost)
-      dpsi_max = dpsi_bounds$Iabs_bound
-      u = try(uniroot(f = function(dpsi){dFdx(dpsi, psi_soil = psi_soil, par_plant = par_plant, 
-                                          par_env = par_env, par_photosynth = par_photosynth, 
-                                          par_cost = par_cost)$dP_dx}, 
-                  interval = c(dpsi_max*0.01, dpsi_max*0.99)),
-          silent = TRUE)
-      # if(any(class(u) %in% "try-error")){
-      #   # print(paste("error try"))
-      #   dpsi=dpsi_max*0.01
-      # }else{
-      dpsi=u$root
-      # }
-      x = calc_x_from_dpsi(dpsi, psi_soil = psi_soil, par_plant = par_plant, 
-                           par_env = par_env, par_photosynth = par_photosynth, 
-                           par_cost = par_cost)
-      psi_l = psi_soil-dpsi
-      gs = calc_gs_phydro(dpsi, psi_soil, par_plant, par_env) # In mol/m2/s
-      E  = 1.6 * gs * par_env$vpd/patm  # E in mol m-2 (ground) s-1
-      J = calc_J(gs, x, par_photosynth)
-      jmax = calc_jmax_from_J(J, par_photosynth)
-      jmax25 = calc_jmax_arrhenius(jmaxT1 = jmax, T1 = (tc + 273.15), T2 = 298.15)
-      a_j = calc_assim_light_limited(gs = gs, jmax = jmax, par_photosynth = par_photosynth)
-      a = a_j$a
-      ci = a_j$ci
-      vcmax = calc_vcmax_coordinated_numerical(a, ci, par_photosynth)
-      vcmax25 = calc_vcmax_arrhenius(vcmaxT1 = vcmax, T1 = (tc + 273.15), T2 = 298.15)
-      jmax25_cost = NA
-      h_cost = NA
-    }else{
+# 
+#     if(stomatal_model == "CMAX"){
+#       dpsi_bounds = calc_dpsi_bound(psi_soil = psi_soil, par_plant = par_plant, 
+#                                     par_env = par_env, par_photosynth = par_photosynth, par_cost = par_cost)
+#       dpsi_max = dpsi_bounds$Iabs_bound
+#       u = try(uniroot(f = function(dpsi){dFdx(dpsi, psi_soil = psi_soil, par_plant = par_plant, 
+#                                           par_env = par_env, par_photosynth = par_photosynth, 
+#                                           par_cost = par_cost)$dP_dx}, 
+#                   interval = c(dpsi_max*0.01, dpsi_max*0.99)),
+#           silent = TRUE)
+#       # if(any(class(u) %in% "try-error")){
+#       #   # print(paste("error try"))
+#       #   dpsi=dpsi_max*0.01
+#       # }else{
+#       dpsi=u$root
+#       # }
+#       x = calc_x_from_dpsi(dpsi, psi_soil = psi_soil, par_plant = par_plant, 
+#                            par_env = par_env, par_photosynth = par_photosynth, 
+#                            par_cost = par_cost)
+#       psi_l = psi_soil-dpsi
+#       gs = calc_gs_phydro(dpsi, psi_soil, par_plant, par_env) # In mol/m2/s
+#       E  = 1.6 * gs * par_env$vpd/patm  # E in mol m-2 (ground) s-1
+#       J = calc_J(gs, x, par_photosynth)
+#       jmax = calc_jmax_from_J(J, par_photosynth)
+#       jmax25 = calc_jmax_arrhenius(jmaxT1 = jmax, T1 = (tc + 273.15), T2 = 298.15)
+#       a_j = calc_assim_light_limited(gs = gs, jmax = jmax, par_photosynth = par_photosynth)
+#       a = a_j$a
+#       ci = a_j$ci
+#       vcmax = calc_vcmax_coordinated_numerical(a, ci, par_photosynth)
+#       vcmax25 = calc_vcmax_arrhenius(vcmaxT1 = vcmax, T1 = (tc + 273.15), T2 = 298.15)
+#       jmax25_cost = NA
+#       h_cost = NA
+#     }else{
       # 3. Optimizer
       lj_dps = optimise_stomata_phydro_schemes(fn_profit, 
                                                psi_soil = psi_soil,
@@ -470,7 +500,7 @@ model_numerical <- function(tc, ppfd, vpd, co2, elv, fapar, kphio, psi_soil,
       jmax25_cost = cost$jmax25_cost
       h_cost = cost$h_cost 
     
-    }
+    # }
 
 
     # 5. Prepare output list and return
@@ -579,19 +609,19 @@ model_numerical_instantaneous <- function(vcmax25, jmax25, tc, ppfd, vpd, co2, e
 }
 
 
-# A_grad <- function(u, psi_soil, par_cost, par_plant, par_env, par_photosynth){
-#   x = u[1]
-#   y = u[2]
-#   psi_leaf = psi_soil-x
-#   gs = calc_gs_phydro(x, psi_soil, par_plant, par_env)+1e-270   # gs in mol/m2ground/s (include residual gs to avoid A calculation error)
-#   jmax = calc_jmax_arrhenius(jmaxT1 = y, T1 = 298.15, T2 = (par_env$tc + 273.15))
-#   a = calc_assim_light_limited(gs, jmax, par_photosynth)$a
-#   b = 1 # as for Sabot et al. 2022
-#   C = 0
-#   gamma = par_cost$gamma
-#   alpha = par_cost$alpha
-#   a  - alpha * y - 1/2*gamma*abs(psi_leaf)^2 - b*abs(psi_leaf)
-# }
+A_grad <- function(u, psi_soil, par_cost, par_plant, par_env, par_photosynth){
+  x = u[1]
+  y = u[2]
+  dpsi = psi_soil-x
+  gs = calc_gs_phydro(dpsi, psi_soil, par_plant, par_env)+1e-270   # gs in mol/m2ground/s (include residual gs to avoid A calculation error)
+  jmax = calc_jmax_arrhenius(jmaxT1 = y, T1 = 298.15, T2 = (par_env$tc + 273.15))
+  a = calc_assim_light_limited(gs, jmax, par_photosynth)$a
+  # b = 1 # as for Sabot et al. 2022
+  # C = 0
+  # gamma = par_cost$gamma
+  # alpha = par_cost$alpha
+  a
+}
 
 A_grad_dpsi <- function(u, jmax, psi_soil, par_cost, par_plant, par_env, par_photosynth){
   x = u[1]
@@ -605,18 +635,18 @@ A_grad_dpsi <- function(u, jmax, psi_soil, par_cost, par_plant, par_env, par_pho
   a
 }
 
-# A_grad_jmax <- function(u, dpsi, psi_soil, par_cost, par_plant, par_env, par_photosynth){
-#   y = u[1]
-#   jmax = calc_jmax_arrhenius(jmaxT1 = y, T1 = 298.15, T2 = (par_env$tc + 273.15))
-#   # psi_leaf = psi_soil-dpsi
-#   gs = calc_gs_phydro(dpsi, psi_soil, par_plant, par_env)+1e-270   # gs in mol/m2ground/s (include residual gs to avoid A calculation error)
-#   a = calc_assim_light_limited(gs, jmax, par_photosynth)$a
-#   # b = 1 # as for Sabot et al. 2022
-#   # C = 0
-#   # gamma = par_cost$gamma
-#   # alpha = par_cost$alpha
-#   a
-# }
+A_grad_jmax <- function(u, dpsi, psi_soil, par_cost, par_plant, par_env, par_photosynth){
+  y = u[1]
+  jmax = calc_jmax_arrhenius(jmaxT1 = y, T1 = 298.15, T2 = (par_env$tc + 273.15))
+  # psi_leaf = psi_soil-dpsi
+  gs = calc_gs_phydro(dpsi, psi_soil, par_plant, par_env)+1e-270   # gs in mol/m2ground/s (include residual gs to avoid A calculation error)
+  a = calc_assim_light_limited(gs, jmax, par_photosynth)$a
+  # b = 1 # as for Sabot et al. 2022
+  # C = 0
+  # gamma = par_cost$gamma
+  # alpha = par_cost$alpha
+  a
+}
 
 
 calc_dpsi_bound <- function(psi_soil, par_plant, par_env, par_photosynth, par_cost){

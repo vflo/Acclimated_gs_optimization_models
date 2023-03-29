@@ -75,8 +75,8 @@ mytheme7 = function(){
   
 }
 
-col_df <- tibble(scheme = factor(c('PHYDRO','CGAIN','PMAX','PMAX2','SOX','SOX2')),
-                 col = brewer_pal(palette = "Dark2")(6)
+col_df <- tibble(scheme = factor(c('PHYDRO','CMAX','CGAIN','PMAX','PMAX2','SOX','SOX2')),
+                 col = brewer_pal(palette = "Dark2")(7)
 )
 
 
@@ -292,6 +292,8 @@ get_partition_a <- function(x){
   #                   weights = log(n_dist))
   # }
   r2_not <- MuMIn::r.squaredGLMM(mod_not)
+  # r2_not <- rsq::rsq.lmm(mod_not)
+  # r2_not <- mitml::multilevelR2(mod_not)
   mod <- lmer(A~a_pred + (1|Species),#(a_pred|Species),
               data = x %>% 
                 filter(calibration_type == "Calibrated α"),
@@ -303,13 +305,22 @@ get_partition_a <- function(x){
   #               weights = log(n_dist))
   # }
   r2 <- MuMIn::r.squaredGLMM(mod)
-  
+  # r2 <- mitml::multilevelR2(mod)
+  # r2 <- rsq::rsq.lmm(mod)
+  # using MuMIn
   return(tibble(stomatal_r2 = r2_not[1],
                 non_stomatal_r2 = r2[1]-r2_not[1],
                 species_r2 = r2[2]-r2[1],
                 Residuals = 1-r2[2],
                 conv_1 = conv_1,
                 conv_2 = conv_2))
+  # using rsq package
+  # return(tibble(stomatal_r2 = r2_not[[2]],
+  #               non_stomatal_r2 = r2[[2]]-r2_not[[2]],
+  #               species_r2 = r2[[1]]-r2[[2]],
+  #               Residuals = 1-r2[[1]],
+  #               conv_1 = conv_1,
+  #               conv_2 = conv_2))
 }
 
 
@@ -361,4 +372,96 @@ get_partition_g_accl <- function(x){
                 non_stomatal_r2 = r2[1]-r2_not[1],
                 species_r2 = r2[2]-r2[1],
                 Residuals = 1-r2[2]))
+}
+
+
+get_partition_a_multiple <- function(x){
+  x <- x %>% filter(LWP<=value_quantile) %>%
+    group_by(calibration_type,Species,source) %>%  
+    mutate(n_dist = n())
+  mod_not <- lmer(A~a_pred + (1|Species),#(a_pred|Species),
+                  data = x %>% filter(calibration_type == "Not acclimated"),
+                  weights = log(n_dist))
+  conv_1 = performance::check_convergence(mod_not)[1]
+  # if(!conv_1){
+  #   mod_not <- lmer(A~a_pred + (1|Species),
+  #                   data = x %>% filter(calibration_type == "Not acclimated"),
+  #                   weights = log(n_dist))
+  # }
+  r2_not <- MuMIn::r.squaredGLMM(mod_not)
+  mod <- lmer(A~a_pred + (1|Species),#(a_pred|Species),
+              data = x %>% 
+                filter(calibration_type == "Calibrated α"),
+              weights = log(n_dist))
+  conv_2 = performance::check_convergence(mod)[1]
+  # if(!conv_2){
+  #   mod <- lmer(A~a_pred + (1|Species),
+  #               data = x %>% filter(calibration_type == "Calibrated α"),
+  #               weights = log(n_dist))
+  # }
+  r2 <- MuMIn::r.squaredGLMM(mod)
+  
+  return(tibble(stomatal_r2 = r2_not[1],
+                non_stomatal_r2 = r2[1]-r2_not[1],
+                species_r2 = r2[2]-r2[1],
+                Residuals = 1-r2[2],
+                conv_1 = conv_1,
+                conv_2 = conv_2))
+}
+
+
+get_partition_a_multiple_bin <- function(x){
+  if(unique(x$`Quantile bins`) == "q1"){
+    x <- x %>% filter(LWP>=`1`,LWP<`2`) %>%
+    group_by(calibration_type,Species,source) %>%  
+    mutate(n_dist = n())
+    }
+  if(unique(x$`Quantile bins`) == "q2"){
+    x <- x %>% filter(LWP>=`2`,LWP<`3`) %>%
+      group_by(calibration_type,Species,source) %>%  
+      mutate(n_dist = n())
+  }
+  if(unique(x$`Quantile bins`) == "q3"){
+    x <- x %>% filter(LWP>=`3`,LWP<`4`) %>%
+      group_by(calibration_type,Species,source) %>%  
+      mutate(n_dist = n())
+  }
+  if(unique(x$`Quantile bins`) == "q4"){
+    x <- x %>% filter(LWP>=`4`,LWP<`5`) %>%
+      group_by(calibration_type,Species,source) %>%  
+      mutate(n_dist = n())
+  }
+  if(unique(x$`Quantile bins`) == "q5"){
+    x <- x %>% filter(LWP>=`5`,LWP<=`6`) %>%
+      group_by(calibration_type,Species,source) %>%  
+      mutate(n_dist = n())
+  }
+  mod_not <- lmer(A~a_pred + (1|Species),#(a_pred|Species),
+                  data = x %>% filter(calibration_type == "Not acclimated"),
+                  weights = log(n_dist))
+  conv_1 = performance::check_convergence(mod_not)[1]
+  # if(!conv_1){
+  #   mod_not <- lmer(A~a_pred + (1|Species),
+  #                   data = x %>% filter(calibration_type == "Not acclimated"),
+  #                   weights = log(n_dist))
+  # }
+  r2_not <- MuMIn::r.squaredGLMM(mod_not)
+  mod <- lmer(A~a_pred + (1|Species),#(a_pred|Species),
+              data = x %>% 
+                filter(calibration_type == "Calibrated α"),
+              weights = log(n_dist))
+  conv_2 = performance::check_convergence(mod)[1]
+  # if(!conv_2){
+  #   mod <- lmer(A~a_pred + (1|Species),
+  #               data = x %>% filter(calibration_type == "Calibrated α"),
+  #               weights = log(n_dist))
+  # }
+  r2 <- MuMIn::r.squaredGLMM(mod)
+  
+  return(tibble(stomatal_r2 = r2_not[1],
+                non_stomatal_r2 = r2[1]-r2_not[1],
+                species_r2 = r2[2]-r2[1],
+                Residuals = 1-r2[2],
+                conv_1 = conv_1,
+                conv_2 = conv_2))
 }

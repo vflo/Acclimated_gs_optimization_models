@@ -465,20 +465,20 @@ get_parameters_kmax_no_alpha <- function(x){
 
 ##### CALIBRATE PARAMETERS #####
 template %>% 
-  filter(!scheme %in% c("CMAX"),#scheme %in% c("CGAIN2") #scheme == "CGAIN",Species == "Diplotaxis ibicensis"
-         Species %in% c( "Diplotaxis ibicensis",
-                         'Helianthus annuus',
-                         "Malva subovata"
-  #        #   # "Rosa cymosa",
-  #        #   # "Broussonetia papyrifera",
-  #        #   # "Cinnamomum bodinieri",
-  #        #   # "Platycarya longipes",
-  #        #   # "Pteroceltis tatarinowii"
-  #        #   # "Picea abies",
-  #        #   # "Betula pendula",
-  #        #   # "Pinus sylvestris",
-  #        #   # "Populus tremula"
-         )
+  filter(scheme %in% c("CMAX")#scheme %in% c("CGAIN2") #scheme == "CGAIN",Species == "Diplotaxis ibicensis"
+  #        Species %in% c( "Diplotaxis ibicensis",
+  #                        'Helianthus annuus',
+  #                        "Malva subovata"
+  # #        #   # "Rosa cymosa",
+  # #        #   # "Broussonetia papyrifera",
+  # #        #   # "Cinnamomum bodinieri",
+  # #        #   # "Platycarya longipes",
+  # #        #   # "Pteroceltis tatarinowii"
+  # #        #   # "Picea abies",
+  # #        #   # "Betula pendula",
+  # #        #   # "Pinus sylvestris",
+  # #        #   # "Populus tremula"
+  #        )
          ) %>%
   # filter(scheme %in% c("CGAIN")) %>%
   # filter(Species == "Quercus ilex", source == "Epron and Dreyer (1990)") %>%

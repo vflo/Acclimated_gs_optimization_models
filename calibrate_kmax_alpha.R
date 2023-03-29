@@ -505,7 +505,7 @@ get_parameters_kmax_alpha <- function(x){
 ##### CALIBRATE PARAMETERS #####
 
 template %>% 
-  filter(!scheme %in% c("CMAX","CGAIN")
+  filter(scheme %in% c("CMAX")
   # #        # Species %in% c(
   # #        #   # "Rosa cymosa",
   # #        #   # "Broussonetia papyrifera",
@@ -518,6 +518,7 @@ template %>%
   # #        #   # "Populus tremula"
   # #        # )
          ) %>%
+  slice(32:39) %>% 
   # filter(scheme %in% c("CGAIN")) %>%
   # filter(Species == "Quercus ilex", source == "Epron and Dreyer (1990)") %>%
   group_split(scheme, Species,source) %>% 

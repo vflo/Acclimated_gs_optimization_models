@@ -1,0 +1,92 @@
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID
+Beta maritima subsp. marcosii,CGAIN,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,marcosii,1631
+Beta maritima subsp. maritima,CGAIN,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,maritima,1632
+Betula pendula,CGAIN,FALSE,TRUE,Salmon et al. (2020),Betula,pendula,NA,1610
+Cistus albidus,CGAIN,FALSE,TRUE,Galmes et al. (2007),Cistus,albidus,NA,1624
+Diplotaxis ibicensis,CGAIN,FALSE,TRUE,Galmes et al. (2007),Diplotaxis,ibicensis,NA,1630
+Hypericum balearicum,CGAIN,FALSE,TRUE,Galmes et al. (2007),Hypericum,balearicum,NA,1627
+Limonium gibertii,CGAIN,FALSE,TRUE,Galmes et al. (2007),Limonium,gibertii,NA,1626
+Limonium magallufianum,CGAIN,FALSE,TRUE,Galmes et al. (2007),Limonium,magallufianum,NA,1625
+Malva subovata,CGAIN,FALSE,TRUE,Galmes et al. (2007),Malva,subovata,NA,1629
+Phlomis italica,CGAIN,FALSE,TRUE,Galmes et al. (2007),Phlomis,italica,NA,1628
+Picea abies,CGAIN,FALSE,TRUE,Salmon et al. (2020),Picea,abies,NA,1609
+Pistacia lentiscus,CGAIN,FALSE,TRUE,Galmes et al. (2007),Pistacia,lentiscus,NA,1623
+Populus tremula,CGAIN,FALSE,TRUE,Salmon et al. (2020),Populus,tremula,NA,1611
+Beta maritima subsp. marcosii,CMAX,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,marcosii,1631
+Beta maritima subsp. maritima,CMAX,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,maritima,1632
+Betula pendula,CMAX,FALSE,TRUE,Salmon et al. (2020),Betula,pendula,NA,1610
+Cistus albidus,CMAX,FALSE,TRUE,Galmes et al. (2007),Cistus,albidus,NA,1624
+Diplotaxis ibicensis,CMAX,FALSE,TRUE,Galmes et al. (2007),Diplotaxis,ibicensis,NA,1630
+Hypericum balearicum,CMAX,FALSE,TRUE,Galmes et al. (2007),Hypericum,balearicum,NA,1627
+Limonium gibertii,CMAX,FALSE,TRUE,Galmes et al. (2007),Limonium,gibertii,NA,1626
+Limonium magallufianum,CMAX,FALSE,TRUE,Galmes et al. (2007),Limonium,magallufianum,NA,1625
+Malva subovata,CMAX,FALSE,TRUE,Galmes et al. (2007),Malva,subovata,NA,1629
+Phlomis italica,CMAX,FALSE,TRUE,Galmes et al. (2007),Phlomis,italica,NA,1628
+Picea abies,CMAX,FALSE,TRUE,Salmon et al. (2020),Picea,abies,NA,1609
+Pistacia lentiscus,CMAX,FALSE,TRUE,Galmes et al. (2007),Pistacia,lentiscus,NA,1623
+Populus tremula,CMAX,FALSE,TRUE,Salmon et al. (2020),Populus,tremula,NA,1611
+Beta maritima subsp. marcosii,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,marcosii,1631
+Beta maritima subsp. maritima,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,maritima,1632
+Betula pendula,PHYDRO,FALSE,TRUE,Salmon et al. (2020),Betula,pendula,NA,1610
+Cistus albidus,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Cistus,albidus,NA,1624
+Diplotaxis ibicensis,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Diplotaxis,ibicensis,NA,1630
+Hypericum balearicum,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Hypericum,balearicum,NA,1627
+Limonium gibertii,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Limonium,gibertii,NA,1626
+Limonium magallufianum,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Limonium,magallufianum,NA,1625
+Malva subovata,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Malva,subovata,NA,1629
+Phlomis italica,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Phlomis,italica,NA,1628
+Picea abies,PHYDRO,FALSE,TRUE,Salmon et al. (2020),Picea,abies,NA,1609
+Pistacia lentiscus,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Pistacia,lentiscus,NA,1623
+Populus tremula,PHYDRO,FALSE,TRUE,Salmon et al. (2020),Populus,tremula,NA,1611
+Beta maritima subsp. marcosii,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,marcosii,1631
+Beta maritima subsp. maritima,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,maritima,1632
+Betula pendula,PROFITMAX,FALSE,TRUE,Salmon et al. (2020),Betula,pendula,NA,1610
+Cistus albidus,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Cistus,albidus,NA,1624
+Diplotaxis ibicensis,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Diplotaxis,ibicensis,NA,1630
+Hypericum balearicum,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Hypericum,balearicum,NA,1627
+Limonium gibertii,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Limonium,gibertii,NA,1626
+Limonium magallufianum,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Limonium,magallufianum,NA,1625
+Malva subovata,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Malva,subovata,NA,1629
+Phlomis italica,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Phlomis,italica,NA,1628
+Picea abies,PROFITMAX,FALSE,TRUE,Salmon et al. (2020),Picea,abies,NA,1609
+Pistacia lentiscus,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Pistacia,lentiscus,NA,1623
+Populus tremula,PROFITMAX,FALSE,TRUE,Salmon et al. (2020),Populus,tremula,NA,1611
+Beta maritima subsp. marcosii,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,marcosii,1631
+Beta maritima subsp. maritima,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,maritima,1632
+Betula pendula,PROFITMAX2,FALSE,TRUE,Salmon et al. (2020),Betula,pendula,NA,1610
+Cistus albidus,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Cistus,albidus,NA,1624
+Diplotaxis ibicensis,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Diplotaxis,ibicensis,NA,1630
+Hypericum balearicum,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Hypericum,balearicum,NA,1627
+Limonium gibertii,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Limonium,gibertii,NA,1626
+Limonium magallufianum,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Limonium,magallufianum,NA,1625
+Malva subovata,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Malva,subovata,NA,1629
+Phlomis italica,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Phlomis,italica,NA,1628
+Picea abies,PROFITMAX2,FALSE,TRUE,Salmon et al. (2020),Picea,abies,NA,1609
+Pistacia lentiscus,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Pistacia,lentiscus,NA,1623
+Populus tremula,PROFITMAX2,FALSE,TRUE,Salmon et al. (2020),Populus,tremula,NA,1611
+Beta maritima subsp. marcosii,SOX,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,marcosii,1631
+Beta maritima subsp. maritima,SOX,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,maritima,1632
+Betula pendula,SOX,FALSE,TRUE,Salmon et al. (2020),Betula,pendula,NA,1610
+Cistus albidus,SOX,FALSE,TRUE,Galmes et al. (2007),Cistus,albidus,NA,1624
+Diplotaxis ibicensis,SOX,FALSE,TRUE,Galmes et al. (2007),Diplotaxis,ibicensis,NA,1630
+Hypericum balearicum,SOX,FALSE,TRUE,Galmes et al. (2007),Hypericum,balearicum,NA,1627
+Limonium gibertii,SOX,FALSE,TRUE,Galmes et al. (2007),Limonium,gibertii,NA,1626
+Limonium magallufianum,SOX,FALSE,TRUE,Galmes et al. (2007),Limonium,magallufianum,NA,1625
+Malva subovata,SOX,FALSE,TRUE,Galmes et al. (2007),Malva,subovata,NA,1629
+Phlomis italica,SOX,FALSE,TRUE,Galmes et al. (2007),Phlomis,italica,NA,1628
+Picea abies,SOX,FALSE,TRUE,Salmon et al. (2020),Picea,abies,NA,1609
+Pistacia lentiscus,SOX,FALSE,TRUE,Galmes et al. (2007),Pistacia,lentiscus,NA,1623
+Populus tremula,SOX,FALSE,TRUE,Salmon et al. (2020),Populus,tremula,NA,1611
+Beta maritima subsp. marcosii,SOX2,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,marcosii,1631
+Beta maritima subsp. maritima,SOX2,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,maritima,1632
+Betula pendula,SOX2,FALSE,TRUE,Salmon et al. (2020),Betula,pendula,NA,1610
+Cistus albidus,SOX2,FALSE,TRUE,Galmes et al. (2007),Cistus,albidus,NA,1624
+Diplotaxis ibicensis,SOX2,FALSE,TRUE,Galmes et al. (2007),Diplotaxis,ibicensis,NA,1630
+Hypericum balearicum,SOX2,FALSE,TRUE,Galmes et al. (2007),Hypericum,balearicum,NA,1627
+Limonium gibertii,SOX2,FALSE,TRUE,Galmes et al. (2007),Limonium,gibertii,NA,1626
+Limonium magallufianum,SOX2,FALSE,TRUE,Galmes et al. (2007),Limonium,magallufianum,NA,1625
+Malva subovata,SOX2,FALSE,TRUE,Galmes et al. (2007),Malva,subovata,NA,1629
+Phlomis italica,SOX2,FALSE,TRUE,Galmes et al. (2007),Phlomis,italica,NA,1628
+Picea abies,SOX2,FALSE,TRUE,Salmon et al. (2020),Picea,abies,NA,1609
+Pistacia lentiscus,SOX2,FALSE,TRUE,Galmes et al. (2007),Pistacia,lentiscus,NA,1623
+Populus tremula,SOX2,FALSE,TRUE,Salmon et al. (2020),Populus,tremula,NA,1611

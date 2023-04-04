@@ -534,21 +534,58 @@ library(psych)
 #                       hv, l_b_opt, l_p50_opt,
 #                       Height.max..m.))
 
-
+pairs.panels(df_param_kmax_alpha %>%
+               mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
+                      # hv = Huber.value*1e4,
+                      lk.scale =log(K.scale),
+                      Height.max..m. = log(Height.max..m.),
+                      l_b = log(b),
+                      l_b_opt = log(b_opt),
+                      l_p50_opt = log(-p50_opt),
+                      D = D*101325/1000,
+                      jmax_ww = log(jmaxww25),
+                      # Ta = T
+                      ) %>%
+               ungroup() %>% 
+               filter(scheme=="PMAX") %>%
+               dplyr::select(#alpha,
+                      # SLA..cm2.g.1.,
+                      # jmax_ww,
+                      # KL,
+                      # ca_pa,
+                      # T,
+                      # Iabs_growth,
+                      # D,
+                      alpha,
+                      l_b ,
+                      P50,
+                      # lk.scale,P50,
+                      # hv, 
+                      l_b_opt, l_p50_opt,
+                      Height.max..m.
+                      ))
 ## FINAL alpha-traits ANALYSIS ##
 #l_b and P50 are moderately-strongly correlated (we use only P50)
 # df_param_kmax_alpha[is.na(df_param_kmax_alpha$lifeform),"lifeform"] <- "Evergreen needleleaf gymnosperm"
 # df_param_kmax_alpha[is.na(df_param_kmax_alpha$lifeform_comp),"lifeform_comp"] <- "Evergreen"
-alpha_mod <- lmerTest::lmer(alpha~ SLA..cm2.g.1.+ KL+ #lifeform_comp +
-                              Iabs_growth + D +
-                              jmax_ww + #hv + #p50_opt + l_b_opt +
-                              Ta + ca_pa+ P50+  Height.max..m.+
-                              (1|source)+ (1|scheme),# + (1|Species),
-                            data = df_param_kmax_alpha %>%
+df_param_kmax_alpha_lifeform <- df_param_kmax_alpha %>%left_join(lifeform)
+alpha_mod <- lmerTest::lmer(alpha ~ SLA..cm2.g.1.+ KL+
+                              # Iabs_growth +
+                              D +
+                              jmax_ww +# p50_opt + l_b_opt +
+                              # Ta +
+                              ca_pa+ 
+                              P50+  
+                              l_b+
+                              hv+
+                              Height.max..m.+
+                              # (1|source)+
+                              (1|scheme),# + (1|lifeform),# + (1|Species),
+                            data = df_param_kmax_alpha_lifeform %>% 
                               mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
                                      hv = Huber.value*1e4,
                                      lk.scale =log(K.scale),
-                                     Height.max..m. =  Height.max..m.,
+                                     Height.max..m. =  log(Height.max..m.),
                                      l_b = log(b),
                                      l_b_opt = log(b_opt),
                                      l_p50_opt = log(-p50_opt),
@@ -560,14 +597,13 @@ alpha_mod <- lmerTest::lmer(alpha~ SLA..cm2.g.1.+ KL+ #lifeform_comp +
 summary(alpha_mod)
 step(alpha_mod)
 alpha_mod <- lmerTest::lmer(
-  alpha ~ KL + Iabs_growth + jmax_ww + Height.max..m. + (1 | source) + (1 | scheme),
-  # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww +  Ta + P50 + (1 | source) + (1 | scheme),
-  # alpha ~ Iabs_growth + jmax_ww + Ta + P50 + Height.max..m. + (1 | source) + (1 | scheme) + (1 | Species),
-  data = df_param_kmax_alpha %>%
+  alpha ~ SLA..cm2.g.1. + D + jmax_ww + P50 + 
+    l_b + Height.max..m. + (1 | scheme),
+  data = df_param_kmax_alpha_lifeform %>%
     mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
            hv = log(Huber.value*1e4),
            lk.scale =log(K.scale),
-           Height.max..m. = log( Height.max..m.),
+           Height.max..m. = log(Height.max..m.),
            l_b = log(b),
            l_b_opt = log(b_opt),
            l_p50_opt = log(-p50_opt),
@@ -597,7 +633,7 @@ alpha_mod <- lmerTest::lmer(
 summary(alpha_mod)
 car::vif(alpha_mod)
 performance::check_collinearity(alpha_mod)
-confint(alpha_mod)
+# confint(alpha_mod)
 MuMIn::r.squaredGLMM(alpha_mod)
 
 
@@ -605,22 +641,22 @@ library(effects)
 closest <- function(x, x0) apply(outer(x, x0, FUN=function(x, x0) abs(x - x0)), 1, which.min)
 
 # 
-# eff<-effect("SLA..cm2.g.1.", partial.residuals=T, alpha_mod)
-# x.fit <- unlist(eff$x.all)
-# trans <- I
-# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, SLA..cm2.g.1. = eff$x$SLA..cm2.g.1.)
-# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$SLA..cm2.g.1.)] + eff$residuals)
-# 
-# g_eff1 <- ggplot(x, aes(x = SLA..cm2.g.1., y = fit)) +
-#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
-#   geom_line(size = 1) +
-#   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
-#   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
-#   geom_smooth(data = xy, aes(x = trans(x), y = y),
-#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
-#   mytheme3()+
-#   ylab(expression(alpha))+
-#   xlab(expression("SLA  [cm"^2~"g"^-1*"]"))
+eff<-effect("SLA..cm2.g.1.", partial.residuals=T, alpha_mod)
+x.fit <- unlist(eff$x.all)
+trans <- I
+x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, SLA..cm2.g.1. = eff$x$SLA..cm2.g.1.)
+xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$SLA..cm2.g.1.)] + eff$residuals)
+
+g_eff1 <- ggplot(x, aes(x = SLA..cm2.g.1., y = fit)) +
+  geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+  geom_line(size = 1) +
+  geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+  geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+  geom_smooth(data = xy, aes(x = trans(x), y = y),
+              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+  mytheme3()+
+  ylab(expression(alpha))+
+  xlab(expression("SLA  [cm"^2~"g"^-1*"]"))
 
 eff<-effect("Height.max..m.", partial.residuals=T, alpha_mod)
 x.fit <- unlist(eff$x.all)
@@ -628,7 +664,7 @@ trans <- I
 x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, Height.max..m. = eff$x$Height.max..m.)
 xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$Height.max..m.)] + eff$residuals)
 
-g_eff1 <- ggplot(x, aes(x = Height.max..m., y = fit)) +
+g_eff10 <- ggplot(x, aes(x = Height.max..m., y = fit)) +
   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
   geom_line(linewidth = 1) +
   geom_line(aes(y= lower), linetype=2) +
@@ -637,25 +673,25 @@ g_eff1 <- ggplot(x, aes(x = Height.max..m., y = fit)) +
               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
   mytheme3()+
   ylab(expression(alpha))+
-  xlab(expression("Max height [m]"))
+  xlab(expression("Max height [ln(m)]"))
 
-eff<-effect("Iabs_growth", partial.residuals=T, alpha_mod)
-# plot(eff)
-x.fit <- unlist(eff$x.all)
-trans <- I
-x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, Iabs_growth = eff$x$Iabs_growth)
-xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$Iabs_growth)] + eff$residuals)
-
-g_eff2 <- ggplot(x, aes(x = Iabs_growth, y = fit)) +
-  geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
-  geom_line(linewidth = 1) +
-  geom_line(aes(y= lower), linetype=2) +
-  geom_line(aes(y= upper), linetype=2) +
-  geom_smooth(data = xy, aes(x = trans(x), y = y),
-              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
-  mytheme3()+
-  ylab(expression(alpha))+
-  xlab(expression(I[abs]~"["*mu*"mol"~m^-2~s^-1*"]"))
+# eff<-effect("Iabs_growth", partial.residuals=T, alpha_mod)
+# # plot(eff)
+# x.fit <- unlist(eff$x.all)
+# trans <- I
+# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, Iabs_growth = eff$x$Iabs_growth)
+# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$Iabs_growth)] + eff$residuals)
+# 
+# g_eff2 <- ggplot(x, aes(x = Iabs_growth, y = fit)) +
+#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+#   geom_line(linewidth = 1) +
+#   geom_line(aes(y= lower), linetype=2) +
+#   geom_line(aes(y= upper), linetype=2) +
+#   geom_smooth(data = xy, aes(x = trans(x), y = y),
+#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+#   mytheme3()+
+#   ylab(expression(alpha))+
+#   xlab(expression(I[abs]~"["*mu*"mol"~m^-2~s^-1*"]"))
 
 
 # eff<-effect("hv", partial.residuals=T, alpha_mod)
@@ -666,8 +702,8 @@ g_eff2 <- ggplot(x, aes(x = Iabs_growth, y = fit)) +
 # xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$hv)] + eff$residuals)
 # 
 # g_eff3 <- ggplot(x, aes(x = hv, y = fit)) +
-#   geom_point(data = xy, aes(x = x, y = y, shape = df_param_kmax_alpha$gym_ang), col = "grey60", size = 2, show.legend = FALSE) +
-#   geom_line(size = 1) +
+#   geom_point(data = xy, aes(x = x, y = y, shape = df_param_kmax_alpha_lifeform$gym_ang), col = "grey60", size = 2, show.legend = FALSE) +
+#   geom_line(linewidth = 1) +
 #   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
 #   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
 #   geom_smooth(data = xy, aes(x = trans(x), y = y),
@@ -676,6 +712,25 @@ g_eff2 <- ggplot(x, aes(x = Iabs_growth, y = fit)) +
 #   ylab(expression(alpha))+
 #   xlab(expression("Huber value [ln("*cm[sw]^2~m[leaf]^-2*")]"))
 
+eff<-effect("D", partial.residuals=T, alpha_mod)
+# plot(eff)
+x.fit <- unlist(eff$x.all)
+trans <- I
+x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, D = eff$x$D)
+xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$D)] + eff$residuals)
+
+g_eff4 <- ggplot(x, aes(x = D, y = fit)) +
+  geom_point(data = xy, aes(x = x, y = y, 
+                            size = log(df_param_kmax_alpha_lifeform$n_dist)), 
+             col = "grey60", size = 2) +
+  geom_line(size = 1) +
+  geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+  geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+  geom_smooth(data = xy, aes(x = trans(x), y = y),
+              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+  mytheme3()+
+  ylab(expression(alpha))+
+  xlab(expression("VPD [kPa]"))
 
 # eff<-effect("Ta", partial.residuals=T, alpha_mod)
 # # plot(eff)
@@ -684,7 +739,7 @@ g_eff2 <- ggplot(x, aes(x = Iabs_growth, y = fit)) +
 # x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, Ta = eff$x$Ta)
 # xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$Ta)] + eff$residuals)
 # 
-# g_eff4 <- ggplot(x, aes(x = Ta, y = fit)) +
+# g_eff8 <- ggplot(x, aes(x = Ta, y = fit)) +
 #   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
 #   geom_line(size = 1) +
 #   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
@@ -696,32 +751,14 @@ g_eff2 <- ggplot(x, aes(x = Iabs_growth, y = fit)) +
 #   xlab(expression(T[a]~"[ºC]"))
 # 
 # 
-# eff<-effect("P50", partial.residuals=T, alpha_mod)
-# # plot(eff)
-# x.fit <- unlist(eff$x.all)
-# trans <- I
-# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, P50 = eff$x$P50)
-# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$P50)] + eff$residuals)
-# 
-# g_eff5 <- ggplot(x, aes(x = P50, y = fit)) +
-#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
-#   geom_line(size = 1) +
-#   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
-#   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
-#   geom_smooth(data = xy, aes(x = trans(x), y = y),
-#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
-#   mytheme3()+
-#   ylab(expression(alpha))+
-#   xlab(expression(psi[50]~"[MPa]"))
-
-eff<-effect("KL", partial.residuals=T, alpha_mod)
+eff<-effect("P50", partial.residuals=T, alpha_mod)
 # plot(eff)
 x.fit <- unlist(eff$x.all)
 trans <- I
-x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, KL = eff$x$KL)
-xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$KL)] + eff$residuals)
+x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, P50 = eff$x$P50)
+xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$P50)] + eff$residuals)
 
-g_eff5 <- ggplot(x, aes(x = KL, y = fit)) +
+g_eff7 <- ggplot(x, aes(x = P50, y = fit)) +
   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
   geom_line(size = 1) +
   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
@@ -730,8 +767,44 @@ g_eff5 <- ggplot(x, aes(x = KL, y = fit)) +
               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
   mytheme3()+
   ylab(expression(alpha))+
-  xlab(expression(K[L]~"[log(mol "~m^{-1}~MPa^{-1}~s^{-1}~")]"))
+  xlab(expression(psi[50]~"[MPa]"))
 
+eff<-effect("l_b", partial.residuals=T, alpha_mod)
+# plot(eff)
+x.fit <- unlist(eff$x.all)
+trans <- I
+x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, l_b = eff$x$l_b)
+xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$l_b)] + eff$residuals)
+
+g_eff11 <- ggplot(x, aes(x = l_b, y = fit)) +
+  geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+  geom_line(size = 1) +
+  geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+  geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+  geom_smooth(data = xy, aes(x = trans(x), y = y),
+              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+  mytheme3()+
+  ylab(expression(alpha))+
+  xlab(expression("ln(b)"))
+
+# eff<-effect("KL", partial.residuals=T, alpha_mod)
+# # plot(eff)
+# x.fit <- unlist(eff$x.all)
+# trans <- I
+# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, KL = eff$x$KL)
+# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$KL)] + eff$residuals)
+# 
+# g_eff5 <- ggplot(x, aes(x = KL, y = fit)) +
+#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+#   geom_line(size = 1) +
+#   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+#   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+#   geom_smooth(data = xy, aes(x = trans(x), y = y),
+#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+#   mytheme3()+
+#   ylab(expression(alpha))+
+#   xlab(expression(K[L]~"[ln(mol "~m^{-1}~MPa^{-1}~s^{-1}~")]"))
+# 
 eff<-effect("jmax_ww", partial.residuals=T, alpha_mod)
 # plot(eff)
 x.fit <- unlist(eff$x.all)
@@ -750,12 +823,12 @@ g_eff6 <- ggplot(x, aes(x = jmax_ww, y = fit)) +
   ylab(expression(alpha))+
   xlab(expression(J["maxWW,25"]~"[ln("*mu*"mol"~m^-2~s^-1*")]"))
 
-alpha_mod_plot <- ggarrange(g_eff2,g_eff6,g_eff5,g_eff1,#g_eff3,#g_eff5,
-          align='hv', labels=c('a', 'b','c','d'),
-          ncol=4, nrow = 1)
+alpha_mod_plot <- ggarrange(g_eff4,g_eff6,g_eff1,g_eff7,g_eff11,g_eff10,
+          align='hv', labels=c('a', 'b','c','d','e','f'),
+          ncol=3, nrow = 2)
 
 # ggsave("PLOTS/alpha_model.png", plot = alpha_mod_plot, width = 30, height = 20, units = "cm")
-ggsave("PLOTS/alpha_model_4.png", plot = alpha_mod_plot, width = 40, height = 10, units = "cm")
+ggsave("PLOTS/alpha_model_5.png", plot = alpha_mod_plot, width = 30, height = 20, units = "cm")
 
 
 
@@ -798,6 +871,340 @@ ggplot(data = model_means_cld) +
 ggsave("PLOTS/alpha_scheme.png", width = 14, height = 10, units = "cm")
 
 
+
+
+
+
+
+#### DARK RESPIRATION ####
+
+df_param_kmax_alpha_lifeform <- df_param_kmax_alpha %>%left_join(lifeform)
+alpha_mod <- lmerTest::lmer(alpha*jmaxww25 ~ SLA..cm2.g.1.+ KL+
+                              # Iabs_growth +
+                              D +
+                              # jmax_ww +# p50_opt + l_b_opt +
+                              # Ta +
+                              ca_pa+ 
+                              P50+  
+                              l_b+
+                              hv+
+                              Height.max..m.+
+                              (1|source)+
+                              (1|scheme),# + (1|lifeform),# + (1|Species),
+                            data = df_param_kmax_alpha_lifeform %>% 
+                              mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
+                                     hv = Huber.value*1e4,
+                                     lk.scale =log(K.scale),
+                                     Height.max..m. =  log(Height.max..m.),
+                                     l_b = log(b),
+                                     l_b_opt = log(b_opt),
+                                     l_p50_opt = log(-p50_opt),
+                                     D = D*101325/1000,
+                                     jmax_ww = log(jmaxww25),
+                                     Ta = T), 
+                            weights = log(n_dist)
+)
+summary(alpha_mod)
+step(alpha_mod,reduce.random = FALSE)
+alpha_mod <- lmerTest::lmer(
+  alpha * jmaxww25 ~ SLA..cm2.g.1. + KL + P50 + 
+    Height.max..m. + (1 | source) + (1 | scheme),
+  # alpha * jmaxww25 ~ SLA..cm2.g.1. + KL + ca_pa + l_b + 
+  #   hv + Height.max..m. + (1 | scheme),
+  data = df_param_kmax_alpha_lifeform %>%
+    mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
+           hv = log(Huber.value*1e4),
+           lk.scale =log(K.scale),
+           Height.max..m. = log(Height.max..m.),
+           l_b = log(b),
+           l_b_opt = log(b_opt),
+           l_p50_opt = log(-p50_opt),
+           D = D*101325/1000,
+           jmax_ww = log(jmaxww25),
+           Ta = T),
+  weights = log(n_dist)
+)
+# alpha_mod <- lmerTest::lmer(
+#   # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + MATbest + P50 + (1 | source) + (1 | scheme),
+#   # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + Ta + P50 + (1 | source) + (1 | scheme),
+#   alpha ~ Iabs_growth + jmax_ww + Ta + P50 + Height.max..m. + (1 | source) + (1 | scheme) + (1 | Species),
+#   data = df_param_kmax_alpha %>% 
+#     mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
+#            hv = log(Huber.value*1e4),
+#            lk.scale =log(K.scale),
+#            Height.max..m. = log( Height.max..m.),
+#            l_b = log(b),
+#            l_b_opt = log(b_opt),
+#            l_p50_opt = log(-p50_opt),
+#            D = D*101325/1000,
+#            jmax_ww = log(jmax_ww),
+#            Ta = T),
+#   weights = log(n_dist)
+# )
+# anova(alpha_mod,alpha_mod2)
+summary(alpha_mod)
+car::vif(alpha_mod)
+performance::check_collinearity(alpha_mod)
+# confint(alpha_mod)
+MuMIn::r.squaredGLMM(alpha_mod)
+
+
+library(effects)
+closest <- function(x, x0) apply(outer(x, x0, FUN=function(x, x0) abs(x - x0)), 1, which.min)
+
+# 
+eff<-effect("SLA..cm2.g.1.", partial.residuals=T, alpha_mod)
+x.fit <- unlist(eff$x.all)
+trans <- I
+x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, SLA..cm2.g.1. = eff$x$SLA..cm2.g.1.)
+xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$SLA..cm2.g.1.)] + eff$residuals)
+
+g_eff1 <- ggplot(x, aes(x = SLA..cm2.g.1., y = fit)) +
+  geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+  geom_line(size = 1) +
+  geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+  geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+  geom_smooth(data = xy, aes(x = trans(x), y = y),
+              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+  mytheme3()+
+  ylab(expression(R[dark]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+  xlab(expression("SLA  [cm"^2~"g"^-1*"]"))
+
+eff<-effect("Height.max..m.", partial.residuals=T, alpha_mod)
+x.fit <- unlist(eff$x.all)
+trans <- I
+x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, Height.max..m. = eff$x$Height.max..m.)
+xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$Height.max..m.)] + eff$residuals)
+
+g_eff10 <- ggplot(x, aes(x = Height.max..m., y = fit)) +
+  geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+  geom_line(linewidth = 1) +
+  geom_line(aes(y= lower), linetype=2) +
+  geom_line(aes(y= upper), linetype=2) +
+  geom_smooth(data = xy, aes(x = trans(x), y = y),
+              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+  mytheme3()+
+  ylab(expression(R[dark]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+  xlab(expression("Max height [ln(m)]"))
+
+# eff<-effect("Iabs_growth", partial.residuals=T, alpha_mod)
+# # plot(eff)
+# x.fit <- unlist(eff$x.all)
+# trans <- I
+# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, Iabs_growth = eff$x$Iabs_growth)
+# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$Iabs_growth)] + eff$residuals)
+# 
+# g_eff2 <- ggplot(x, aes(x = Iabs_growth, y = fit)) +
+#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+#   geom_line(linewidth = 1) +
+#   geom_line(aes(y= lower), linetype=2) +
+#   geom_line(aes(y= upper), linetype=2) +
+#   geom_smooth(data = xy, aes(x = trans(x), y = y),
+#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+#   mytheme3()+
+#   ylab(expression(alpha))+
+#   xlab(expression(I[abs]~"["*mu*"mol"~m^-2~s^-1*"]"))
+
+
+eff<-effect("hv", partial.residuals=T, alpha_mod)
+# plot(eff)
+x.fit <- unlist(eff$x.all)
+trans <- I
+x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, hv = eff$x$hv)
+xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$hv)] + eff$residuals)
+
+g_eff3 <- ggplot(x, aes(x = hv, y = fit)) +
+  geom_point(data = xy, aes(x = x, y = y, shape = df_param_kmax_alpha_lifeform$gym_ang), col = "grey60", size = 2, show.legend = FALSE) +
+  geom_line(linewidth = 1) +
+  geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+  geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+  geom_smooth(data = xy, aes(x = trans(x), y = y),
+              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+  mytheme3()+
+  ylab(expression(R[dark]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+  xlab(expression("Huber value [ln("*cm[sw]^2~m[leaf]^-2*")]"))
+
+# eff<-effect("D", partial.residuals=T, alpha_mod)
+# # plot(eff)
+# x.fit <- unlist(eff$x.all)
+# trans <- I
+# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, D = eff$x$D)
+# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$D)] + eff$residuals)
+# 
+# g_eff4 <- ggplot(x, aes(x = D, y = fit)) +
+#   geom_point(data = xy, aes(x = x, y = y, 
+#                             size = log(df_param_kmax_alpha_lifeform$n_dist)), 
+#              col = "grey60", size = 2) +
+#   geom_line(size = 1) +
+#   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+#   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+#   geom_smooth(data = xy, aes(x = trans(x), y = y),
+#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+#   mytheme3()+
+#   ylab(expression(alpha))+
+#   xlab(expression("VPD [kPa]"))
+
+eff<-effect("ca_pa", partial.residuals=T, alpha_mod)
+# plot(eff)
+x.fit <- unlist(eff$x.all)
+trans <- I
+x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, ca_pa = eff$x$ca_pa)
+xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$ca_pa)] + eff$residuals)
+
+g_eff4 <- ggplot(x, aes(x = ca_pa, y = fit)) +
+  geom_point(data = xy, aes(x = x, y = y,
+                            size = log(df_param_kmax_alpha_lifeform$n_dist)),
+             col = "grey60", size = 2) +
+  geom_line(size = 1) +
+  geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+  geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+  geom_smooth(data = xy, aes(x = trans(x), y = y),
+              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+  mytheme3()+
+  ylab(expression(R[dark]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+  xlab(expression(C[a]~"[Pa]"))
+
+# eff<-effect("Ta", partial.residuals=T, alpha_mod)
+# # plot(eff)
+# x.fit <- unlist(eff$x.all)
+# trans <- I
+# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, Ta = eff$x$Ta)
+# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$Ta)] + eff$residuals)
+# 
+# g_eff8 <- ggplot(x, aes(x = Ta, y = fit)) +
+#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+#   geom_line(size = 1) +
+#   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+#   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+#   geom_smooth(data = xy, aes(x = trans(x), y = y),
+#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+#   mytheme3()+
+#   ylab(expression(alpha))+
+#   xlab(expression(T[a]~"[ºC]"))
+# 
+# 
+eff<-effect("P50", partial.residuals=T, alpha_mod)
+# plot(eff)
+x.fit <- unlist(eff$x.all)
+trans <- I
+x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, P50 = eff$x$P50)
+xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$P50)] + eff$residuals)
+
+g_eff7 <- ggplot(x, aes(x = P50, y = fit)) +
+  geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+  geom_line(size = 1) +
+  geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+  geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+  geom_smooth(data = xy, aes(x = trans(x), y = y),
+              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+  mytheme3()+
+  ylab(expression(R[dark]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+  xlab(expression(psi[50]~"[MPa]"))
+
+eff<-effect("l_b", partial.residuals=T, alpha_mod)
+# plot(eff)
+x.fit <- unlist(eff$x.all)
+trans <- I
+x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, l_b = eff$x$l_b)
+xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$l_b)] + eff$residuals)
+
+g_eff11 <- ggplot(x, aes(x = l_b, y = fit)) +
+  geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+  geom_line(size = 1) +
+  geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+  geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+  geom_smooth(data = xy, aes(x = trans(x), y = y),
+              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+  mytheme3()+
+  ylab(expression(R[dark]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+  xlab(expression("ln(b)"))
+
+eff<-effect("KL", partial.residuals=T, alpha_mod)
+# plot(eff)
+x.fit <- unlist(eff$x.all)
+trans <- I
+x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, KL = eff$x$KL)
+xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$KL)] + eff$residuals)
+
+g_eff5 <- ggplot(x, aes(x = KL, y = fit)) +
+  geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+  geom_line(size = 1) +
+  geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+  geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+  geom_smooth(data = xy, aes(x = trans(x), y = y),
+              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+  mytheme3()+
+  ylab(expression(R[dark]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+  xlab(expression(K[L]~"[ln(mol "~m^{-1}~MPa^{-1}~s^{-1}~")]"))
+# 
+# eff<-effect("jmax_ww", partial.residuals=T, alpha_mod)
+# # plot(eff)
+# x.fit <- unlist(eff$x.all)
+# trans <- I
+# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, jmax_ww = eff$x$jmax_ww)
+# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$jmax_ww)] + eff$residuals)
+# 
+# g_eff6 <- ggplot(x, aes(x = jmax_ww, y = fit)) +
+#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+#   geom_line(linewidth = 1) +
+#   geom_line(aes(y= lower), linetype=2) +
+#   geom_line(aes(y= upper), linetype=2) +
+#   geom_smooth(data = xy, aes(x = trans(x), y = y), 
+#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+#   mytheme3()+
+#   ylab(expression(alpha))+
+#   xlab(expression(J["maxWW,25"]~"[ln("*mu*"mol"~m^-2~s^-1*")]"))
+
+# alpha_mod_plot <- ggarrange(g_eff4,g_eff1,g_eff10,g_eff3,g_eff5,g_eff11,
+#                             align='hv', labels=c('a', 'b','c','d','e','f'),
+#                             ncol=3, nrow = 2)
+
+alpha_mod_plot <- ggarrange(g_eff1,g_eff10,g_eff5,g_eff7,
+                            align='hv', labels=c('a', 'b','c','d'),
+                            ncol=2, nrow = 2)
+
+# ggsave("PLOTS/alpha_model.png", plot = alpha_mod_plot, width = 30, height = 20, units = "cm")
+ggsave("PLOTS/rdark_model.png", plot = alpha_mod_plot, width = 30, height = 20, units = "cm")
+
+
+
+
+#### Alpha - scheme ####
+alpha_scheme <- lmerTest::lmer(alpha~ scheme + (1|Species)+ (1|source), 
+                               data = df_param_kmax_alpha %>% 
+                                 mutate(scheme = factor(scheme, 
+                                                        levels = c("SOX",
+                                                                   "SOX2",
+                                                                   "PMAX",
+                                                                   "PMAX2",
+                                                                   "CGAIN2",
+                                                                   "CGAIN",
+                                                                   "CMAX",
+                                                                   "PHYDRO"))), 
+                               weights = log(n_dist))
+alpha_scheme_mean <- lmerTest::lmer(alpha~ (1|scheme)+ (1|source)+(1|Species), 
+                                    data = df_param_kmax_alpha , weights = log(n_dist))
+summary(alpha_scheme)
+model_means <- emmeans(alpha_scheme, "scheme")
+
+model_means_cld <- cld(object = model_means,
+                       adjust = "sidak",
+                       Letters = letters,
+                       alpha = 0.05)
+
+test(model_means, null = alpha_scheme_mean@beta )
+
+ggplot(data = model_means_cld) +
+  geom_pointrange(mapping=aes(scheme, emmean, ymin=emmean - SE, ymax= emmean + SE)) +
+  geom_abline(slope=0,intercept=fixef(alpha_scheme_mean),linetype=2)+
+  geom_text(aes(y = emmean - SE -0.001, x = scheme, label = str_trim(.group)
+  ))+
+  ylab(expression(alpha)) +
+  mytheme3()+
+  xlab("")+
+  coord_flip()
+
+ggsave("PLOTS/alpha_scheme.png", width = 14, height = 10, units = "cm")
 
 
 # 

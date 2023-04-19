@@ -248,7 +248,7 @@ error_fun_kmax_alpha = function(x,
                  pmod = map(var, ~model_numerical(tc = mean(data$T,na.rm = TRUE), ppfd = mean(data$Iabs_growth,na.rm = TRUE), 
                                                   vpd = mean(data$D*101325,na.rm = TRUE), co2 = mean(data$ca,na.rm = TRUE), 
                                                   elv = 0, fapar = .99, kphio = 0.087, 
-                                                  psi_soil = ., rdark = 0.02, par_plant=par_plant_now, 
+                                                  psi_soil = ., rdark = 0.015, par_plant=par_plant_now, 
                                                   par_cost = par_cost_now, stomatal_model = stomatal_model))) %>% 
           unnest_wider(pmod),
         silent = TRUE)
@@ -270,7 +270,7 @@ error_fun_kmax_alpha = function(x,
                                                                   vpd = ..6*101325, 
                                                                   co2 = ..7, elv = 0, 
                                                                   fapar = .99, kphio = 0.087, 
-                                                                  psi_soil = ..1, rdark = 0.02, 
+                                                                  psi_soil = ..1, rdark = 0.015, 
                                                                   par_plant=par_plant_now, 
                                                                   par_cost = par_cost_now, 
                                                                   jmax25 = ..2, vcmax25 = ..3, 
@@ -367,7 +367,7 @@ error_fun_kmax_alpha_gamma = function(x,
                pmod = map(var, ~model_numerical(tc = mean(data$T,na.rm = TRUE), ppfd = mean(data$Iabs_growth,na.rm = TRUE), 
                                                 vpd = mean(data$D*101325,na.rm = TRUE), co2 = mean(data$ca,na.rm = TRUE), 
                                                 elv = 0, fapar = .99, kphio = 0.087, 
-                                                psi_soil = ., rdark = 0.02, par_plant=par_plant_now, 
+                                                psi_soil = ., rdark = 0.015, par_plant=par_plant_now, 
                                                 par_cost = par_cost_now, stomatal_model = stomatal_model))) %>% 
         unnest_wider(pmod),
       silent = TRUE)
@@ -389,7 +389,7 @@ error_fun_kmax_alpha_gamma = function(x,
                                                                 vpd = ..6*101325, 
                                                                 co2 = ..7, elv = 0, 
                                                                 fapar = .99, kphio = 0.087, 
-                                                                psi_soil = ..1, rdark = 0.02, 
+                                                                psi_soil = ..1, rdark = 0.015, 
                                                                 par_plant=par_plant_now, 
                                                                 par_cost = par_cost_now, 
                                                                 jmax25 = ..2, vcmax25 = ..3, 
@@ -505,7 +505,7 @@ get_parameters_kmax_alpha <- function(x){
 ##### CALIBRATE PARAMETERS #####
 
 template %>% 
-  filter(scheme %in% c("CMAX")
+  # filter(scheme %in% c("CMAX")
   # #        # Species %in% c(
   # #        #   # "Rosa cymosa",
   # #        #   # "Broussonetia papyrifera",
@@ -517,8 +517,8 @@ template %>%
   # #        #   # "Pinus sylvestris",
   # #        #   # "Populus tremula"
   # #        # )
-         ) %>%
-  slice(32:39) %>% 
+         # ) %>%
+  # slice(32:39) %>% 
   # filter(scheme %in% c("CGAIN")) %>%
   # filter(Species == "Quercus ilex", source == "Epron and Dreyer (1990)") %>%
   group_split(scheme, Species,source) %>% 

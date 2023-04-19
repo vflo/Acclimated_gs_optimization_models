@@ -234,7 +234,7 @@ error_fun_kmax_no_alpha = function(x,
                                                               vpd = ..6*101325, 
                                                               co2 = ..7, elv = 0, 
                                                               fapar = .99, kphio = 0.087, 
-                                                              psi_soil = ..1, rdark = 0.02, 
+                                                              psi_soil = ..1, rdark = 0.015, 
                                                               par_plant=par_plant_now, 
                                                               par_cost = par_cost_now, 
                                                               jmax25 = ..2, vcmax25 = ..3, 
@@ -314,7 +314,7 @@ error_fun_kmax_no_alpha_gamma = function(x,
                                                               vpd = ..6*101325, 
                                                               co2 = ..7, elv = 0, 
                                                               fapar = .99, kphio = 0.087, 
-                                                              psi_soil = ..1, rdark = 0.02, 
+                                                              psi_soil = ..1, rdark = 0.015, 
                                                               par_plant=par_plant_now, 
                                                               par_cost = par_cost_now, 
                                                               jmax25 = ..2, vcmax25 = ..3, 
@@ -370,7 +370,7 @@ get_parameters_kmax_no_alpha <- function(x){
                                          ci = data_ww$ci,
                                          tc = data_ww$T,
                                          patm = calc_patm(0,data_ww$T),
-                                         rdark = 0.020
+                                         rdark = 0.0150
     )
     
     vcmax25 = calc_vcmax_arrhenius(vcmaxT1 = vcmax, T1 = (273.15+data_ww$T),

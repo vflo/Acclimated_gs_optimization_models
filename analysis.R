@@ -114,6 +114,33 @@ df_kmaxww_a_n <- df_kmaxww_a %>%
 df_kmaxww_a <- df_kmaxww_a %>%   
   left_join(df_kmaxww_a_n)
 
+
+
+
+
+
+#### SIMULATIONS KMAXWW ALPHA P50ox ####
+load(file = "DATA/simulations_kmaxww_alpha_1_3.RData")
+df_kmaxww_a_1_3 <- df  %>% 
+  mutate(chi = Ciest/ca_pa,
+         acclimation = factor(acclimation, 
+                              levels = c('TRUE','FALSE'),
+                              labels = c("Acclimated", "Not acclimated")),
+         scheme = as_factor(scheme),
+         scheme = fct_recode(scheme, "PMAX" = "PROFITMAX","PMAX2"="PROFITMAX2"),
+         calibration_type = as_factor(calibration_type),
+         calibration_type = fct_recode(calibration_type, 
+                                       "Calibrated \u03B1" = "alpha",
+                                       "Average \u03B1"="alpha_fix",
+                                       "Not acclimated"="no_alpha"))#%>% 
+# filter(!(scheme %in% c("SOX")&Species %in%c("Broussonetia papyrifera")))%>% ### Broussonetia papyrifera did not converged in SOX !!!!!!
+df_kmaxww_a_n_1_3 <- df_kmaxww_a_1_3 %>%
+  group_by(scheme,acclimation,calibration_type,Species,source) %>%
+  filter(!is.na(A)) %>%
+  summarise(n_dist = n())
+
+df_kmaxww_a_1_3 <- df_kmaxww_a_1_3 %>%   
+  left_join(df_kmaxww_a_n_1_3)
 # df_kmaxww_a %>%
 #   dplyr::select(Species, scheme, acclimation,
 #                 calibration_type, K.scale, gamma,alpha) %>%
@@ -1239,7 +1266,8 @@ ggsave("PLOTS/alpha_scheme.png", width = 14, height = 10, units = "cm")
 
 
 #### A #####
-df_a <- df_kmaxww_a %>% 
+# df_a <- df_kmaxww_a %>%
+df_a <- df_kmaxww_a_1_3 %>%
   group_by(scheme,Species,source,calibration_type) %>% 
   filter(!is.na(A))  %>% 
   mutate(scheme = factor(scheme, 
@@ -1257,7 +1285,8 @@ df_a <- df_kmaxww_a %>%
             r = cor(A, a_pred, use = "pairwise.complete.obs"),
             bias = mean(diff_a,na.rm = TRUE)/mean(A,na.rm = TRUE),
             rmse = Metrics::rmse(A,a_pred),
-            beta = lm(A~a_pred)$coefficients[2]) 
+            beta = lm(A~a_pred)$coefficients[2]) %>% 
+  filter(beta> -10)
 
 df_a %>% 
   group_by(scheme,calibration_type) %>% 
@@ -1269,7 +1298,7 @@ df_a %>%
             r_mean = mean(r),
             bias_mean = mean(bias),
             rmse_mean = mean(rmse),
-            beta_mean = mean(beta))->foo
+            beta_mean = mean(beta)) ->foo
 
 r_a <- lmerTest::lmer(r~scheme*calibration_type + (1|source)+ (1|Species), data = df_a, weights = log(n_dist)
                       )
@@ -1454,13 +1483,12 @@ ggarrange(p1,
                                ),
           common.legend = T,ncol=2, nrow = 2)
 
-# ggarrange(p1,
-#           p2,p3,p4, 
-#           align='hv', labels=c('a', 'b','c','d'
+# ggarrange(p2,p3,
+#           align='hv', labels=c("",""
 #           ),
 #           common.legend = T,ncol=2, nrow = 1)
 
-ggsave("PLOTS/A_metrics.png", width = 20, height = 14, units = "cm")
+ggsave("PLOTS/A_metrics_1_3.png", width = 20, height = 14, units = "cm")
 
 
 # 
@@ -1497,9 +1525,9 @@ ggsave("PLOTS/A_metrics.png", width = 20, height = 14, units = "cm")
 #   ylab(expression(textstyle("Observed A")))+
 #   ggtitle(expression(atop("PROFITMAX2 Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
 # 
-# df_a_fix %>% 
-#   filter(scheme == "SOX") %>% 
-#   ggplot(aes(a_pred,A,color = acclimation))+
+# df_kmaxww_a_1_3 %>%
+#   filter(scheme == "SOX") %>%
+#   ggplot(aes(a_pred,A,color = calibration_type))+
 #   geom_point()+
 #   geom_abline(intercept = 0,slope = 1, color = "grey20")+
 #   geom_smooth(method = "lm", se = FALSE)+
@@ -1508,7 +1536,7 @@ ggsave("PLOTS/A_metrics.png", width = 20, height = 14, units = "cm")
 #   theme(legend.title = element_blank(),
 #         legend.position="top",
 #         plot.title = element_text(vjust = -10))+
-#   scale_color_manual(values = c("#FFC20A","#018571"))+
+#   scale_color_manual(values = c("#FFC20A","#0C7BDC","#A2B56F"))+
 #   xlab(expression(textstyle("Predicted A")))+
 #   ylab(expression(textstyle("Observed A")))+
 #   ggtitle(expression(atop("SOX Assimilation rate,", italic(A)*" ("*mu*"mol m"^-2~"s"^-1*")")))
@@ -3151,7 +3179,9 @@ df_param_kmax_no_alpha_comp <- df_param_kmax_no_alpha %>%
          KL = KL..kg.m.1.MPa.1.s.1.*55.5) %>%  
   dplyr::select(n_dist,Kmax, p50_opt, b_opt,
                 gamma,alpha, KL,
-                P50, b,source,scheme,Species) %>% 
+                P50, b,source,
+                scheme,
+                Species) %>% 
   rename(Kmax.cal3 = Kmax,
          p50_opt.cal3 = p50_opt,
          b_opt.cal3 = b_opt)
@@ -3169,8 +3199,11 @@ df_param_compar <- df_param_kmax_alpha %>%
   dplyr::select(n_dist,Kmax, p50_opt, b_opt,
                 gamma,alpha, KL,
                 P50, b,source,scheme,Species) %>% 
-  left_join(df_param_kmaxww, by= c('scheme','Species','source', 'n_dist','P50','b','KL'),suffix = c(".cal1",".cal2")) %>% 
-  left_join(df_param_kmax_no_alpha_comp, by= c('scheme','Species','source', 'n_dist','P50','b','KL'))
+  left_join(df_param_kmaxww, 
+            by= c('scheme','Species','source', 'n_dist','P50','b','KL'),
+            suffix = c(".cal1",".cal2")) %>% 
+  left_join(df_param_kmax_no_alpha_comp, 
+            by= c('scheme','Species','source', 'n_dist','P50','b','KL'))
 
   
 
@@ -3246,6 +3279,7 @@ p1 <- df_foo %>%
   
 #P50
 df_foo <- df_param_compar %>%
+    mutate(P50 = P50/3) %>% 
     pivot_longer(cols = c(P50,p50_opt,p50_opt.cal3), names_to = "cal_type") %>%
     dplyr::select(scheme, value, cal_type,Species,source) %>%
     rowwise() %>% 
@@ -3409,6 +3443,203 @@ ggarrange(p1,p2,p3,p4,
   
 
 ggsave("PLOTS/par_comp.png", width = 34, height = 25, units = "cm")
+
+
+
+
+
+
+
+#P50 only observed values
+df_foo <- df_param_compar %>% 
+  filter(Species %in%c('Broussonetia papyrifera',
+                       'Platycarya longipes',
+                       'Pteroceltis tatarinowii',
+                       'Cedrus atlantica',
+                       'Pseudotzuga menziesii',
+                       'Eucalyptus populnea',
+                       'Helianthus annuus',
+                       'Olea europaea var. Chemlali',
+                       'Olea europaea var. Meski',
+                       'Picea abies',
+                       'Pinus sylvestris',
+                       'Betula pendula',
+                       'Populus tremula',
+                       'Quercus suber',
+                       'Quercus ilex',
+                       'Quercus petraea',
+                       'Quercus pubescens'
+  ))%>% 
+  pivot_longer(cols = c(P50,p50_opt,p50_opt.cal3), names_to = "cal_type") %>%
+  dplyr::select(scheme, value, cal_type,Species,source) %>%
+  rowwise() %>% 
+  mutate(scheme = as.character(scheme),
+         scheme = case_when(cal_type %in% "P50" ~ "Species",
+                            TRUE ~ scheme),
+         # scheme = as.factor(scheme),
+         cal_type = as.factor(cal_type),
+         cal_type = fct_recode(cal_type,
+                               "Species"="P50",
+                               "Calibration 1"='p50_opt',
+                               "Calibration 1 not acclimated"='p50_opt.cal3'),
+         value = -value
+  ) %>%
+  dplyr::distinct() %>% 
+  ungroup()
+
+stat.test <- df_foo %>%
+  filter(scheme != "Species") %>% 
+  group_by(scheme) %>%
+  t_test(value ~ cal_type) %>%
+  adjust_pvalue(method = "bonferroni") %>%
+  add_significance("p.adj")%>%
+  add_xy_position(x = "scheme", dodge = 0.9)
+stat.test <- stat.test %>% rbind(data.frame('scheme' = "Species",
+                                            '.y.' = 'log_value',
+                                            'group1' = "Species",
+                                            'group2' = "Species",
+                                            'n1' = 39,
+                                            'n2' = 39,
+                                            'statistic' = NA,
+                                            'df' = NA,
+                                            'p' = 1,
+                                            'p.adj' = 1,
+                                            'p.adj.signif' = "ns",
+                                            'y.position' = 5.5,
+                                            'groups' = "<chr>",
+                                            'x' = 7,
+                                            'xmin' = NA,
+                                            'xmax' = NA))
+
+
+df_foo %>% 
+  ggplot(aes(scheme, value, color = cal_type))+
+  geom_violin(width = 1,position=position_dodge(.9))+
+  geom_boxplot(width = 0.3,position=position_dodge(.9))+
+  # ggpubr::stat_pvalue_manual(stat.test,  label = "{p.adj.signif}",
+  #                             tip.length = 0, hide.ns = TRUE)+
+  ggpubr:: stat_pvalue_manual(stat.test,  label = "{p.adj.signif}", 
+                              tip.length = 0, hide.ns = FALSE)+
+  mytheme5()+
+  ylab(expression(psi[50]~"[-"*MPa*"]"))+
+  xlab("Stomatal model")+
+  scale_color_manual(values = c("#AD9E77","#FFC20A","#A2B56F"))+
+  theme(legend.position="top")+
+  guides(color=guide_legend(title=""))+
+  NULL
+
+
+df_param_compar %>% 
+  filter(Species %in%c('Broussonetia papyrifera',
+                       'Platycarya longipes',
+                       'Pteroceltis tatarinowii',
+                       'Cedrus atlantica',
+                       'Pseudotzuga menziesii',
+                       'Eucalyptus populnea',
+                       'Helianthus annuus',
+                       'Olea europaea var. Chemlali',
+                       'Olea europaea var. Meski',
+                       'Picea abies',
+                       'Pinus sylvestris',
+                       'Betula pendula',
+                       'Populus tremula',
+                       'Quercus suber',
+                       'Quercus ilex',
+                       'Quercus petraea',
+                       'Quercus pubescens'
+  )) %>% 
+  dplyr::select(scheme, Species,source,P50,p50_opt,p50_opt.cal3) %>% 
+  # filter(scheme=="PMAX") %>% 
+  mutate(p50_diff_accl = P50 - p50_opt,
+         p50_diff_no_accl = P50 - p50_opt.cal3,
+         p50_diff_no_accl_1_3 = P50/3 - p50_opt.cal3) %>% 
+  pivot_longer(cols = c(p50_diff_accl, p50_diff_no_accl,p50_diff_no_accl_1_3)) %>% 
+  mutate(name = fct_recode(name,
+                           "Acclimated"='p50_diff_accl',
+                           "Not acclimated"='p50_diff_no_accl',
+                           "Not Acclimated P50/3"='p50_diff_no_accl_1_3')) %>% 
+  ggplot(aes(Species, value, color = name))+
+  geom_abline(slope=0,intercept=0,linetype=2)+
+  # geom_violin(width = 1,position=position_dodge(.9))+
+  geom_boxplot(width = 0.3,position=position_dodge(.4))+
+  geom_point(aes(Species,P50), shape=3, color="black")+
+  # # ggpubr::stat_pvalue_manual(stat.test,  label = "{p.adj.signif}",
+  # #                             tip.length = 0, hide.ns = TRUE)+
+  # ggpubr:: stat_pvalue_manual(stat.test,  label = "{p.adj.signif}", 
+  #                             tip.length = 0, hide.ns = FALSE)+
+  # mytheme5()+
+  theme_bw()+
+  ylab(expression(psi[50]*" - "*psi[`50opt`]~"[MPa] "))+
+  xlab("Species")+
+  scale_color_manual(values = c("#AD9E77","#FFC20A","#A2B56F"))+
+  theme(legend.position="top")+
+  guides(color=guide_legend(title=""))+
+  coord_flip()+
+  NULL
+
+
+df_param_compar %>% 
+  filter(Species %in%c('Broussonetia papyrifera',
+                       'Platycarya longipes',
+                       'Pteroceltis tatarinowii',
+                       'Cedrus atlantica',
+                       'Pseudotzuga menziesii',
+                       'Eucalyptus populnea',
+                       'Helianthus annuus',
+                       'Olea europaea var. Chemlali',
+                       'Olea europaea var. Meski',
+                       'Picea abies',
+                       'Pinus sylvestris',
+                       'Betula pendula',
+                       'Populus tremula',
+                       'Quercus suber',
+                       'Quercus ilex',
+                       'Quercus petraea',
+                       'Quercus pubescens'
+  )) %>% 
+  dplyr::select(scheme, Species,source,b,b_opt,b_opt.cal3) %>% 
+  # filter(scheme=="PMAX") %>% 
+  mutate(b_diff_accl = b - b_opt,
+         b_diff_no_accl = b - b_opt.cal3,
+         b_diff_no_accl_1_3 = 1 - b_opt.cal3
+         ) %>% 
+  pivot_longer(cols = c(b_diff_accl, b_diff_no_accl,b_diff_no_accl_1_3)) %>% 
+  mutate(name = fct_recode(name,
+                           "Acclimated"='b_diff_accl',
+                           "Not acclimated b=1" = "b_diff_no_accl_1_3",
+                           "Not acclimated"='b_diff_no_accl')) %>% 
+  ggplot(aes(Species, value, color = name))+
+  geom_abline(slope=0,intercept=0,linetype=2)+
+  # geom_violin(width = 1,position=position_dodge(.9))+
+  geom_boxplot(width = 0.3,position=position_dodge(.4))+
+  geom_point(aes(Species,b), shape=3, color="black")+
+  # # ggpubr::stat_pvalue_manual(stat.test,  label = "{p.adj.signif}",
+  # #                             tip.length = 0, hide.ns = TRUE)+
+  # ggpubr:: stat_pvalue_manual(stat.test,  label = "{p.adj.signif}", 
+  #                             tip.length = 0, hide.ns = FALSE)+
+  # mytheme5()+
+  theme_bw()+
+  ylab(expression("b - "*b[opt]))+
+  xlab("Species")+
+  scale_color_manual(values = c("#AD9E77","#FFC20A","#A2B56F"))+
+  theme(legend.position="top")+
+  guides(color=guide_legend(title=""))+
+  coord_flip()+
+  NULL
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #### Example plots ####

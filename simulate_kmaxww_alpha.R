@@ -58,31 +58,42 @@ fun_no_accl = function(data, dpsi_calib=T,  k=7,
                        par_plant_now = par_plant,
                        par_cost_now = par_cost,
                        Species_now = species){
-
+  
   data = data %>% 
     mutate(  patm = calc_patm(0,T),
              ca_pa = ca*1e-6 * patm,
              Ciest = ca_pa-(A*1e-6)/(gC/patm))
   dpsi_data = dpsi_df %>% filter(Species == Species_now)
-
+  
   lwp_actual = data$LWP
   dat1 = tibble(var = lwp_actual, jmax25_a=jmax25, vcmax25_a=vcmax25) %>% 
-    cbind(data %>% select(t=T,Iabs_used, D,ca)) %>% 
+    cbind(data %>% select(t=T,Iabs_used, D,ca)) %>%
     mutate(var = case_when(var>0~0,
                            TRUE~var),
-           p = purrr::pmap(list(var, jmax25_a, vcmax25_a,t,Iabs_used,D,ca), 
-                           ~model_numerical_instantaneous(tc = ..4, 
-                                                          ppfd = ..5, 
-                                                          vpd = ..6*101325, 
-                                                          co2 = ..7, elv = 0, 
-                                                          fapar = .99, kphio = 0.087, 
-                                                          psi_soil = ..1, rdark = 0.02, 
-                                                          par_plant=par_plant_now, 
-                                                          par_cost = par_cost_now, 
-                                                          jmax25 = ..2, vcmax25 = ..3, 
-                                                          stomatal_model = stomatal_model)) ) %>% 
+           p = purrr::pmap(list(var, jmax25_a, vcmax25_a,t,Iabs_used,D,ca),
+                           ~model_numerical_instantaneous(tc = ..4,
+                                                          ppfd = ..5,
+                                                          vpd = ..6*101325,
+                                                          co2 = ..7, elv = 0,
+                                                          fapar = .99, kphio = 0.087,
+                                                          psi_soil = ..1, rdark = 0.015,
+                                                          par_plant=par_plant_now,
+                                                          par_cost = par_cost_now,
+                                                          jmax25 = ..2, vcmax25 = ..3,
+                                                          stomatal_model = stomatal_model)) ) %>%
+           # p = pmap(list(var, jmax25_a, vcmax25_a), 
+           #          ~model_numerical_instantaneous(tc = mean(data$T,na.rm = TRUE), 
+           #                                         ppfd = mean(data$Iabs_growth,na.rm = TRUE), 
+           #                                         vpd = mean(data$D*101325,na.rm = TRUE), 
+           #                                         co2 = mean(data$ca,na.rm = TRUE), 
+           #                                         elv = 0, fapar = .99, kphio = 0.087, 
+           #                                         psi_soil = ..1, rdark = 0.015, 
+           #                                         par_plant=par_plant_now, 
+           #                                         par_cost = par_cost_now, 
+           #                                         jmax25 = ..2, vcmax25 = ..3,
+           #                                         stomatal_model = stomatal_model))) %>%  
     unnest_wider(p)
-
+  
   ndays = mean(data$Drydown.days)
   psi_crit = par_plant_now$psi50 * (log(1000)/log(2)) ^ ( 1/par_plant_now$b)
   if(min(data$LWP,na.rm = TRUE)<psi_crit){
@@ -102,29 +113,29 @@ fun_no_accl = function(data, dpsi_calib=T,  k=7,
                                                           vpd = mean(data$D*101325,na.rm = TRUE), 
                                                           co2 = mean(data$ca,na.rm = TRUE), elv = 0, 
                                                           fapar = .99, kphio = 0.087, 
-                                                          psi_soil = ..1, rdark = 0.02, 
+                                                          psi_soil = ..1, rdark = 0.015, 
                                                           par_plant = par_plant_now, 
                                                           par_cost = par_cost_now, 
                                                           jmax25 = ..2, vcmax25 = ..3, 
                                                           stomatal_model = stomatal_model)) ) %>% 
     unnest_wider(p)
   
-    dat2 <- dat2 %>% filter(gs>=1e-40)
-    gx = log(dat2$gs)
-    gy = dat2$var
-    fpsi = splinefun(x = gx, y=gy, method = "natural")
-    gs0 = dat2$gs[which(dat2$var==0)]
-    psi88S = fpsi(log(gs0*0.12))
-    dpx = dat2$var
-    dpy = dat2$dpsi
-    f1 = splinefun(dpy~dpx)
-    dp88S = f1(psi88S)
-    psiL88S = psi88S-dp88S
+  dat2 <- dat2 %>% filter(gs>=1e-40)
+  gx = log(dat2$gs)
+  gy = dat2$var
+  fpsi = splinefun(x = gx, y=gy, method = "natural")
+  gs0 = dat2$gs[which(dat2$var==0)]
+  psi88S = fpsi(log(gs0*0.12))
+  dpx = dat2$var
+  dpy = dat2$dpsi
+  f1 = splinefun(dpy~dpx)
+  dp88S = f1(psi88S)
+  psiL88S = psi88S-dp88S
   
   # A, G, CHI
   
   data_f <- data
-
+  
   a_pred = dat1$a
   g_pred = dat1$gs
   c_pred = dat1$chi
@@ -159,7 +170,7 @@ fun_no_accl = function(data, dpsi_calib=T,  k=7,
   
   # JOIN EVERYTHING
   res <- full_join(data_f, dpsi_data_f)%>% dplyr::distinct()
-    
+  
   return(res)
   
 }
@@ -203,27 +214,38 @@ fun_accl = function(data, dpsi_calib=T, inst=F, k=7,
            pmod = map(var, ~model_numerical(tc = mean(data$T,na.rm = TRUE), ppfd = mean(data$Iabs_growth,na.rm = TRUE), 
                                             vpd = mean(data$D*101325,na.rm = TRUE), co2 = mean(data$ca,na.rm = TRUE), 
                                             elv = 0, fapar = .99, kphio = 0.087, 
-                                            psi_soil = ., rdark = 0.02, par_plant=par_plant_now, 
+                                            psi_soil = ., rdark = 0.015, par_plant=par_plant_now, 
                                             par_cost = par_cost_now, stomatal_model = stomatal_model))) %>% 
     unnest_wider(pmod)
   lwp_actual = data$LWP
   
   #INSTANTANEOUS
   dat1 = tibble(var = lwp_actual, jmax25_a=dat_acc$jmax25, vcmax25_a=dat_acc$vcmax25) %>% 
-    cbind(data %>% select(t=T,Iabs_used, D,ca)) %>% 
+    cbind(data %>% select(t=T,Iabs_used, D,ca)) %>%
     mutate(var = case_when(var>0~0,
                            TRUE~var),
-           p = purrr::pmap(list(var, jmax25_a, vcmax25_a,t,Iabs_used,D,ca), 
-                           ~model_numerical_instantaneous(tc = ..4, 
-                                                          ppfd = ..5, 
-                                                          vpd = ..6*101325, 
-                                                          co2 = ..7, elv = 0, 
-                                                          fapar = .99, kphio = 0.087, 
-                                                          psi_soil = ..1, rdark = 0.02, 
-                                                          par_plant=par_plant_now, 
-                                                          par_cost = par_cost_now, 
-                                                          jmax25 = ..2, vcmax25 = ..3, 
-                                                          stomatal_model = stomatal_model)) ) %>% 
+           p = purrr::pmap(list(var, jmax25_a, vcmax25_a,t,Iabs_used,D,ca),
+                           ~model_numerical_instantaneous(tc = ..4,
+                                                          ppfd = ..5,
+                                                          vpd = ..6*101325,
+                                                          co2 = ..7, elv = 0,
+                                                          fapar = .99, kphio = 0.087,
+                                                          psi_soil = ..1, rdark = 0.015,
+                                                          par_plant=par_plant_now,
+                                                          par_cost = par_cost_now,
+                                                          jmax25 = ..2, vcmax25 = ..3,
+                                                          stomatal_model = stomatal_model)) ) %>%
+           # p = pmap(list(var, jmax25_a, vcmax25_a), 
+           #          ~model_numerical_instantaneous(tc = mean(data$T,na.rm = TRUE), 
+           #                                         ppfd = mean(data$Iabs_growth,na.rm = TRUE), 
+           #                                         vpd = mean(data$D*101325,na.rm = TRUE), 
+           #                                         co2 = mean(data$ca,na.rm = TRUE), 
+           #                                         elv = 0, fapar = .99, kphio = 0.087, 
+           #                                         psi_soil = ..1, rdark = 0.015, 
+           #                                         par_plant=par_plant_now, 
+           #                                         par_cost = par_cost_now, 
+           #                                         jmax25 = ..2, vcmax25 = ..3,
+           #                                         stomatal_model = stomatal_model))) %>% 
     unnest_wider(p)
   
   #Calculate all the dry-down to estimate psi88S and DPSI
@@ -235,7 +257,7 @@ fun_accl = function(data, dpsi_calib=T, inst=F, k=7,
                                             vpd = mean(data$D*101325,na.rm = TRUE), 
                                             co2 = mean(data$ca,na.rm = TRUE), 
                                             elv = 0, fapar = .99, kphio = 0.087, 
-                                            psi_soil = ., rdark = 0.02, par_plant=par_plant_now, 
+                                            psi_soil = ., rdark = 0.015, par_plant=par_plant_now, 
                                             par_cost = par_cost_now, stomatal_model = stomatal_model))) %>% 
     unnest_wider(pmod)
   dat2 = tibble(var = lwp, jmax25_a=dat_acc$jmax25, vcmax25_a=dat_acc$vcmax25) %>%
@@ -245,7 +267,7 @@ fun_accl = function(data, dpsi_calib=T, inst=F, k=7,
                                                           vpd = mean(data$D*101325,na.rm = TRUE), 
                                                           co2 = mean(data$ca,na.rm = TRUE), elv = 0, 
                                                           fapar = .99, kphio = 0.087, 
-                                                          psi_soil = ..1, rdark = 0.02, 
+                                                          psi_soil = ..1, rdark = 0.015, 
                                                           par_plant=par_plant_now, 
                                                           par_cost = par_cost_now, 
                                                           jmax25 = ..2, vcmax25 = ..3, 
@@ -304,6 +326,7 @@ fun_accl = function(data, dpsi_calib=T, inst=F, k=7,
   return(res)
 }
 
+
 ##### SIMULATION #####
 get_simulations <- function(x){
   species = x$Species %>% unique()
@@ -338,7 +361,7 @@ get_simulations <- function(x){
                                        ci = data_ww$ci,
                                        tc = data_ww$T,
                                        patm = calc_patm(0,data_ww$T),
-                                       rdark = 0.020
+                                       rdark = 0.0150
   )
   
   vcmax25 = calc_vcmax_arrhenius(vcmaxT1 = vcmax, T1 = (273.15+data_ww$T),
@@ -408,7 +431,7 @@ get_simulations <- function(x){
     b= x[1,"b"][[1]]
   ))
   par_cost_acclimation = as.list(data.frame(
-    alpha  = 0.0913, 
+    alpha  = 0.0930, 
     gamma = x[1,"gamma"][[1]]
   ))
   
@@ -425,7 +448,7 @@ get_simulations <- function(x){
     cbind(calibration_type = 'alpha_fix',
           jmaxww25 = jmax25,
           vcmaxww25 = vcmax25) %>% 
-    mutate(alpha = 0.0913)
+    mutate(alpha = 0.0930)
 
 
   

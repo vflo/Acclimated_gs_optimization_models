@@ -1,274 +1,274 @@
-"Species","scheme","dpsi","inst","source","genus","species","subsp","ID"
-"Allocasuarina luehmannii","CGAIN","FALSE","TRUE","Posch & Bennett (2009)","Allocasuarina","luehmannii","NA",1598
-"Beta maritima subsp. marcosii","CGAIN","FALSE","TRUE","Galmes et al. (2007)","Beta","maritima","marcosii",1631
-"Beta maritima subsp. maritima","CGAIN","FALSE","TRUE","Galmes et al. (2007)","Beta","maritima","maritima",1632
-"Betula pendula","CGAIN","FALSE","TRUE","Salmon et al. (2020)","Betula","pendula","NA",1610
-"Broussonetia papyrifera","CGAIN","FALSE","FALSE","Liu et al. (2010)","Broussonetia","papyrifera","NA",1615
-"Cedrus atlantica","CGAIN","FALSE","TRUE","Grieu et al. (1988)","Cedrus","atlantica","NA",1599
-"Cinnamomum bodinieri","CGAIN","FALSE","FALSE","Liu et al. (2010)","Cinnamomum","bodinieri","NA",1616
-"Cistus albidus","CGAIN","FALSE","TRUE","Galmes et al. (2007)","Cistus","albidus","NA",1624
-"Diplotaxis ibicensis","CGAIN","FALSE","TRUE","Galmes et al. (2007)","Diplotaxis","ibicensis","NA",1630
-"Eucalyptus pilularis","CGAIN","FALSE","TRUE","Kelly et al. (2016)","Eucalyptus","pilularis","NA",1602
-"Eucalyptus populnea","CGAIN","FALSE","TRUE","Kelly et al. (2016)","Eucalyptus","populnea","NA",1603
-"Ficus tikoua","CGAIN","FALSE","FALSE","Liu et al. (2011)","Ficus","tikoua","NA",1621
-"Glycine max","CGAIN","FALSE","TRUE","Liu et al. (2005)","Glycine","max","NA",1604
-"Helianthus annuus","CGAIN","FALSE","TRUE","Tezara et al. (2008)","Helianthus","annuus","NA",1622
-"Hypericum balearicum","CGAIN","FALSE","TRUE","Galmes et al. (2007)","Hypericum","balearicum","NA",1627
-"Limonium gibertii","CGAIN","FALSE","TRUE","Galmes et al. (2007)","Limonium","gibertii","NA",1626
-"Limonium magallufianum","CGAIN","FALSE","TRUE","Galmes et al. (2007)","Limonium","magallufianum","NA",1625
-"Lysimachia minoricensis","CGAIN","FALSE","TRUE","Galmes et al. (2007)","Lysimachia","minoricensis","NA",1633
-"Malva subovata","CGAIN","FALSE","TRUE","Galmes et al. (2007)","Malva","subovata","NA",1629
-"Olea europaea var. Chemlali","CGAIN","FALSE","TRUE","Ennajeh et al. (2008)","Olea","europaea","Chemlali",1635
-"Olea europaea var. Meski","CGAIN","FALSE","TRUE","Ennajeh et al. (2008)","Olea","europaea","Meski",1634
-"Phlomis italica","CGAIN","FALSE","TRUE","Galmes et al. (2007)","Phlomis","italica","NA",1628
-"Picea abies","CGAIN","FALSE","TRUE","Salmon et al. (2020)","Picea","abies","NA",1609
-"Pinus sylvestris","CGAIN","FALSE","TRUE","Salmon et al. (2020)","Pinus","sylvestris","NA",1608
-"Pistacia lentiscus","CGAIN","FALSE","TRUE","Galmes et al. (2007)","Pistacia","lentiscus","NA",1623
-"Platycarya longipes","CGAIN","FALSE","FALSE","Liu et al. (2010)","Platycarya","longipes","NA",1617
-"Populus tremula","CGAIN","FALSE","TRUE","Salmon et al. (2020)","Populus","tremula","NA",1611
-"Pseudotsuga macrocarpa","CGAIN","FALSE","TRUE","Grieu et al. (1988)","Pseudotsuga","macrocarpa","NA",1601
-"Pseudotsuga menziesii","CGAIN","FALSE","TRUE","Grieu et al. (1988)","Pseudotsuga","menziesii","NA",1600
-"Pteroceltis tatarinowii","CGAIN","FALSE","FALSE","Liu et al. (2010)","Pteroceltis","tatarinowii","NA",1618
-"Pyracantha fortuneana","CGAIN","FALSE","FALSE","Liu et al. (2010)","Pyracantha","fortuneana","NA",1619
-"Quercus coccifera","CGAIN","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","coccifera","NA",1605
-"Quercus ilex","CGAIN","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","ilex","NA",1606
-"Quercus ilex","CGAIN","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","ilex","NA",1614
-"Quercus petraea","CGAIN","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","petraea","NA",1612
-"Quercus pubescens","CGAIN","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","pubescens","NA",1613
-"Quercus suber","CGAIN","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","suber","NA",1607
-"Rosa cymosa","CGAIN","FALSE","FALSE","Liu et al. (2010)","Rosa","cymosa","NA",1620
-"Sequoia sempervirens","CGAIN","FALSE","FALSE","Simonin et al. (2009)","Sequoia","sempervirens","NA",1636
-"Allocasuarina luehmannii","CMAX","FALSE","TRUE","Posch & Bennett (2009)","Allocasuarina","luehmannii","NA",1598
-"Beta maritima subsp. marcosii","CMAX","FALSE","TRUE","Galmes et al. (2007)","Beta","maritima","marcosii",1631
-"Beta maritima subsp. maritima","CMAX","FALSE","TRUE","Galmes et al. (2007)","Beta","maritima","maritima",1632
-"Betula pendula","CMAX","FALSE","TRUE","Salmon et al. (2020)","Betula","pendula","NA",1610
-"Broussonetia papyrifera","CMAX","FALSE","FALSE","Liu et al. (2010)","Broussonetia","papyrifera","NA",1615
-"Cedrus atlantica","CMAX","FALSE","TRUE","Grieu et al. (1988)","Cedrus","atlantica","NA",1599
-"Cinnamomum bodinieri","CMAX","FALSE","FALSE","Liu et al. (2010)","Cinnamomum","bodinieri","NA",1616
-"Cistus albidus","CMAX","FALSE","TRUE","Galmes et al. (2007)","Cistus","albidus","NA",1624
-"Diplotaxis ibicensis","CMAX","FALSE","TRUE","Galmes et al. (2007)","Diplotaxis","ibicensis","NA",1630
-"Eucalyptus pilularis","CMAX","FALSE","TRUE","Kelly et al. (2016)","Eucalyptus","pilularis","NA",1602
-"Eucalyptus populnea","CMAX","FALSE","TRUE","Kelly et al. (2016)","Eucalyptus","populnea","NA",1603
-"Ficus tikoua","CMAX","FALSE","FALSE","Liu et al. (2011)","Ficus","tikoua","NA",1621
-"Glycine max","CMAX","FALSE","TRUE","Liu et al. (2005)","Glycine","max","NA",1604
-"Helianthus annuus","CMAX","FALSE","TRUE","Tezara et al. (2008)","Helianthus","annuus","NA",1622
-"Hypericum balearicum","CMAX","FALSE","TRUE","Galmes et al. (2007)","Hypericum","balearicum","NA",1627
-"Limonium gibertii","CMAX","FALSE","TRUE","Galmes et al. (2007)","Limonium","gibertii","NA",1626
-"Limonium magallufianum","CMAX","FALSE","TRUE","Galmes et al. (2007)","Limonium","magallufianum","NA",1625
-"Lysimachia minoricensis","CMAX","FALSE","TRUE","Galmes et al. (2007)","Lysimachia","minoricensis","NA",1633
-"Malva subovata","CMAX","FALSE","TRUE","Galmes et al. (2007)","Malva","subovata","NA",1629
-"Olea europaea var. Chemlali","CMAX","FALSE","TRUE","Ennajeh et al. (2008)","Olea","europaea","Chemlali",1635
-"Olea europaea var. Meski","CMAX","FALSE","TRUE","Ennajeh et al. (2008)","Olea","europaea","Meski",1634
-"Phlomis italica","CMAX","FALSE","TRUE","Galmes et al. (2007)","Phlomis","italica","NA",1628
-"Picea abies","CMAX","FALSE","TRUE","Salmon et al. (2020)","Picea","abies","NA",1609
-"Pinus sylvestris","CMAX","FALSE","TRUE","Salmon et al. (2020)","Pinus","sylvestris","NA",1608
-"Pistacia lentiscus","CMAX","FALSE","TRUE","Galmes et al. (2007)","Pistacia","lentiscus","NA",1623
-"Platycarya longipes","CMAX","FALSE","FALSE","Liu et al. (2010)","Platycarya","longipes","NA",1617
-"Populus tremula","CMAX","FALSE","TRUE","Salmon et al. (2020)","Populus","tremula","NA",1611
-"Pseudotsuga macrocarpa","CMAX","FALSE","TRUE","Grieu et al. (1988)","Pseudotsuga","macrocarpa","NA",1601
-"Pseudotsuga menziesii","CMAX","FALSE","TRUE","Grieu et al. (1988)","Pseudotsuga","menziesii","NA",1600
-"Pteroceltis tatarinowii","CMAX","FALSE","FALSE","Liu et al. (2010)","Pteroceltis","tatarinowii","NA",1618
-"Pyracantha fortuneana","CMAX","FALSE","FALSE","Liu et al. (2010)","Pyracantha","fortuneana","NA",1619
-"Quercus coccifera","CMAX","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","coccifera","NA",1605
-"Quercus ilex","CMAX","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","ilex","NA",1606
-"Quercus ilex","CMAX","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","ilex","NA",1614
-"Quercus petraea","CMAX","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","petraea","NA",1612
-"Quercus pubescens","CMAX","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","pubescens","NA",1613
-"Quercus suber","CMAX","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","suber","NA",1607
-"Rosa cymosa","CMAX","FALSE","FALSE","Liu et al. (2010)","Rosa","cymosa","NA",1620
-"Sequoia sempervirens","CMAX","FALSE","FALSE","Simonin et al. (2009)","Sequoia","sempervirens","NA",1636
-"Allocasuarina luehmannii","PHYDRO","FALSE","TRUE","Posch & Bennett (2009)","Allocasuarina","luehmannii","NA",1598
-"Beta maritima subsp. marcosii","PHYDRO","FALSE","TRUE","Galmes et al. (2007)","Beta","maritima","marcosii",1631
-"Beta maritima subsp. maritima","PHYDRO","FALSE","TRUE","Galmes et al. (2007)","Beta","maritima","maritima",1632
-"Betula pendula","PHYDRO","FALSE","TRUE","Salmon et al. (2020)","Betula","pendula","NA",1610
-"Broussonetia papyrifera","PHYDRO","FALSE","FALSE","Liu et al. (2010)","Broussonetia","papyrifera","NA",1615
-"Cedrus atlantica","PHYDRO","FALSE","TRUE","Grieu et al. (1988)","Cedrus","atlantica","NA",1599
-"Cinnamomum bodinieri","PHYDRO","FALSE","FALSE","Liu et al. (2010)","Cinnamomum","bodinieri","NA",1616
-"Cistus albidus","PHYDRO","FALSE","TRUE","Galmes et al. (2007)","Cistus","albidus","NA",1624
-"Diplotaxis ibicensis","PHYDRO","FALSE","TRUE","Galmes et al. (2007)","Diplotaxis","ibicensis","NA",1630
-"Eucalyptus pilularis","PHYDRO","FALSE","TRUE","Kelly et al. (2016)","Eucalyptus","pilularis","NA",1602
-"Eucalyptus populnea","PHYDRO","FALSE","TRUE","Kelly et al. (2016)","Eucalyptus","populnea","NA",1603
-"Ficus tikoua","PHYDRO","FALSE","FALSE","Liu et al. (2011)","Ficus","tikoua","NA",1621
-"Glycine max","PHYDRO","FALSE","TRUE","Liu et al. (2005)","Glycine","max","NA",1604
-"Helianthus annuus","PHYDRO","FALSE","TRUE","Tezara et al. (2008)","Helianthus","annuus","NA",1622
-"Hypericum balearicum","PHYDRO","FALSE","TRUE","Galmes et al. (2007)","Hypericum","balearicum","NA",1627
-"Limonium gibertii","PHYDRO","FALSE","TRUE","Galmes et al. (2007)","Limonium","gibertii","NA",1626
-"Limonium magallufianum","PHYDRO","FALSE","TRUE","Galmes et al. (2007)","Limonium","magallufianum","NA",1625
-"Lysimachia minoricensis","PHYDRO","FALSE","TRUE","Galmes et al. (2007)","Lysimachia","minoricensis","NA",1633
-"Malva subovata","PHYDRO","FALSE","TRUE","Galmes et al. (2007)","Malva","subovata","NA",1629
-"Olea europaea var. Chemlali","PHYDRO","FALSE","TRUE","Ennajeh et al. (2008)","Olea","europaea","Chemlali",1635
-"Olea europaea var. Meski","PHYDRO","FALSE","TRUE","Ennajeh et al. (2008)","Olea","europaea","Meski",1634
-"Phlomis italica","PHYDRO","FALSE","TRUE","Galmes et al. (2007)","Phlomis","italica","NA",1628
-"Picea abies","PHYDRO","FALSE","TRUE","Salmon et al. (2020)","Picea","abies","NA",1609
-"Pinus sylvestris","PHYDRO","FALSE","TRUE","Salmon et al. (2020)","Pinus","sylvestris","NA",1608
-"Pistacia lentiscus","PHYDRO","FALSE","TRUE","Galmes et al. (2007)","Pistacia","lentiscus","NA",1623
-"Platycarya longipes","PHYDRO","FALSE","FALSE","Liu et al. (2010)","Platycarya","longipes","NA",1617
-"Populus tremula","PHYDRO","FALSE","TRUE","Salmon et al. (2020)","Populus","tremula","NA",1611
-"Pseudotsuga macrocarpa","PHYDRO","FALSE","TRUE","Grieu et al. (1988)","Pseudotsuga","macrocarpa","NA",1601
-"Pseudotsuga menziesii","PHYDRO","FALSE","TRUE","Grieu et al. (1988)","Pseudotsuga","menziesii","NA",1600
-"Pteroceltis tatarinowii","PHYDRO","FALSE","FALSE","Liu et al. (2010)","Pteroceltis","tatarinowii","NA",1618
-"Pyracantha fortuneana","PHYDRO","FALSE","FALSE","Liu et al. (2010)","Pyracantha","fortuneana","NA",1619
-"Quercus coccifera","PHYDRO","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","coccifera","NA",1605
-"Quercus ilex","PHYDRO","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","ilex","NA",1606
-"Quercus ilex","PHYDRO","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","ilex","NA",1614
-"Quercus petraea","PHYDRO","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","petraea","NA",1612
-"Quercus pubescens","PHYDRO","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","pubescens","NA",1613
-"Quercus suber","PHYDRO","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","suber","NA",1607
-"Rosa cymosa","PHYDRO","FALSE","FALSE","Liu et al. (2010)","Rosa","cymosa","NA",1620
-"Sequoia sempervirens","PHYDRO","FALSE","FALSE","Simonin et al. (2009)","Sequoia","sempervirens","NA",1636
-"Allocasuarina luehmannii","PROFITMAX","FALSE","TRUE","Posch & Bennett (2009)","Allocasuarina","luehmannii","NA",1598
-"Beta maritima subsp. marcosii","PROFITMAX","FALSE","TRUE","Galmes et al. (2007)","Beta","maritima","marcosii",1631
-"Beta maritima subsp. maritima","PROFITMAX","FALSE","TRUE","Galmes et al. (2007)","Beta","maritima","maritima",1632
-"Betula pendula","PROFITMAX","FALSE","TRUE","Salmon et al. (2020)","Betula","pendula","NA",1610
-"Broussonetia papyrifera","PROFITMAX","FALSE","FALSE","Liu et al. (2010)","Broussonetia","papyrifera","NA",1615
-"Cedrus atlantica","PROFITMAX","FALSE","TRUE","Grieu et al. (1988)","Cedrus","atlantica","NA",1599
-"Cinnamomum bodinieri","PROFITMAX","FALSE","FALSE","Liu et al. (2010)","Cinnamomum","bodinieri","NA",1616
-"Cistus albidus","PROFITMAX","FALSE","TRUE","Galmes et al. (2007)","Cistus","albidus","NA",1624
-"Diplotaxis ibicensis","PROFITMAX","FALSE","TRUE","Galmes et al. (2007)","Diplotaxis","ibicensis","NA",1630
-"Eucalyptus pilularis","PROFITMAX","FALSE","TRUE","Kelly et al. (2016)","Eucalyptus","pilularis","NA",1602
-"Eucalyptus populnea","PROFITMAX","FALSE","TRUE","Kelly et al. (2016)","Eucalyptus","populnea","NA",1603
-"Ficus tikoua","PROFITMAX","FALSE","FALSE","Liu et al. (2011)","Ficus","tikoua","NA",1621
-"Glycine max","PROFITMAX","FALSE","TRUE","Liu et al. (2005)","Glycine","max","NA",1604
-"Helianthus annuus","PROFITMAX","FALSE","TRUE","Tezara et al. (2008)","Helianthus","annuus","NA",1622
-"Hypericum balearicum","PROFITMAX","FALSE","TRUE","Galmes et al. (2007)","Hypericum","balearicum","NA",1627
-"Limonium gibertii","PROFITMAX","FALSE","TRUE","Galmes et al. (2007)","Limonium","gibertii","NA",1626
-"Limonium magallufianum","PROFITMAX","FALSE","TRUE","Galmes et al. (2007)","Limonium","magallufianum","NA",1625
-"Lysimachia minoricensis","PROFITMAX","FALSE","TRUE","Galmes et al. (2007)","Lysimachia","minoricensis","NA",1633
-"Malva subovata","PROFITMAX","FALSE","TRUE","Galmes et al. (2007)","Malva","subovata","NA",1629
-"Olea europaea var. Chemlali","PROFITMAX","FALSE","TRUE","Ennajeh et al. (2008)","Olea","europaea","Chemlali",1635
-"Olea europaea var. Meski","PROFITMAX","FALSE","TRUE","Ennajeh et al. (2008)","Olea","europaea","Meski",1634
-"Phlomis italica","PROFITMAX","FALSE","TRUE","Galmes et al. (2007)","Phlomis","italica","NA",1628
-"Picea abies","PROFITMAX","FALSE","TRUE","Salmon et al. (2020)","Picea","abies","NA",1609
-"Pinus sylvestris","PROFITMAX","FALSE","TRUE","Salmon et al. (2020)","Pinus","sylvestris","NA",1608
-"Pistacia lentiscus","PROFITMAX","FALSE","TRUE","Galmes et al. (2007)","Pistacia","lentiscus","NA",1623
-"Platycarya longipes","PROFITMAX","FALSE","FALSE","Liu et al. (2010)","Platycarya","longipes","NA",1617
-"Populus tremula","PROFITMAX","FALSE","TRUE","Salmon et al. (2020)","Populus","tremula","NA",1611
-"Pseudotsuga macrocarpa","PROFITMAX","FALSE","TRUE","Grieu et al. (1988)","Pseudotsuga","macrocarpa","NA",1601
-"Pseudotsuga menziesii","PROFITMAX","FALSE","TRUE","Grieu et al. (1988)","Pseudotsuga","menziesii","NA",1600
-"Pteroceltis tatarinowii","PROFITMAX","FALSE","FALSE","Liu et al. (2010)","Pteroceltis","tatarinowii","NA",1618
-"Pyracantha fortuneana","PROFITMAX","FALSE","FALSE","Liu et al. (2010)","Pyracantha","fortuneana","NA",1619
-"Quercus coccifera","PROFITMAX","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","coccifera","NA",1605
-"Quercus ilex","PROFITMAX","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","ilex","NA",1606
-"Quercus ilex","PROFITMAX","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","ilex","NA",1614
-"Quercus petraea","PROFITMAX","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","petraea","NA",1612
-"Quercus pubescens","PROFITMAX","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","pubescens","NA",1613
-"Quercus suber","PROFITMAX","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","suber","NA",1607
-"Rosa cymosa","PROFITMAX","FALSE","FALSE","Liu et al. (2010)","Rosa","cymosa","NA",1620
-"Sequoia sempervirens","PROFITMAX","FALSE","FALSE","Simonin et al. (2009)","Sequoia","sempervirens","NA",1636
-"Allocasuarina luehmannii","PROFITMAX2","FALSE","TRUE","Posch & Bennett (2009)","Allocasuarina","luehmannii","NA",1598
-"Beta maritima subsp. marcosii","PROFITMAX2","FALSE","TRUE","Galmes et al. (2007)","Beta","maritima","marcosii",1631
-"Beta maritima subsp. maritima","PROFITMAX2","FALSE","TRUE","Galmes et al. (2007)","Beta","maritima","maritima",1632
-"Betula pendula","PROFITMAX2","FALSE","TRUE","Salmon et al. (2020)","Betula","pendula","NA",1610
-"Broussonetia papyrifera","PROFITMAX2","FALSE","FALSE","Liu et al. (2010)","Broussonetia","papyrifera","NA",1615
-"Cedrus atlantica","PROFITMAX2","FALSE","TRUE","Grieu et al. (1988)","Cedrus","atlantica","NA",1599
-"Cinnamomum bodinieri","PROFITMAX2","FALSE","FALSE","Liu et al. (2010)","Cinnamomum","bodinieri","NA",1616
-"Cistus albidus","PROFITMAX2","FALSE","TRUE","Galmes et al. (2007)","Cistus","albidus","NA",1624
-"Diplotaxis ibicensis","PROFITMAX2","FALSE","TRUE","Galmes et al. (2007)","Diplotaxis","ibicensis","NA",1630
-"Eucalyptus pilularis","PROFITMAX2","FALSE","TRUE","Kelly et al. (2016)","Eucalyptus","pilularis","NA",1602
-"Eucalyptus populnea","PROFITMAX2","FALSE","TRUE","Kelly et al. (2016)","Eucalyptus","populnea","NA",1603
-"Ficus tikoua","PROFITMAX2","FALSE","FALSE","Liu et al. (2011)","Ficus","tikoua","NA",1621
-"Glycine max","PROFITMAX2","FALSE","TRUE","Liu et al. (2005)","Glycine","max","NA",1604
-"Helianthus annuus","PROFITMAX2","FALSE","TRUE","Tezara et al. (2008)","Helianthus","annuus","NA",1622
-"Hypericum balearicum","PROFITMAX2","FALSE","TRUE","Galmes et al. (2007)","Hypericum","balearicum","NA",1627
-"Limonium gibertii","PROFITMAX2","FALSE","TRUE","Galmes et al. (2007)","Limonium","gibertii","NA",1626
-"Limonium magallufianum","PROFITMAX2","FALSE","TRUE","Galmes et al. (2007)","Limonium","magallufianum","NA",1625
-"Lysimachia minoricensis","PROFITMAX2","FALSE","TRUE","Galmes et al. (2007)","Lysimachia","minoricensis","NA",1633
-"Malva subovata","PROFITMAX2","FALSE","TRUE","Galmes et al. (2007)","Malva","subovata","NA",1629
-"Olea europaea var. Chemlali","PROFITMAX2","FALSE","TRUE","Ennajeh et al. (2008)","Olea","europaea","Chemlali",1635
-"Olea europaea var. Meski","PROFITMAX2","FALSE","TRUE","Ennajeh et al. (2008)","Olea","europaea","Meski",1634
-"Phlomis italica","PROFITMAX2","FALSE","TRUE","Galmes et al. (2007)","Phlomis","italica","NA",1628
-"Picea abies","PROFITMAX2","FALSE","TRUE","Salmon et al. (2020)","Picea","abies","NA",1609
-"Pinus sylvestris","PROFITMAX2","FALSE","TRUE","Salmon et al. (2020)","Pinus","sylvestris","NA",1608
-"Pistacia lentiscus","PROFITMAX2","FALSE","TRUE","Galmes et al. (2007)","Pistacia","lentiscus","NA",1623
-"Platycarya longipes","PROFITMAX2","FALSE","FALSE","Liu et al. (2010)","Platycarya","longipes","NA",1617
-"Populus tremula","PROFITMAX2","FALSE","TRUE","Salmon et al. (2020)","Populus","tremula","NA",1611
-"Pseudotsuga macrocarpa","PROFITMAX2","FALSE","TRUE","Grieu et al. (1988)","Pseudotsuga","macrocarpa","NA",1601
-"Pseudotsuga menziesii","PROFITMAX2","FALSE","TRUE","Grieu et al. (1988)","Pseudotsuga","menziesii","NA",1600
-"Pteroceltis tatarinowii","PROFITMAX2","FALSE","FALSE","Liu et al. (2010)","Pteroceltis","tatarinowii","NA",1618
-"Pyracantha fortuneana","PROFITMAX2","FALSE","FALSE","Liu et al. (2010)","Pyracantha","fortuneana","NA",1619
-"Quercus coccifera","PROFITMAX2","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","coccifera","NA",1605
-"Quercus ilex","PROFITMAX2","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","ilex","NA",1606
-"Quercus ilex","PROFITMAX2","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","ilex","NA",1614
-"Quercus petraea","PROFITMAX2","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","petraea","NA",1612
-"Quercus pubescens","PROFITMAX2","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","pubescens","NA",1613
-"Quercus suber","PROFITMAX2","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","suber","NA",1607
-"Rosa cymosa","PROFITMAX2","FALSE","FALSE","Liu et al. (2010)","Rosa","cymosa","NA",1620
-"Sequoia sempervirens","PROFITMAX2","FALSE","FALSE","Simonin et al. (2009)","Sequoia","sempervirens","NA",1636
-"Allocasuarina luehmannii","SOX","FALSE","TRUE","Posch & Bennett (2009)","Allocasuarina","luehmannii","NA",1598
-"Beta maritima subsp. marcosii","SOX","FALSE","TRUE","Galmes et al. (2007)","Beta","maritima","marcosii",1631
-"Beta maritima subsp. maritima","SOX","FALSE","TRUE","Galmes et al. (2007)","Beta","maritima","maritima",1632
-"Betula pendula","SOX","FALSE","TRUE","Salmon et al. (2020)","Betula","pendula","NA",1610
-"Broussonetia papyrifera","SOX","FALSE","FALSE","Liu et al. (2010)","Broussonetia","papyrifera","NA",1615
-"Cedrus atlantica","SOX","FALSE","TRUE","Grieu et al. (1988)","Cedrus","atlantica","NA",1599
-"Cinnamomum bodinieri","SOX","FALSE","FALSE","Liu et al. (2010)","Cinnamomum","bodinieri","NA",1616
-"Cistus albidus","SOX","FALSE","TRUE","Galmes et al. (2007)","Cistus","albidus","NA",1624
-"Diplotaxis ibicensis","SOX","FALSE","TRUE","Galmes et al. (2007)","Diplotaxis","ibicensis","NA",1630
-"Eucalyptus pilularis","SOX","FALSE","TRUE","Kelly et al. (2016)","Eucalyptus","pilularis","NA",1602
-"Eucalyptus populnea","SOX","FALSE","TRUE","Kelly et al. (2016)","Eucalyptus","populnea","NA",1603
-"Ficus tikoua","SOX","FALSE","FALSE","Liu et al. (2011)","Ficus","tikoua","NA",1621
-"Glycine max","SOX","FALSE","TRUE","Liu et al. (2005)","Glycine","max","NA",1604
-"Helianthus annuus","SOX","FALSE","TRUE","Tezara et al. (2008)","Helianthus","annuus","NA",1622
-"Hypericum balearicum","SOX","FALSE","TRUE","Galmes et al. (2007)","Hypericum","balearicum","NA",1627
-"Limonium gibertii","SOX","FALSE","TRUE","Galmes et al. (2007)","Limonium","gibertii","NA",1626
-"Limonium magallufianum","SOX","FALSE","TRUE","Galmes et al. (2007)","Limonium","magallufianum","NA",1625
-"Lysimachia minoricensis","SOX","FALSE","TRUE","Galmes et al. (2007)","Lysimachia","minoricensis","NA",1633
-"Malva subovata","SOX","FALSE","TRUE","Galmes et al. (2007)","Malva","subovata","NA",1629
-"Olea europaea var. Chemlali","SOX","FALSE","TRUE","Ennajeh et al. (2008)","Olea","europaea","Chemlali",1635
-"Olea europaea var. Meski","SOX","FALSE","TRUE","Ennajeh et al. (2008)","Olea","europaea","Meski",1634
-"Phlomis italica","SOX","FALSE","TRUE","Galmes et al. (2007)","Phlomis","italica","NA",1628
-"Picea abies","SOX","FALSE","TRUE","Salmon et al. (2020)","Picea","abies","NA",1609
-"Pinus sylvestris","SOX","FALSE","TRUE","Salmon et al. (2020)","Pinus","sylvestris","NA",1608
-"Pistacia lentiscus","SOX","FALSE","TRUE","Galmes et al. (2007)","Pistacia","lentiscus","NA",1623
-"Platycarya longipes","SOX","FALSE","FALSE","Liu et al. (2010)","Platycarya","longipes","NA",1617
-"Populus tremula","SOX","FALSE","TRUE","Salmon et al. (2020)","Populus","tremula","NA",1611
-"Pseudotsuga macrocarpa","SOX","FALSE","TRUE","Grieu et al. (1988)","Pseudotsuga","macrocarpa","NA",1601
-"Pseudotsuga menziesii","SOX","FALSE","TRUE","Grieu et al. (1988)","Pseudotsuga","menziesii","NA",1600
-"Pteroceltis tatarinowii","SOX","FALSE","FALSE","Liu et al. (2010)","Pteroceltis","tatarinowii","NA",1618
-"Pyracantha fortuneana","SOX","FALSE","FALSE","Liu et al. (2010)","Pyracantha","fortuneana","NA",1619
-"Quercus coccifera","SOX","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","coccifera","NA",1605
-"Quercus ilex","SOX","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","ilex","NA",1606
-"Quercus ilex","SOX","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","ilex","NA",1614
-"Quercus petraea","SOX","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","petraea","NA",1612
-"Quercus pubescens","SOX","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","pubescens","NA",1613
-"Quercus suber","SOX","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","suber","NA",1607
-"Rosa cymosa","SOX","FALSE","FALSE","Liu et al. (2010)","Rosa","cymosa","NA",1620
-"Sequoia sempervirens","SOX","FALSE","FALSE","Simonin et al. (2009)","Sequoia","sempervirens","NA",1636
-"Allocasuarina luehmannii","SOX2","FALSE","TRUE","Posch & Bennett (2009)","Allocasuarina","luehmannii","NA",1598
-"Beta maritima subsp. marcosii","SOX2","FALSE","TRUE","Galmes et al. (2007)","Beta","maritima","marcosii",1631
-"Beta maritima subsp. maritima","SOX2","FALSE","TRUE","Galmes et al. (2007)","Beta","maritima","maritima",1632
-"Betula pendula","SOX2","FALSE","TRUE","Salmon et al. (2020)","Betula","pendula","NA",1610
-"Broussonetia papyrifera","SOX2","FALSE","FALSE","Liu et al. (2010)","Broussonetia","papyrifera","NA",1615
-"Cedrus atlantica","SOX2","FALSE","TRUE","Grieu et al. (1988)","Cedrus","atlantica","NA",1599
-"Cinnamomum bodinieri","SOX2","FALSE","FALSE","Liu et al. (2010)","Cinnamomum","bodinieri","NA",1616
-"Cistus albidus","SOX2","FALSE","TRUE","Galmes et al. (2007)","Cistus","albidus","NA",1624
-"Diplotaxis ibicensis","SOX2","FALSE","TRUE","Galmes et al. (2007)","Diplotaxis","ibicensis","NA",1630
-"Eucalyptus pilularis","SOX2","FALSE","TRUE","Kelly et al. (2016)","Eucalyptus","pilularis","NA",1602
-"Eucalyptus populnea","SOX2","FALSE","TRUE","Kelly et al. (2016)","Eucalyptus","populnea","NA",1603
-"Ficus tikoua","SOX2","FALSE","FALSE","Liu et al. (2011)","Ficus","tikoua","NA",1621
-"Glycine max","SOX2","FALSE","TRUE","Liu et al. (2005)","Glycine","max","NA",1604
-"Helianthus annuus","SOX2","FALSE","TRUE","Tezara et al. (2008)","Helianthus","annuus","NA",1622
-"Hypericum balearicum","SOX2","FALSE","TRUE","Galmes et al. (2007)","Hypericum","balearicum","NA",1627
-"Limonium gibertii","SOX2","FALSE","TRUE","Galmes et al. (2007)","Limonium","gibertii","NA",1626
-"Limonium magallufianum","SOX2","FALSE","TRUE","Galmes et al. (2007)","Limonium","magallufianum","NA",1625
-"Lysimachia minoricensis","SOX2","FALSE","TRUE","Galmes et al. (2007)","Lysimachia","minoricensis","NA",1633
-"Malva subovata","SOX2","FALSE","TRUE","Galmes et al. (2007)","Malva","subovata","NA",1629
-"Olea europaea var. Chemlali","SOX2","FALSE","TRUE","Ennajeh et al. (2008)","Olea","europaea","Chemlali",1635
-"Olea europaea var. Meski","SOX2","FALSE","TRUE","Ennajeh et al. (2008)","Olea","europaea","Meski",1634
-"Phlomis italica","SOX2","FALSE","TRUE","Galmes et al. (2007)","Phlomis","italica","NA",1628
-"Picea abies","SOX2","FALSE","TRUE","Salmon et al. (2020)","Picea","abies","NA",1609
-"Pinus sylvestris","SOX2","FALSE","TRUE","Salmon et al. (2020)","Pinus","sylvestris","NA",1608
-"Pistacia lentiscus","SOX2","FALSE","TRUE","Galmes et al. (2007)","Pistacia","lentiscus","NA",1623
-"Platycarya longipes","SOX2","FALSE","FALSE","Liu et al. (2010)","Platycarya","longipes","NA",1617
-"Populus tremula","SOX2","FALSE","TRUE","Salmon et al. (2020)","Populus","tremula","NA",1611
-"Pseudotsuga macrocarpa","SOX2","FALSE","TRUE","Grieu et al. (1988)","Pseudotsuga","macrocarpa","NA",1601
-"Pseudotsuga menziesii","SOX2","FALSE","TRUE","Grieu et al. (1988)","Pseudotsuga","menziesii","NA",1600
-"Pteroceltis tatarinowii","SOX2","FALSE","FALSE","Liu et al. (2010)","Pteroceltis","tatarinowii","NA",1618
-"Pyracantha fortuneana","SOX2","FALSE","FALSE","Liu et al. (2010)","Pyracantha","fortuneana","NA",1619
-"Quercus coccifera","SOX2","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","coccifera","NA",1605
-"Quercus ilex","SOX2","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","ilex","NA",1606
-"Quercus ilex","SOX2","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","ilex","NA",1614
-"Quercus petraea","SOX2","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","petraea","NA",1612
-"Quercus pubescens","SOX2","FALSE","TRUE","Epron and Dreyer (1990)","Quercus","pubescens","NA",1613
-"Quercus suber","SOX2","FALSE","TRUE","Peguero-Pina et al. (2009)","Quercus","suber","NA",1607
-"Rosa cymosa","SOX2","FALSE","FALSE","Liu et al. (2010)","Rosa","cymosa","NA",1620
-"Sequoia sempervirens","SOX2","FALSE","FALSE","Simonin et al. (2009)","Sequoia","sempervirens","NA",1636
+Species,scheme,dpsi,inst,source,genus,species,subsp,ID
+Allocasuarina luehmannii,CGAIN,FALSE,TRUE,Posch & Bennett (2009),Allocasuarina,luehmannii,NA,1598
+Beta maritima subsp. marcosii,CGAIN,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,marcosii,1631
+Beta maritima subsp. maritima,CGAIN,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,maritima,1632
+Betula pendula,CGAIN,FALSE,TRUE,Salmon et al. (2020),Betula,pendula,NA,1610
+Broussonetia papyrifera,CGAIN,FALSE,FALSE,Liu et al. (2010),Broussonetia,papyrifera,NA,1615
+Cedrus atlantica,CGAIN,FALSE,TRUE,Grieu et al. (1988),Cedrus,atlantica,NA,1599
+Cinnamomum bodinieri,CGAIN,FALSE,FALSE,Liu et al. (2010),Cinnamomum,bodinieri,NA,1616
+Cistus albidus,CGAIN,FALSE,TRUE,Galmes et al. (2007),Cistus,albidus,NA,1624
+Diplotaxis ibicensis,CGAIN,FALSE,TRUE,Galmes et al. (2007),Diplotaxis,ibicensis,NA,1630
+Eucalyptus pilularis,CGAIN,FALSE,TRUE,Kelly et al. (2016),Eucalyptus,pilularis,NA,1602
+Eucalyptus populnea,CGAIN,FALSE,TRUE,Kelly et al. (2016),Eucalyptus,populnea,NA,1603
+Ficus tikoua,CGAIN,FALSE,FALSE,Liu et al. (2011),Ficus,tikoua,NA,1621
+Glycine max,CGAIN,FALSE,TRUE,Liu et al. (2005),Glycine,max,NA,1604
+Helianthus annuus,CGAIN,FALSE,TRUE,Tezara et al. (2008),Helianthus,annuus,NA,1622
+Hypericum balearicum,CGAIN,FALSE,TRUE,Galmes et al. (2007),Hypericum,balearicum,NA,1627
+Limonium gibertii,CGAIN,FALSE,TRUE,Galmes et al. (2007),Limonium,gibertii,NA,1626
+Limonium magallufianum,CGAIN,FALSE,TRUE,Galmes et al. (2007),Limonium,magallufianum,NA,1625
+Lysimachia minoricensis,CGAIN,FALSE,TRUE,Galmes et al. (2007),Lysimachia,minoricensis,NA,1633
+Malva subovata,CGAIN,FALSE,TRUE,Galmes et al. (2007),Malva,subovata,NA,1629
+Olea europaea var. Chemlali,CGAIN,FALSE,TRUE,Ennajeh et al. (2008),Olea,europaea,Chemlali,1635
+Olea europaea var. Meski,CGAIN,FALSE,TRUE,Ennajeh et al. (2008),Olea,europaea,Meski,1634
+Phlomis italica,CGAIN,FALSE,TRUE,Galmes et al. (2007),Phlomis,italica,NA,1628
+Picea abies,CGAIN,FALSE,TRUE,Salmon et al. (2020),Picea,abies,NA,1609
+Pinus sylvestris,CGAIN,FALSE,TRUE,Salmon et al. (2020),Pinus,sylvestris,NA,1608
+Pistacia lentiscus,CGAIN,FALSE,TRUE,Galmes et al. (2007),Pistacia,lentiscus,NA,1623
+Platycarya longipes,CGAIN,FALSE,FALSE,Liu et al. (2010),Platycarya,longipes,NA,1617
+Populus tremula,CGAIN,FALSE,TRUE,Salmon et al. (2020),Populus,tremula,NA,1611
+Pseudotsuga macrocarpa,CGAIN,FALSE,TRUE,Grieu et al. (1988),Pseudotsuga,macrocarpa,NA,1601
+Pseudotsuga menziesii,CGAIN,FALSE,TRUE,Grieu et al. (1988),Pseudotsuga,menziesii,NA,1600
+Pteroceltis tatarinowii,CGAIN,FALSE,FALSE,Liu et al. (2010),Pteroceltis,tatarinowii,NA,1618
+Pyracantha fortuneana,CGAIN,FALSE,FALSE,Liu et al. (2010),Pyracantha,fortuneana,NA,1619
+Quercus coccifera,CGAIN,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,coccifera,NA,1605
+Quercus ilex,CGAIN,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,ilex,NA,1606
+Quercus ilex,CGAIN,FALSE,TRUE,Epron and Dreyer (1990),Quercus,ilex,NA,1614
+Quercus petraea,CGAIN,FALSE,TRUE,Epron and Dreyer (1990),Quercus,petraea,NA,1612
+Quercus pubescens,CGAIN,FALSE,TRUE,Epron and Dreyer (1990),Quercus,pubescens,NA,1613
+Quercus suber,CGAIN,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,suber,NA,1607
+Rosa cymosa,CGAIN,FALSE,FALSE,Liu et al. (2010),Rosa,cymosa,NA,1620
+Sequoia sempervirens,CGAIN,FALSE,FALSE,Simonin et al. (2009),Sequoia,sempervirens,NA,1636
+Allocasuarina luehmannii,PMAX3,FALSE,TRUE,Posch & Bennett (2009),Allocasuarina,luehmannii,NA,1598
+Beta maritima subsp. marcosii,PMAX3,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,marcosii,1631
+Beta maritima subsp. maritima,PMAX3,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,maritima,1632
+Betula pendula,PMAX3,FALSE,TRUE,Salmon et al. (2020),Betula,pendula,NA,1610
+Broussonetia papyrifera,PMAX3,FALSE,FALSE,Liu et al. (2010),Broussonetia,papyrifera,NA,1615
+Cedrus atlantica,PMAX3,FALSE,TRUE,Grieu et al. (1988),Cedrus,atlantica,NA,1599
+Cinnamomum bodinieri,PMAX3,FALSE,FALSE,Liu et al. (2010),Cinnamomum,bodinieri,NA,1616
+Cistus albidus,PMAX3,FALSE,TRUE,Galmes et al. (2007),Cistus,albidus,NA,1624
+Diplotaxis ibicensis,PMAX3,FALSE,TRUE,Galmes et al. (2007),Diplotaxis,ibicensis,NA,1630
+Eucalyptus pilularis,PMAX3,FALSE,TRUE,Kelly et al. (2016),Eucalyptus,pilularis,NA,1602
+Eucalyptus populnea,PMAX3,FALSE,TRUE,Kelly et al. (2016),Eucalyptus,populnea,NA,1603
+Ficus tikoua,PMAX3,FALSE,FALSE,Liu et al. (2011),Ficus,tikoua,NA,1621
+Glycine max,PMAX3,FALSE,TRUE,Liu et al. (2005),Glycine,max,NA,1604
+Helianthus annuus,PMAX3,FALSE,TRUE,Tezara et al. (2008),Helianthus,annuus,NA,1622
+Hypericum balearicum,PMAX3,FALSE,TRUE,Galmes et al. (2007),Hypericum,balearicum,NA,1627
+Limonium gibertii,PMAX3,FALSE,TRUE,Galmes et al. (2007),Limonium,gibertii,NA,1626
+Limonium magallufianum,PMAX3,FALSE,TRUE,Galmes et al. (2007),Limonium,magallufianum,NA,1625
+Lysimachia minoricensis,PMAX3,FALSE,TRUE,Galmes et al. (2007),Lysimachia,minoricensis,NA,1633
+Malva subovata,PMAX3,FALSE,TRUE,Galmes et al. (2007),Malva,subovata,NA,1629
+Olea europaea var. Chemlali,PMAX3,FALSE,TRUE,Ennajeh et al. (2008),Olea,europaea,Chemlali,1635
+Olea europaea var. Meski,PMAX3,FALSE,TRUE,Ennajeh et al. (2008),Olea,europaea,Meski,1634
+Phlomis italica,PMAX3,FALSE,TRUE,Galmes et al. (2007),Phlomis,italica,NA,1628
+Picea abies,PMAX3,FALSE,TRUE,Salmon et al. (2020),Picea,abies,NA,1609
+Pinus sylvestris,PMAX3,FALSE,TRUE,Salmon et al. (2020),Pinus,sylvestris,NA,1608
+Pistacia lentiscus,PMAX3,FALSE,TRUE,Galmes et al. (2007),Pistacia,lentiscus,NA,1623
+Platycarya longipes,PMAX3,FALSE,FALSE,Liu et al. (2010),Platycarya,longipes,NA,1617
+Populus tremula,PMAX3,FALSE,TRUE,Salmon et al. (2020),Populus,tremula,NA,1611
+Pseudotsuga macrocarpa,PMAX3,FALSE,TRUE,Grieu et al. (1988),Pseudotsuga,macrocarpa,NA,1601
+Pseudotsuga menziesii,PMAX3,FALSE,TRUE,Grieu et al. (1988),Pseudotsuga,menziesii,NA,1600
+Pteroceltis tatarinowii,PMAX3,FALSE,FALSE,Liu et al. (2010),Pteroceltis,tatarinowii,NA,1618
+Pyracantha fortuneana,PMAX3,FALSE,FALSE,Liu et al. (2010),Pyracantha,fortuneana,NA,1619
+Quercus coccifera,PMAX3,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,coccifera,NA,1605
+Quercus ilex,PMAX3,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,ilex,NA,1606
+Quercus ilex,PMAX3,FALSE,TRUE,Epron and Dreyer (1990),Quercus,ilex,NA,1614
+Quercus petraea,PMAX3,FALSE,TRUE,Epron and Dreyer (1990),Quercus,petraea,NA,1612
+Quercus pubescens,PMAX3,FALSE,TRUE,Epron and Dreyer (1990),Quercus,pubescens,NA,1613
+Quercus suber,PMAX3,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,suber,NA,1607
+Rosa cymosa,PMAX3,FALSE,FALSE,Liu et al. (2010),Rosa,cymosa,NA,1620
+Sequoia sempervirens,PMAX3,FALSE,FALSE,Simonin et al. (2009),Sequoia,sempervirens,NA,1636
+Allocasuarina luehmannii,PHYDRO,FALSE,TRUE,Posch & Bennett (2009),Allocasuarina,luehmannii,NA,1598
+Beta maritima subsp. marcosii,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,marcosii,1631
+Beta maritima subsp. maritima,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,maritima,1632
+Betula pendula,PHYDRO,FALSE,TRUE,Salmon et al. (2020),Betula,pendula,NA,1610
+Broussonetia papyrifera,PHYDRO,FALSE,FALSE,Liu et al. (2010),Broussonetia,papyrifera,NA,1615
+Cedrus atlantica,PHYDRO,FALSE,TRUE,Grieu et al. (1988),Cedrus,atlantica,NA,1599
+Cinnamomum bodinieri,PHYDRO,FALSE,FALSE,Liu et al. (2010),Cinnamomum,bodinieri,NA,1616
+Cistus albidus,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Cistus,albidus,NA,1624
+Diplotaxis ibicensis,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Diplotaxis,ibicensis,NA,1630
+Eucalyptus pilularis,PHYDRO,FALSE,TRUE,Kelly et al. (2016),Eucalyptus,pilularis,NA,1602
+Eucalyptus populnea,PHYDRO,FALSE,TRUE,Kelly et al. (2016),Eucalyptus,populnea,NA,1603
+Ficus tikoua,PHYDRO,FALSE,FALSE,Liu et al. (2011),Ficus,tikoua,NA,1621
+Glycine max,PHYDRO,FALSE,TRUE,Liu et al. (2005),Glycine,max,NA,1604
+Helianthus annuus,PHYDRO,FALSE,TRUE,Tezara et al. (2008),Helianthus,annuus,NA,1622
+Hypericum balearicum,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Hypericum,balearicum,NA,1627
+Limonium gibertii,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Limonium,gibertii,NA,1626
+Limonium magallufianum,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Limonium,magallufianum,NA,1625
+Lysimachia minoricensis,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Lysimachia,minoricensis,NA,1633
+Malva subovata,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Malva,subovata,NA,1629
+Olea europaea var. Chemlali,PHYDRO,FALSE,TRUE,Ennajeh et al. (2008),Olea,europaea,Chemlali,1635
+Olea europaea var. Meski,PHYDRO,FALSE,TRUE,Ennajeh et al. (2008),Olea,europaea,Meski,1634
+Phlomis italica,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Phlomis,italica,NA,1628
+Picea abies,PHYDRO,FALSE,TRUE,Salmon et al. (2020),Picea,abies,NA,1609
+Pinus sylvestris,PHYDRO,FALSE,TRUE,Salmon et al. (2020),Pinus,sylvestris,NA,1608
+Pistacia lentiscus,PHYDRO,FALSE,TRUE,Galmes et al. (2007),Pistacia,lentiscus,NA,1623
+Platycarya longipes,PHYDRO,FALSE,FALSE,Liu et al. (2010),Platycarya,longipes,NA,1617
+Populus tremula,PHYDRO,FALSE,TRUE,Salmon et al. (2020),Populus,tremula,NA,1611
+Pseudotsuga macrocarpa,PHYDRO,FALSE,TRUE,Grieu et al. (1988),Pseudotsuga,macrocarpa,NA,1601
+Pseudotsuga menziesii,PHYDRO,FALSE,TRUE,Grieu et al. (1988),Pseudotsuga,menziesii,NA,1600
+Pteroceltis tatarinowii,PHYDRO,FALSE,FALSE,Liu et al. (2010),Pteroceltis,tatarinowii,NA,1618
+Pyracantha fortuneana,PHYDRO,FALSE,FALSE,Liu et al. (2010),Pyracantha,fortuneana,NA,1619
+Quercus coccifera,PHYDRO,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,coccifera,NA,1605
+Quercus ilex,PHYDRO,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,ilex,NA,1606
+Quercus ilex,PHYDRO,FALSE,TRUE,Epron and Dreyer (1990),Quercus,ilex,NA,1614
+Quercus petraea,PHYDRO,FALSE,TRUE,Epron and Dreyer (1990),Quercus,petraea,NA,1612
+Quercus pubescens,PHYDRO,FALSE,TRUE,Epron and Dreyer (1990),Quercus,pubescens,NA,1613
+Quercus suber,PHYDRO,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,suber,NA,1607
+Rosa cymosa,PHYDRO,FALSE,FALSE,Liu et al. (2010),Rosa,cymosa,NA,1620
+Sequoia sempervirens,PHYDRO,FALSE,FALSE,Simonin et al. (2009),Sequoia,sempervirens,NA,1636
+Allocasuarina luehmannii,PROFITMAX,FALSE,TRUE,Posch & Bennett (2009),Allocasuarina,luehmannii,NA,1598
+Beta maritima subsp. marcosii,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,marcosii,1631
+Beta maritima subsp. maritima,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,maritima,1632
+Betula pendula,PROFITMAX,FALSE,TRUE,Salmon et al. (2020),Betula,pendula,NA,1610
+Broussonetia papyrifera,PROFITMAX,FALSE,FALSE,Liu et al. (2010),Broussonetia,papyrifera,NA,1615
+Cedrus atlantica,PROFITMAX,FALSE,TRUE,Grieu et al. (1988),Cedrus,atlantica,NA,1599
+Cinnamomum bodinieri,PROFITMAX,FALSE,FALSE,Liu et al. (2010),Cinnamomum,bodinieri,NA,1616
+Cistus albidus,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Cistus,albidus,NA,1624
+Diplotaxis ibicensis,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Diplotaxis,ibicensis,NA,1630
+Eucalyptus pilularis,PROFITMAX,FALSE,TRUE,Kelly et al. (2016),Eucalyptus,pilularis,NA,1602
+Eucalyptus populnea,PROFITMAX,FALSE,TRUE,Kelly et al. (2016),Eucalyptus,populnea,NA,1603
+Ficus tikoua,PROFITMAX,FALSE,FALSE,Liu et al. (2011),Ficus,tikoua,NA,1621
+Glycine max,PROFITMAX,FALSE,TRUE,Liu et al. (2005),Glycine,max,NA,1604
+Helianthus annuus,PROFITMAX,FALSE,TRUE,Tezara et al. (2008),Helianthus,annuus,NA,1622
+Hypericum balearicum,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Hypericum,balearicum,NA,1627
+Limonium gibertii,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Limonium,gibertii,NA,1626
+Limonium magallufianum,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Limonium,magallufianum,NA,1625
+Lysimachia minoricensis,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Lysimachia,minoricensis,NA,1633
+Malva subovata,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Malva,subovata,NA,1629
+Olea europaea var. Chemlali,PROFITMAX,FALSE,TRUE,Ennajeh et al. (2008),Olea,europaea,Chemlali,1635
+Olea europaea var. Meski,PROFITMAX,FALSE,TRUE,Ennajeh et al. (2008),Olea,europaea,Meski,1634
+Phlomis italica,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Phlomis,italica,NA,1628
+Picea abies,PROFITMAX,FALSE,TRUE,Salmon et al. (2020),Picea,abies,NA,1609
+Pinus sylvestris,PROFITMAX,FALSE,TRUE,Salmon et al. (2020),Pinus,sylvestris,NA,1608
+Pistacia lentiscus,PROFITMAX,FALSE,TRUE,Galmes et al. (2007),Pistacia,lentiscus,NA,1623
+Platycarya longipes,PROFITMAX,FALSE,FALSE,Liu et al. (2010),Platycarya,longipes,NA,1617
+Populus tremula,PROFITMAX,FALSE,TRUE,Salmon et al. (2020),Populus,tremula,NA,1611
+Pseudotsuga macrocarpa,PROFITMAX,FALSE,TRUE,Grieu et al. (1988),Pseudotsuga,macrocarpa,NA,1601
+Pseudotsuga menziesii,PROFITMAX,FALSE,TRUE,Grieu et al. (1988),Pseudotsuga,menziesii,NA,1600
+Pteroceltis tatarinowii,PROFITMAX,FALSE,FALSE,Liu et al. (2010),Pteroceltis,tatarinowii,NA,1618
+Pyracantha fortuneana,PROFITMAX,FALSE,FALSE,Liu et al. (2010),Pyracantha,fortuneana,NA,1619
+Quercus coccifera,PROFITMAX,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,coccifera,NA,1605
+Quercus ilex,PROFITMAX,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,ilex,NA,1606
+Quercus ilex,PROFITMAX,FALSE,TRUE,Epron and Dreyer (1990),Quercus,ilex,NA,1614
+Quercus petraea,PROFITMAX,FALSE,TRUE,Epron and Dreyer (1990),Quercus,petraea,NA,1612
+Quercus pubescens,PROFITMAX,FALSE,TRUE,Epron and Dreyer (1990),Quercus,pubescens,NA,1613
+Quercus suber,PROFITMAX,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,suber,NA,1607
+Rosa cymosa,PROFITMAX,FALSE,FALSE,Liu et al. (2010),Rosa,cymosa,NA,1620
+Sequoia sempervirens,PROFITMAX,FALSE,FALSE,Simonin et al. (2009),Sequoia,sempervirens,NA,1636
+Allocasuarina luehmannii,PROFITMAX2,FALSE,TRUE,Posch & Bennett (2009),Allocasuarina,luehmannii,NA,1598
+Beta maritima subsp. marcosii,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,marcosii,1631
+Beta maritima subsp. maritima,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,maritima,1632
+Betula pendula,PROFITMAX2,FALSE,TRUE,Salmon et al. (2020),Betula,pendula,NA,1610
+Broussonetia papyrifera,PROFITMAX2,FALSE,FALSE,Liu et al. (2010),Broussonetia,papyrifera,NA,1615
+Cedrus atlantica,PROFITMAX2,FALSE,TRUE,Grieu et al. (1988),Cedrus,atlantica,NA,1599
+Cinnamomum bodinieri,PROFITMAX2,FALSE,FALSE,Liu et al. (2010),Cinnamomum,bodinieri,NA,1616
+Cistus albidus,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Cistus,albidus,NA,1624
+Diplotaxis ibicensis,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Diplotaxis,ibicensis,NA,1630
+Eucalyptus pilularis,PROFITMAX2,FALSE,TRUE,Kelly et al. (2016),Eucalyptus,pilularis,NA,1602
+Eucalyptus populnea,PROFITMAX2,FALSE,TRUE,Kelly et al. (2016),Eucalyptus,populnea,NA,1603
+Ficus tikoua,PROFITMAX2,FALSE,FALSE,Liu et al. (2011),Ficus,tikoua,NA,1621
+Glycine max,PROFITMAX2,FALSE,TRUE,Liu et al. (2005),Glycine,max,NA,1604
+Helianthus annuus,PROFITMAX2,FALSE,TRUE,Tezara et al. (2008),Helianthus,annuus,NA,1622
+Hypericum balearicum,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Hypericum,balearicum,NA,1627
+Limonium gibertii,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Limonium,gibertii,NA,1626
+Limonium magallufianum,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Limonium,magallufianum,NA,1625
+Lysimachia minoricensis,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Lysimachia,minoricensis,NA,1633
+Malva subovata,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Malva,subovata,NA,1629
+Olea europaea var. Chemlali,PROFITMAX2,FALSE,TRUE,Ennajeh et al. (2008),Olea,europaea,Chemlali,1635
+Olea europaea var. Meski,PROFITMAX2,FALSE,TRUE,Ennajeh et al. (2008),Olea,europaea,Meski,1634
+Phlomis italica,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Phlomis,italica,NA,1628
+Picea abies,PROFITMAX2,FALSE,TRUE,Salmon et al. (2020),Picea,abies,NA,1609
+Pinus sylvestris,PROFITMAX2,FALSE,TRUE,Salmon et al. (2020),Pinus,sylvestris,NA,1608
+Pistacia lentiscus,PROFITMAX2,FALSE,TRUE,Galmes et al. (2007),Pistacia,lentiscus,NA,1623
+Platycarya longipes,PROFITMAX2,FALSE,FALSE,Liu et al. (2010),Platycarya,longipes,NA,1617
+Populus tremula,PROFITMAX2,FALSE,TRUE,Salmon et al. (2020),Populus,tremula,NA,1611
+Pseudotsuga macrocarpa,PROFITMAX2,FALSE,TRUE,Grieu et al. (1988),Pseudotsuga,macrocarpa,NA,1601
+Pseudotsuga menziesii,PROFITMAX2,FALSE,TRUE,Grieu et al. (1988),Pseudotsuga,menziesii,NA,1600
+Pteroceltis tatarinowii,PROFITMAX2,FALSE,FALSE,Liu et al. (2010),Pteroceltis,tatarinowii,NA,1618
+Pyracantha fortuneana,PROFITMAX2,FALSE,FALSE,Liu et al. (2010),Pyracantha,fortuneana,NA,1619
+Quercus coccifera,PROFITMAX2,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,coccifera,NA,1605
+Quercus ilex,PROFITMAX2,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,ilex,NA,1606
+Quercus ilex,PROFITMAX2,FALSE,TRUE,Epron and Dreyer (1990),Quercus,ilex,NA,1614
+Quercus petraea,PROFITMAX2,FALSE,TRUE,Epron and Dreyer (1990),Quercus,petraea,NA,1612
+Quercus pubescens,PROFITMAX2,FALSE,TRUE,Epron and Dreyer (1990),Quercus,pubescens,NA,1613
+Quercus suber,PROFITMAX2,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,suber,NA,1607
+Rosa cymosa,PROFITMAX2,FALSE,FALSE,Liu et al. (2010),Rosa,cymosa,NA,1620
+Sequoia sempervirens,PROFITMAX2,FALSE,FALSE,Simonin et al. (2009),Sequoia,sempervirens,NA,1636
+Allocasuarina luehmannii,SOX,FALSE,TRUE,Posch & Bennett (2009),Allocasuarina,luehmannii,NA,1598
+Beta maritima subsp. marcosii,SOX,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,marcosii,1631
+Beta maritima subsp. maritima,SOX,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,maritima,1632
+Betula pendula,SOX,FALSE,TRUE,Salmon et al. (2020),Betula,pendula,NA,1610
+Broussonetia papyrifera,SOX,FALSE,FALSE,Liu et al. (2010),Broussonetia,papyrifera,NA,1615
+Cedrus atlantica,SOX,FALSE,TRUE,Grieu et al. (1988),Cedrus,atlantica,NA,1599
+Cinnamomum bodinieri,SOX,FALSE,FALSE,Liu et al. (2010),Cinnamomum,bodinieri,NA,1616
+Cistus albidus,SOX,FALSE,TRUE,Galmes et al. (2007),Cistus,albidus,NA,1624
+Diplotaxis ibicensis,SOX,FALSE,TRUE,Galmes et al. (2007),Diplotaxis,ibicensis,NA,1630
+Eucalyptus pilularis,SOX,FALSE,TRUE,Kelly et al. (2016),Eucalyptus,pilularis,NA,1602
+Eucalyptus populnea,SOX,FALSE,TRUE,Kelly et al. (2016),Eucalyptus,populnea,NA,1603
+Ficus tikoua,SOX,FALSE,FALSE,Liu et al. (2011),Ficus,tikoua,NA,1621
+Glycine max,SOX,FALSE,TRUE,Liu et al. (2005),Glycine,max,NA,1604
+Helianthus annuus,SOX,FALSE,TRUE,Tezara et al. (2008),Helianthus,annuus,NA,1622
+Hypericum balearicum,SOX,FALSE,TRUE,Galmes et al. (2007),Hypericum,balearicum,NA,1627
+Limonium gibertii,SOX,FALSE,TRUE,Galmes et al. (2007),Limonium,gibertii,NA,1626
+Limonium magallufianum,SOX,FALSE,TRUE,Galmes et al. (2007),Limonium,magallufianum,NA,1625
+Lysimachia minoricensis,SOX,FALSE,TRUE,Galmes et al. (2007),Lysimachia,minoricensis,NA,1633
+Malva subovata,SOX,FALSE,TRUE,Galmes et al. (2007),Malva,subovata,NA,1629
+Olea europaea var. Chemlali,SOX,FALSE,TRUE,Ennajeh et al. (2008),Olea,europaea,Chemlali,1635
+Olea europaea var. Meski,SOX,FALSE,TRUE,Ennajeh et al. (2008),Olea,europaea,Meski,1634
+Phlomis italica,SOX,FALSE,TRUE,Galmes et al. (2007),Phlomis,italica,NA,1628
+Picea abies,SOX,FALSE,TRUE,Salmon et al. (2020),Picea,abies,NA,1609
+Pinus sylvestris,SOX,FALSE,TRUE,Salmon et al. (2020),Pinus,sylvestris,NA,1608
+Pistacia lentiscus,SOX,FALSE,TRUE,Galmes et al. (2007),Pistacia,lentiscus,NA,1623
+Platycarya longipes,SOX,FALSE,FALSE,Liu et al. (2010),Platycarya,longipes,NA,1617
+Populus tremula,SOX,FALSE,TRUE,Salmon et al. (2020),Populus,tremula,NA,1611
+Pseudotsuga macrocarpa,SOX,FALSE,TRUE,Grieu et al. (1988),Pseudotsuga,macrocarpa,NA,1601
+Pseudotsuga menziesii,SOX,FALSE,TRUE,Grieu et al. (1988),Pseudotsuga,menziesii,NA,1600
+Pteroceltis tatarinowii,SOX,FALSE,FALSE,Liu et al. (2010),Pteroceltis,tatarinowii,NA,1618
+Pyracantha fortuneana,SOX,FALSE,FALSE,Liu et al. (2010),Pyracantha,fortuneana,NA,1619
+Quercus coccifera,SOX,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,coccifera,NA,1605
+Quercus ilex,SOX,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,ilex,NA,1606
+Quercus ilex,SOX,FALSE,TRUE,Epron and Dreyer (1990),Quercus,ilex,NA,1614
+Quercus petraea,SOX,FALSE,TRUE,Epron and Dreyer (1990),Quercus,petraea,NA,1612
+Quercus pubescens,SOX,FALSE,TRUE,Epron and Dreyer (1990),Quercus,pubescens,NA,1613
+Quercus suber,SOX,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,suber,NA,1607
+Rosa cymosa,SOX,FALSE,FALSE,Liu et al. (2010),Rosa,cymosa,NA,1620
+Sequoia sempervirens,SOX,FALSE,FALSE,Simonin et al. (2009),Sequoia,sempervirens,NA,1636
+Allocasuarina luehmannii,SOX2,FALSE,TRUE,Posch & Bennett (2009),Allocasuarina,luehmannii,NA,1598
+Beta maritima subsp. marcosii,SOX2,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,marcosii,1631
+Beta maritima subsp. maritima,SOX2,FALSE,TRUE,Galmes et al. (2007),Beta,maritima,maritima,1632
+Betula pendula,SOX2,FALSE,TRUE,Salmon et al. (2020),Betula,pendula,NA,1610
+Broussonetia papyrifera,SOX2,FALSE,FALSE,Liu et al. (2010),Broussonetia,papyrifera,NA,1615
+Cedrus atlantica,SOX2,FALSE,TRUE,Grieu et al. (1988),Cedrus,atlantica,NA,1599
+Cinnamomum bodinieri,SOX2,FALSE,FALSE,Liu et al. (2010),Cinnamomum,bodinieri,NA,1616
+Cistus albidus,SOX2,FALSE,TRUE,Galmes et al. (2007),Cistus,albidus,NA,1624
+Diplotaxis ibicensis,SOX2,FALSE,TRUE,Galmes et al. (2007),Diplotaxis,ibicensis,NA,1630
+Eucalyptus pilularis,SOX2,FALSE,TRUE,Kelly et al. (2016),Eucalyptus,pilularis,NA,1602
+Eucalyptus populnea,SOX2,FALSE,TRUE,Kelly et al. (2016),Eucalyptus,populnea,NA,1603
+Ficus tikoua,SOX2,FALSE,FALSE,Liu et al. (2011),Ficus,tikoua,NA,1621
+Glycine max,SOX2,FALSE,TRUE,Liu et al. (2005),Glycine,max,NA,1604
+Helianthus annuus,SOX2,FALSE,TRUE,Tezara et al. (2008),Helianthus,annuus,NA,1622
+Hypericum balearicum,SOX2,FALSE,TRUE,Galmes et al. (2007),Hypericum,balearicum,NA,1627
+Limonium gibertii,SOX2,FALSE,TRUE,Galmes et al. (2007),Limonium,gibertii,NA,1626
+Limonium magallufianum,SOX2,FALSE,TRUE,Galmes et al. (2007),Limonium,magallufianum,NA,1625
+Lysimachia minoricensis,SOX2,FALSE,TRUE,Galmes et al. (2007),Lysimachia,minoricensis,NA,1633
+Malva subovata,SOX2,FALSE,TRUE,Galmes et al. (2007),Malva,subovata,NA,1629
+Olea europaea var. Chemlali,SOX2,FALSE,TRUE,Ennajeh et al. (2008),Olea,europaea,Chemlali,1635
+Olea europaea var. Meski,SOX2,FALSE,TRUE,Ennajeh et al. (2008),Olea,europaea,Meski,1634
+Phlomis italica,SOX2,FALSE,TRUE,Galmes et al. (2007),Phlomis,italica,NA,1628
+Picea abies,SOX2,FALSE,TRUE,Salmon et al. (2020),Picea,abies,NA,1609
+Pinus sylvestris,SOX2,FALSE,TRUE,Salmon et al. (2020),Pinus,sylvestris,NA,1608
+Pistacia lentiscus,SOX2,FALSE,TRUE,Galmes et al. (2007),Pistacia,lentiscus,NA,1623
+Platycarya longipes,SOX2,FALSE,FALSE,Liu et al. (2010),Platycarya,longipes,NA,1617
+Populus tremula,SOX2,FALSE,TRUE,Salmon et al. (2020),Populus,tremula,NA,1611
+Pseudotsuga macrocarpa,SOX2,FALSE,TRUE,Grieu et al. (1988),Pseudotsuga,macrocarpa,NA,1601
+Pseudotsuga menziesii,SOX2,FALSE,TRUE,Grieu et al. (1988),Pseudotsuga,menziesii,NA,1600
+Pteroceltis tatarinowii,SOX2,FALSE,FALSE,Liu et al. (2010),Pteroceltis,tatarinowii,NA,1618
+Pyracantha fortuneana,SOX2,FALSE,FALSE,Liu et al. (2010),Pyracantha,fortuneana,NA,1619
+Quercus coccifera,SOX2,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,coccifera,NA,1605
+Quercus ilex,SOX2,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,ilex,NA,1606
+Quercus ilex,SOX2,FALSE,TRUE,Epron and Dreyer (1990),Quercus,ilex,NA,1614
+Quercus petraea,SOX2,FALSE,TRUE,Epron and Dreyer (1990),Quercus,petraea,NA,1612
+Quercus pubescens,SOX2,FALSE,TRUE,Epron and Dreyer (1990),Quercus,pubescens,NA,1613
+Quercus suber,SOX2,FALSE,TRUE,Peguero-Pina et al. (2009),Quercus,suber,NA,1607
+Rosa cymosa,SOX2,FALSE,FALSE,Liu et al. (2010),Rosa,cymosa,NA,1620
+Sequoia sempervirens,SOX2,FALSE,FALSE,Simonin et al. (2009),Sequoia,sempervirens,NA,1636

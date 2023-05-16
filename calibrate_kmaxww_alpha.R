@@ -216,7 +216,7 @@ error_fun_no_accl = function(x, data, data_template, plot=F,
                              K_PROFITMAX = K_PROFITMAX_no_acclimate){
   
   data = data %>% 
-    mutate(  patm = calc_patm(0,T),
+    mutate(  patm = calc_patm(0),
              ca_pa = ca*1e-6 * patm,
              Ciest = ca_pa-(A*1e-6)/(gC/patm))
   
@@ -325,7 +325,7 @@ error_fun_kmax_alpha = function(x, data_all, data_ww, data_template,  plot=F,
   # }else{
   
   data = data_ww %>% 
-    mutate(  patm = calc_patm(0,T),
+    mutate(  patm = calc_patm(0),
              ca_pa = ca*1e-6 * patm,
              Ciest = ca_pa-(A*1e-6)/(gC/patm))
   
@@ -436,7 +436,7 @@ error_fun_kmax_alpha = function(x, data_all, data_ww, data_template,  plot=F,
 
 
 par_scheme_gamma <- list("PHYDRO","CGAIN", "CMAX", "SOX2")
-par_scheme_no_gamma <- list("PROFITMAX2","SOX","PROFITMAX")
+par_scheme_no_gamma <- list("PROFITMAX2","SOX","PROFITMAX","PMAX3")
 
 ##### PARAMETERIZATION #####
 get_parameters_kmaxww_alpha <- function(x){
@@ -471,7 +471,7 @@ get_parameters_kmaxww_alpha <- function(x){
   data_ww <- data1 %>% 
     filter(!is.na(gC)) %>% 
     mutate(LWP_q90 = quantile(LWP, 0.8, na.rm = TRUE),
-           patm = calc_patm(0,T),
+           patm = calc_patm(0),
            ca_pa = ca*1e-6 * patm,
            ci = ca_pa-(A*1e-6)/(gC/patm)) %>% 
     filter(LWP >= LWP_q90) 
@@ -479,7 +479,7 @@ get_parameters_kmaxww_alpha <- function(x){
   vcmax <- calc_vcmax_no_acclimated_ww(A = data_ww$A,
                                        ci = data_ww$ci,
                                        tc = data_ww$T,
-                                       patm = calc_patm(0,data_ww$T),
+                                       patm = calc_patm(0),
                                        rdark = 0.0150
   )
   
@@ -492,7 +492,7 @@ get_parameters_kmaxww_alpha <- function(x){
                                      ci = data_ww$ci,
                                      I = data_ww$Iabs_growth,
                                      tc = data_ww$T,
-                                     patm = calc_patm(0,data_ww$T),
+                                     patm = calc_patm(0),
                                      kphio = 0.087
   )
   jmax25 = calc_jmax_arrhenius(jmaxT1 = jmax, T1 = (273.15+data_ww$T),
@@ -619,13 +619,13 @@ get_parameters_kmaxww_alpha <- function(x){
 
 ##### COMPUTE PARAMETERS #####
 #First compute PROFITMAX model to obtain Kmax for CMAX. CGAIN, WUE and PHYDRO models
-K_PROFITMAX <- NULL
-template %>% filter(scheme == "PROFITMAX"#,Species %in% c("Diplotaxis ibicensis")
-                    ) %>%
-  group_split(scheme, dpsi, Species,source) %>%
-  purrr::map_df(get_parameters_kmaxww_alpha)->res
-#
-save(res,file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
+# K_PROFITMAX <- NULL
+# template %>% filter(scheme == "PROFITMAX"#,Species %in% c("Diplotaxis ibicensis")
+#                     ) %>%
+#   group_split(scheme, dpsi, Species,source) %>%
+#   purrr::map_df(get_parameters_kmaxww_alpha)->res
+# #
+# save(res,file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
 # 
 load(file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
 
@@ -636,9 +636,9 @@ K_PROFITMAX <- res %>%
 
 #Compute the other models
 template %>% 
-  filter(!scheme %in% c("PROFITMAX"),scheme %in% c("SOX2"),
-         Species %in% c("Broussonetia papyrifera")
-         #   "Ficus tikoua"
+  filter(!scheme %in% c("PROFITMAX","CMAX"),scheme %in% c("PMAX3")
+         # Species %in% c("Ficus tikoua")
+         #  
          # "Malva subovata"
          #   # "Rosa cymosa",
          # "Broussonetia papyrifera"#,

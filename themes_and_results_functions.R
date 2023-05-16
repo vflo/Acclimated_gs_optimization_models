@@ -285,6 +285,8 @@ get_partition_a <- function(x){
   mod_not <- lmer(A~a_pred + (1|Species),#(a_pred|Species),
                   data = x %>% filter(calibration_type == "Not acclimated"),
                   weights = log(n_dist))
+  # mod_not <- lmeresampler::bootstrap(mod_not, .f = fixef,resample = c(TRUE,FALSE),
+  #                                    type = "case", B = 100)
   conv_1 = performance::check_convergence(mod_not)[1]
   # if(!conv_1){
   #   mod_not <- lmer(A~a_pred + (1|Species),

@@ -14,6 +14,7 @@ library(ggpubr)
 library(scales)
 library(ggalt)
 library(grid)
+# devtools::install_github("cmartin/ggConvexHull")
 library(ggConvexHull)
 library(rphydro)
 library(ggplot2)
@@ -624,7 +625,8 @@ alpha_mod <- lmerTest::lmer(alpha ~ SLA..cm2.g.1.+ KL+
 summary(alpha_mod)
 step(alpha_mod)
 alpha_mod <- lmerTest::lmer(
-  alpha ~ SLA..cm2.g.1. + D + jmax_ww + P50 + 
+  alpha ~ SLA..cm2.g.1. + 
+    D + jmax_ww + P50 + 
     l_b + Height.max..m. + (1 | scheme),
   data = df_param_kmax_alpha_lifeform %>%
     mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
@@ -850,7 +852,9 @@ g_eff6 <- ggplot(x, aes(x = jmax_ww, y = fit)) +
   ylab(expression(alpha))+
   xlab(expression(J["maxWW,25"]~"[ln("*mu*"mol"~m^-2~s^-1*")]"))
 
-alpha_mod_plot <- ggarrange(g_eff4,g_eff6,g_eff1,g_eff7,g_eff11,g_eff10,
+alpha_mod_plot <- ggarrange(g_eff4,g_eff6,g_eff1,
+                            g_eff7,g_eff11,
+                            g_eff10,
           align='hv', labels=c('a', 'b','c','d','e','f'),
           ncol=3, nrow = 2)
 
@@ -864,13 +868,13 @@ ggsave("PLOTS/alpha_model_5.png", plot = alpha_mod_plot, width = 30, height = 20
 alpha_scheme <- lmerTest::lmer(alpha~ scheme + (1|Species)+ (1|source), 
                               data = df_param_kmax_alpha %>% 
                                 mutate(scheme = factor(scheme, 
-                                                       levels = c("SOX",
-                                                                  "SOX2",
-                                                                  "PMAX",
+                                                       levels = c("SOX2",
+                                                                  "SOX",
+                                                                  "PMAX3",
                                                                   "PMAX2",
+                                                                  "PMAX",
                                                                   "CGAIN2",
                                                                   "CGAIN",
-                                                                  "CMAX",
                                                                   "PHYDRO"))), 
                               weights = log(n_dist))
 alpha_scheme_mean <- lmerTest::lmer(alpha~ (1|scheme)+ (1|source)+(1|Species), 
@@ -934,7 +938,7 @@ alpha_mod <- lmerTest::lmer(alpha*jmaxww25 ~ SLA..cm2.g.1.+ KL+
 summary(alpha_mod)
 step(alpha_mod,reduce.random = FALSE)
 alpha_mod <- lmerTest::lmer(
-  alpha * jmaxww25 ~ SLA..cm2.g.1. + KL + P50 + 
+  alpha * jmaxww25 ~ SLA..cm2.g.1. + KL + P50 + #l_b + hv + 
     Height.max..m. + (1 | source) + (1 | scheme),
   # alpha * jmaxww25 ~ SLA..cm2.g.1. + KL + ca_pa + l_b + 
   #   hv + Height.max..m. + (1 | scheme),
@@ -951,23 +955,7 @@ alpha_mod <- lmerTest::lmer(
            Ta = T),
   weights = log(n_dist)
 )
-# alpha_mod <- lmerTest::lmer(
-#   # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + MATbest + P50 + (1 | source) + (1 | scheme),
-#   # alpha ~ SLA..cm2.g.1. + Iabs_growth + jmax_ww + hv + Ta + P50 + (1 | source) + (1 | scheme),
-#   alpha ~ Iabs_growth + jmax_ww + Ta + P50 + Height.max..m. + (1 | source) + (1 | scheme) + (1 | Species),
-#   data = df_param_kmax_alpha %>% 
-#     mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
-#            hv = log(Huber.value*1e4),
-#            lk.scale =log(K.scale),
-#            Height.max..m. = log( Height.max..m.),
-#            l_b = log(b),
-#            l_b_opt = log(b_opt),
-#            l_p50_opt = log(-p50_opt),
-#            D = D*101325/1000,
-#            jmax_ww = log(jmax_ww),
-#            Ta = T),
-#   weights = log(n_dist)
-# )
+
 # anova(alpha_mod,alpha_mod2)
 summary(alpha_mod)
 car::vif(alpha_mod)
@@ -979,7 +967,6 @@ MuMIn::r.squaredGLMM(alpha_mod)
 library(effects)
 closest <- function(x, x0) apply(outer(x, x0, FUN=function(x, x0) abs(x - x0)), 1, which.min)
 
-# 
 eff<-effect("SLA..cm2.g.1.", partial.residuals=T, alpha_mod)
 x.fit <- unlist(eff$x.all)
 trans <- I
@@ -1014,102 +1001,7 @@ g_eff10 <- ggplot(x, aes(x = Height.max..m., y = fit)) +
   ylab(expression(R[dark]~"["*mu*"mol"~m^-2~s^-1*"]"))+
   xlab(expression("Max height [ln(m)]"))
 
-# eff<-effect("Iabs_growth", partial.residuals=T, alpha_mod)
-# # plot(eff)
-# x.fit <- unlist(eff$x.all)
-# trans <- I
-# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, Iabs_growth = eff$x$Iabs_growth)
-# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$Iabs_growth)] + eff$residuals)
-# 
-# g_eff2 <- ggplot(x, aes(x = Iabs_growth, y = fit)) +
-#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
-#   geom_line(linewidth = 1) +
-#   geom_line(aes(y= lower), linetype=2) +
-#   geom_line(aes(y= upper), linetype=2) +
-#   geom_smooth(data = xy, aes(x = trans(x), y = y),
-#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
-#   mytheme3()+
-#   ylab(expression(alpha))+
-#   xlab(expression(I[abs]~"["*mu*"mol"~m^-2~s^-1*"]"))
 
-
-eff<-effect("hv", partial.residuals=T, alpha_mod)
-# plot(eff)
-x.fit <- unlist(eff$x.all)
-trans <- I
-x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, hv = eff$x$hv)
-xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$hv)] + eff$residuals)
-
-g_eff3 <- ggplot(x, aes(x = hv, y = fit)) +
-  geom_point(data = xy, aes(x = x, y = y, shape = df_param_kmax_alpha_lifeform$gym_ang), col = "grey60", size = 2, show.legend = FALSE) +
-  geom_line(linewidth = 1) +
-  geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
-  geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
-  geom_smooth(data = xy, aes(x = trans(x), y = y),
-              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
-  mytheme3()+
-  ylab(expression(R[dark]~"["*mu*"mol"~m^-2~s^-1*"]"))+
-  xlab(expression("Huber value [ln("*cm[sw]^2~m[leaf]^-2*")]"))
-
-# eff<-effect("D", partial.residuals=T, alpha_mod)
-# # plot(eff)
-# x.fit <- unlist(eff$x.all)
-# trans <- I
-# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, D = eff$x$D)
-# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$D)] + eff$residuals)
-# 
-# g_eff4 <- ggplot(x, aes(x = D, y = fit)) +
-#   geom_point(data = xy, aes(x = x, y = y, 
-#                             size = log(df_param_kmax_alpha_lifeform$n_dist)), 
-#              col = "grey60", size = 2) +
-#   geom_line(size = 1) +
-#   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
-#   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
-#   geom_smooth(data = xy, aes(x = trans(x), y = y),
-#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
-#   mytheme3()+
-#   ylab(expression(alpha))+
-#   xlab(expression("VPD [kPa]"))
-
-eff<-effect("ca_pa", partial.residuals=T, alpha_mod)
-# plot(eff)
-x.fit <- unlist(eff$x.all)
-trans <- I
-x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, ca_pa = eff$x$ca_pa)
-xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$ca_pa)] + eff$residuals)
-
-g_eff4 <- ggplot(x, aes(x = ca_pa, y = fit)) +
-  geom_point(data = xy, aes(x = x, y = y,
-                            size = log(df_param_kmax_alpha_lifeform$n_dist)),
-             col = "grey60", size = 2) +
-  geom_line(size = 1) +
-  geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
-  geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
-  geom_smooth(data = xy, aes(x = trans(x), y = y),
-              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
-  mytheme3()+
-  ylab(expression(R[dark]~"["*mu*"mol"~m^-2~s^-1*"]"))+
-  xlab(expression(C[a]~"[Pa]"))
-
-# eff<-effect("Ta", partial.residuals=T, alpha_mod)
-# # plot(eff)
-# x.fit <- unlist(eff$x.all)
-# trans <- I
-# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, Ta = eff$x$Ta)
-# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$Ta)] + eff$residuals)
-# 
-# g_eff8 <- ggplot(x, aes(x = Ta, y = fit)) +
-#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
-#   geom_line(size = 1) +
-#   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
-#   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
-#   geom_smooth(data = xy, aes(x = trans(x), y = y),
-#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
-#   mytheme3()+
-#   ylab(expression(alpha))+
-#   xlab(expression(T[a]~"[ºC]"))
-# 
-# 
 eff<-effect("P50", partial.residuals=T, alpha_mod)
 # plot(eff)
 x.fit <- unlist(eff$x.all)
@@ -1128,23 +1020,6 @@ g_eff7 <- ggplot(x, aes(x = P50, y = fit)) +
   ylab(expression(R[dark]~"["*mu*"mol"~m^-2~s^-1*"]"))+
   xlab(expression(psi[50]~"[MPa]"))
 
-eff<-effect("l_b", partial.residuals=T, alpha_mod)
-# plot(eff)
-x.fit <- unlist(eff$x.all)
-trans <- I
-x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, l_b = eff$x$l_b)
-xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$l_b)] + eff$residuals)
-
-g_eff11 <- ggplot(x, aes(x = l_b, y = fit)) +
-  geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
-  geom_line(size = 1) +
-  geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
-  geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
-  geom_smooth(data = xy, aes(x = trans(x), y = y),
-              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
-  mytheme3()+
-  ylab(expression(R[dark]~"["*mu*"mol"~m^-2~s^-1*"]"))+
-  xlab(expression("ln(b)"))
 
 eff<-effect("KL", partial.residuals=T, alpha_mod)
 # plot(eff)
@@ -1163,28 +1038,7 @@ g_eff5 <- ggplot(x, aes(x = KL, y = fit)) +
   mytheme3()+
   ylab(expression(R[dark]~"["*mu*"mol"~m^-2~s^-1*"]"))+
   xlab(expression(K[L]~"[ln(mol "~m^{-1}~MPa^{-1}~s^{-1}~")]"))
-# 
-# eff<-effect("jmax_ww", partial.residuals=T, alpha_mod)
-# # plot(eff)
-# x.fit <- unlist(eff$x.all)
-# trans <- I
-# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, jmax_ww = eff$x$jmax_ww)
-# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$jmax_ww)] + eff$residuals)
-# 
-# g_eff6 <- ggplot(x, aes(x = jmax_ww, y = fit)) +
-#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
-#   geom_line(linewidth = 1) +
-#   geom_line(aes(y= lower), linetype=2) +
-#   geom_line(aes(y= upper), linetype=2) +
-#   geom_smooth(data = xy, aes(x = trans(x), y = y), 
-#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
-#   mytheme3()+
-#   ylab(expression(alpha))+
-#   xlab(expression(J["maxWW,25"]~"[ln("*mu*"mol"~m^-2~s^-1*")]"))
 
-# alpha_mod_plot <- ggarrange(g_eff4,g_eff1,g_eff10,g_eff3,g_eff5,g_eff11,
-#                             align='hv', labels=c('a', 'b','c','d','e','f'),
-#                             ncol=3, nrow = 2)
 
 alpha_mod_plot <- ggarrange(g_eff1,g_eff10,g_eff5,g_eff7,
                             align='hv', labels=c('a', 'b','c','d'),
@@ -1195,43 +1049,43 @@ ggsave("PLOTS/rdark_model.png", plot = alpha_mod_plot, width = 30, height = 20, 
 
 
 
-
-#### Alpha - scheme ####
-alpha_scheme <- lmerTest::lmer(alpha~ scheme + (1|Species)+ (1|source), 
-                               data = df_param_kmax_alpha %>% 
-                                 mutate(scheme = factor(scheme, 
-                                                        levels = c("SOX",
-                                                                   "SOX2",
-                                                                   "PMAX",
-                                                                   "PMAX2",
-                                                                   "CGAIN2",
-                                                                   "CGAIN",
-                                                                   "CMAX",
-                                                                   "PHYDRO"))), 
-                               weights = log(n_dist))
-alpha_scheme_mean <- lmerTest::lmer(alpha~ (1|scheme)+ (1|source)+(1|Species), 
-                                    data = df_param_kmax_alpha , weights = log(n_dist))
-summary(alpha_scheme)
-model_means <- emmeans(alpha_scheme, "scheme")
-
-model_means_cld <- cld(object = model_means,
-                       adjust = "sidak",
-                       Letters = letters,
-                       alpha = 0.05)
-
-test(model_means, null = alpha_scheme_mean@beta )
-
-ggplot(data = model_means_cld) +
-  geom_pointrange(mapping=aes(scheme, emmean, ymin=emmean - SE, ymax= emmean + SE)) +
-  geom_abline(slope=0,intercept=fixef(alpha_scheme_mean),linetype=2)+
-  geom_text(aes(y = emmean - SE -0.001, x = scheme, label = str_trim(.group)
-  ))+
-  ylab(expression(alpha)) +
-  mytheme3()+
-  xlab("")+
-  coord_flip()
-
-ggsave("PLOTS/alpha_scheme.png", width = 14, height = 10, units = "cm")
+# 
+# #### Alpha - scheme ####
+# alpha_scheme <- lmerTest::lmer(alpha~ scheme + (1|Species)+ (1|source), 
+#                                data = df_param_kmax_alpha %>% 
+#                                  mutate(scheme = factor(scheme, 
+#                                                         levels = c("SOX2",
+#                                                                    "SOX",
+#                                                                    "PMAX3",
+#                                                                    "PMAX2",
+#                                                                    "PMAX",
+#                                                                    "CGAIN2",
+#                                                                    "CGAIN",
+#                                                                    "PHYDRO"))), 
+#                                weights = log(n_dist))
+# alpha_scheme_mean <- lmerTest::lmer(alpha~ (1|scheme)+ (1|source)+(1|Species), 
+#                                     data = df_param_kmax_alpha , weights = log(n_dist))
+# summary(alpha_scheme)
+# model_means <- emmeans(alpha_scheme, "scheme")
+# 
+# model_means_cld <- cld(object = model_means,
+#                        adjust = "sidak",
+#                        Letters = letters,
+#                        alpha = 0.05)
+# 
+# test(model_means, null = alpha_scheme_mean@beta )
+# 
+# ggplot(data = model_means_cld) +
+#   geom_pointrange(mapping=aes(scheme, emmean, ymin=emmean - SE, ymax= emmean + SE)) +
+#   geom_abline(slope=0,intercept=fixef(alpha_scheme_mean),linetype=2)+
+#   geom_text(aes(y = emmean - SE -0.001, x = scheme, label = str_trim(.group)
+#   ))+
+#   ylab(expression(alpha)) +
+#   mytheme3()+
+#   xlab("")+
+#   coord_flip()
+# 
+# ggsave("PLOTS/alpha_scheme.png", width = 14, height = 10, units = "cm")
 
 
 # 
@@ -1266,18 +1120,18 @@ ggsave("PLOTS/alpha_scheme.png", width = 14, height = 10, units = "cm")
 
 
 #### A #####
-# df_a <- df_kmaxww_a %>%
-df_a <- df_kmaxww_a_1_3 %>%
+df_a <- df_kmaxww_a %>%
+# df_a <- df_kmaxww_a_1_3 %>%
   group_by(scheme,Species,source,calibration_type) %>% 
   filter(!is.na(A))  %>% 
   mutate(scheme = factor(scheme, 
-                         levels = c("SOX",
-                                    "SOX2",
-                                    "PMAX",
+                         levels = c("SOX2",
+                                    "SOX",
+                                    "PMAX3",
                                     "PMAX2",
+                                    "PMAX",
                                     "CGAIN2",
                                     "CGAIN",
-                                    "CMAX",
                                     "PHYDRO")),
          calibration_type = as_factor(calibration_type))%>% 
   mutate(diff_a = a_pred - A) %>% 
@@ -1287,6 +1141,30 @@ df_a <- df_kmaxww_a_1_3 %>%
             rmse = Metrics::rmse(A,a_pred),
             beta = lm(A~a_pred)$coefficients[2]) %>% 
   filter(beta> -10)
+
+df_a_1_3 <- df_kmaxww_a_1_3 %>%
+  group_by(scheme,Species,source,calibration_type) %>% 
+  filter(!is.na(A))  %>% 
+  mutate(scheme = factor(scheme, 
+                         levels = c("SOX2",
+                                    "SOX",
+                                    "PMAX3",
+                                    "PMAX2",
+                                    "PMAX",
+                                    "CGAIN2",
+                                    "CGAIN",
+                                    "PHYDRO")),
+         calibration_type = as_factor(calibration_type))%>% 
+  mutate(diff_a = a_pred - A) %>% 
+  summarise(n_dist = n(),
+            r = cor(A, a_pred, use = "pairwise.complete.obs"),
+            bias = mean(diff_a,na.rm = TRUE)/mean(A,na.rm = TRUE),
+            rmse = Metrics::rmse(A,a_pred),
+            beta = lm(A~a_pred)$coefficients[2]) %>% 
+  filter(beta> -10)
+
+df_a <- df_a %>% filter(scheme != "PHYDRO") %>% 
+  bind_rows(df_a_1_3 %>% filter(scheme == "PHYDRO"))
 
 df_a %>% 
   group_by(scheme,calibration_type) %>% 
@@ -1488,7 +1366,7 @@ ggarrange(p1,
 #           ),
 #           common.legend = T,ncol=2, nrow = 1)
 
-ggsave("PLOTS/A_metrics_1_3.png", width = 20, height = 14, units = "cm")
+ggsave("PLOTS/A_metrics_combined.png", width = 20, height = 14, units = "cm")
 
 
 # 
@@ -1598,24 +1476,46 @@ ggsave("PLOTS/A_metrics_1_3.png", width = 20, height = 14, units = "cm")
 #### G ####
 df_g <- df_kmaxww_a %>% 
   group_by(scheme,calibration_type,Species,source) %>% 
-  filter(!is.na(gC))  %>% 
+  filter(!is.na(gC)) %>% 
   mutate(scheme = factor(scheme, 
-                         levels = c("SOX",
-                                    "SOX2",
-                                    "PMAX",
+                         levels = c("SOX2",
+                                    "SOX",
+                                    "PMAX3",
                                     "PMAX2",
+                                    "PMAX",
                                     "CGAIN2",
                                     "CGAIN",
-                                    "CMAX",
-                                    "PHYDRO")))%>% 
-  mutate(calibration_type = as_factor(calibration_type)) %>%
+                                    "PHYDRO")),
+         calibration_type = as_factor(calibration_type)) %>% 
+  mutate(diff_g =  g_pred-gC) %>% 
+  summarise(n_dist = n(),
+            r = cor(gC, g_pred, use = "pairwise.complete.obs"),
+            bias = mean(diff_g,na.rm = TRUE)/mean(gC,na.rm = TRUE),
+            rmse = Metrics::rmse(gC,g_pred),
+            beta = lm(gC~g_pred)$coefficients[2])
+
+df_g_1_3 <- df_kmaxww_a_1_3 %>% 
+  group_by(scheme,calibration_type,Species,source) %>% 
+  filter(!is.na(gC)) %>% 
+  mutate(scheme = factor(scheme, 
+                         levels = c("SOX2",
+                                    "SOX",
+                                    "PMAX3",
+                                    "PMAX2",
+                                    "PMAX",
+                                    "CGAIN2",
+                                    "CGAIN",
+                                    "PHYDRO")),
+         calibration_type = as_factor(calibration_type)) %>% 
   mutate(diff_g =  g_pred-gC) %>% 
   summarise(n_dist = n(),
             r = cor(gC, g_pred, use = "pairwise.complete.obs"),
             bias = mean(diff_g,na.rm = TRUE)/mean(gC,na.rm = TRUE),
             rmse = Metrics::rmse(gC,g_pred),
             beta = lm(gC~g_pred)$coefficients[2]) 
-
+  
+df_g <- df_g %>% filter(scheme != "PHYDRO") %>% 
+  bind_rows(df_g_1_3 %>% filter(scheme == "PHYDRO"))
 
 df_g %>% 
   group_by(scheme,calibration_type) %>% 
@@ -1623,7 +1523,11 @@ df_g %>%
   summarise(r_median = median(r),
             bias_median = median(bias),
             rmse_median = median(rmse),
-            beta_median = median(beta))
+            beta_median = median(beta),
+            r_mean = mean(r),
+            bias_mean = mean(bias),
+            rmse_mean = mean(rmse),
+            beta_mean = mean(beta)) ->foo
 
 r_a <- lmerTest::lmer(r~scheme*calibration_type + (1|source)+ (1|Species), data = df_g, weights = log(n_dist)
 )
@@ -1910,8 +1814,19 @@ ggsave("PLOTS/gs_metrics.png", width = 20, height = 14, units = "cm")
 # STOMATAL NON-STOMATAL PARTITION ----------------------------------------------
 
 
-partition_full <- df_kmaxww_a  %>%
+partition_full <- df_kmaxww_a %>% filter(scheme != "PHYDRO") %>% 
+  bind_rows(df_kmaxww_a_1_3 %>% filter(scheme == "PHYDRO")) %>%
   filter(!is.na(A)) %>% 
+  mutate(scheme = factor(scheme, 
+                         levels = rev(c("SOX2",
+                                        "SOX",
+                                        "PMAX3",
+                                        "PMAX2",
+                                        "PMAX",
+                                        "CGAIN2",
+                                        "CGAIN",
+                                        "PHYDRO"))),
+         calibration_type = as_factor(calibration_type)) %>% 
   # group_by(scheme,species,source,calibration_type) %>% 
   # mutate(n_dist = n())%>% 
   # ungroup() %>% 
@@ -1921,7 +1836,7 @@ partition_full <- df_kmaxww_a  %>%
   pivot_longer(2:5) %>% 
   mutate(Partition = factor(name,
                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
-                            labels = c("Residuals","Species", "Non-stomatal","Stomatal"))) %>%
+                            labels = c("Residuals  ","Species  ", "Non-stomatal  ","Stomatal  "))) %>%
   ggplot()+
   geom_col(aes(x = `Stomatal model`,y=value,fill=Partition))+
   ylab(expression(R^2))+
@@ -1931,7 +1846,18 @@ partition_full <- df_kmaxww_a  %>%
   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
   theme(legend.title = element_blank())
 
-partition_dry <- df_kmaxww_a %>% 
+partition_dry <- df_kmaxww_a %>% filter(scheme != "PHYDRO") %>% 
+  bind_rows(df_kmaxww_a_1_3 %>% filter(scheme == "PHYDRO")) %>% 
+  mutate(scheme = factor(scheme, 
+                         levels = rev(c("SOX2",
+                                        "SOX",
+                                        "PMAX3",
+                                        "PMAX2",
+                                        "PMAX",
+                                        "CGAIN2",
+                                        "CGAIN",
+                                        "PHYDRO"))),
+         calibration_type = as_factor(calibration_type)) %>% 
   group_by(scheme,calibration_type,Species,source) %>% 
   mutate(LWP_q50 = quantile(LWP, 0.5,na.rm = TRUE)) %>%
   filter(!is.na(A),LWP<=LWP_q50) %>% 
@@ -1943,7 +1869,7 @@ partition_dry <- df_kmaxww_a %>%
   pivot_longer(2:5) %>% 
   mutate(Partition = factor(name,
                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
-                            labels = c("Residuals","Species", "Non-stomatal","Stomatal"))) %>% 
+                            labels = c("Residuals  ","Species  ", "Non-stomatal  ","Stomatal  "))) %>% 
   ggplot()+
   geom_col(aes(x = `Stomatal model`,y=value,fill=Partition))+
   ylab(expression(R^2~"dry conditions"))+
@@ -1953,7 +1879,18 @@ partition_dry <- df_kmaxww_a %>%
   theme(legend.title = element_blank())
 
 
-partition_wet <- df_kmaxww_a %>% 
+partition_wet <- df_kmaxww_a %>% filter(scheme != "PHYDRO") %>% 
+  bind_rows(df_kmaxww_a_1_3 %>% filter(scheme == "PHYDRO")) %>% 
+  mutate(scheme = factor(scheme, 
+                         levels = rev(c("SOX2",
+                                    "SOX",
+                                    "PMAX3",
+                                    "PMAX2",
+                                    "PMAX",
+                                    "CGAIN2",
+                                    "CGAIN",
+                                    "PHYDRO"))),
+         calibration_type = as_factor(calibration_type)) %>% 
   group_by(scheme,calibration_type,Species,source) %>% 
   mutate(LWP_q50 = quantile(LWP, 0.5,na.rm = TRUE)) %>%
   filter(!is.na(A),LWP>=LWP_q50) %>% 
@@ -1974,7 +1911,7 @@ partition_wet <- df_kmaxww_a %>%
                            TRUE ~ value)) %>%
   mutate(Partition = factor(name,
                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
-                            labels = c("Residuals","Species", "Non-stomatal","Stomatal"))) %>%
+                            labels = c("Residuals  ","Species  ", "Non-stomatal  ","Stomatal  "))) %>%
   ggplot()+
   geom_col_pattern(aes(x = `Stomatal model`,y=value,fill=Partition,pattern = pattern_1),
                    pattern_color = NA,
@@ -1991,11 +1928,11 @@ partition_wet <- df_kmaxww_a %>%
   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
   theme(legend.title = element_blank())
 
-ggarrange(partition_full, partition_wet,partition_dry,
-          align='hv', labels=c('a', 'b','c'),
-          common.legend = T,ncol=3, nrow = 1)
+ggarrange(partition_full, partition_dry,
+          align='hv', labels=c('a', 'b'),
+          common.legend = T,ncol=2, nrow = 1)
 
-ggsave("PLOTS/partition.png", width = 40, height = 14, units = "cm")
+ggsave("PLOTS/partition.png", width = 32, height = 14, units = "cm")
 
 # 
 # library(ggpattern)
@@ -2201,365 +2138,365 @@ ggsave("PLOTS/partition.png", width = 40, height = 14, units = "cm")
 
 
 
-ggarrange(partition_dry_80,partition_dry_70,partition_dry_60,partition_dry_40,partition_dry_30,partition_dry_20,
-          align='hv', labels=c('a', 'b','c','d','e','f','g'),
-          common.legend = T,ncol=3, nrow = 2)
-
-ggsave("PLOTS/partition_multiple.png", width = 40, height = 24, units = "cm")
-
-
+# ggarrange(partition_dry_80,partition_dry_70,partition_dry_60,partition_dry_40,partition_dry_30,partition_dry_20,
+#           align='hv', labels=c('a', 'b','c','d','e','f','g'),
+#           common.legend = T,ncol=3, nrow = 2)
+# 
+# ggsave("PLOTS/partition_multiple.png", width = 40, height = 24, units = "cm")
 
 
 
 
 
-partition_PMAX <- df_kmaxww_a %>% 
-  filter(scheme == "PMAX") %>% 
-  group_by(calibration_type,Species,source) %>% 
-  mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
-         `30th` = quantile(LWP, 0.3,na.rm = TRUE),
-         `40th` = quantile(LWP, 0.4,na.rm = TRUE),
-         `50th` = quantile(LWP, 0.5,na.rm = TRUE),
-         `60th` = quantile(LWP, 0.6,na.rm = TRUE),
-         `70th` = quantile(LWP, 0.7,na.rm = TRUE),
-         `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
-  ungroup() %>% 
-  pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
-  rename(`Drought quantile`=Drought) %>%
-  group_by(`Drought quantile`) %>%
-  do(get_partition_a_multiple(.)) %>%
-  # mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
-  #                                TRUE ~stomatal_r2),
-  #        species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
-  #                              TRUE ~species_r2)
-  # ) %>%
-  pivot_longer(2:5) %>%
-  mutate(pattern_1 = case_when(value<0~"stripe",
-                               TRUE ~ "none"),
-         value = case_when(value<0~ -1*value,
-                           TRUE ~ value)) %>%
-  mutate(Partition = factor(name,
-                            levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
-                            labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
-         `Drought quantile` = factor(`Drought quantile`,
-                                     levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
-  ggplot()+
-  geom_col(aes(x = `Drought quantile`,y=value,fill=Partition))+
-  # geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
-  #                  pattern_color = NA,
-  #                  pattern_fill = "black",
-  #                  pattern_angle = 45,
-  #                  pattern_density = 0.5,
-  #                  pattern_spacing = 0.025,
-  #                  pattern_key_scale_factor = 1,
-  #                  show.legend = TRUE)+
-  # scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
-  ylab(expression(R^2~"PMAX"))+
-  xlab(psi[s]~" quantile")+
-  mytheme7()+
-  ylim(0,1)+
-  scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
-  theme(legend.title = element_blank())
 
-
-
-partition_PMAX2 <- df_kmaxww_a %>% 
-  filter(scheme == "PMAX2") %>% 
-  group_by(calibration_type,Species,source) %>%
-  mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
-         `30th` = quantile(LWP, 0.3,na.rm = TRUE),
-         `40th` = quantile(LWP, 0.4,na.rm = TRUE),
-         `50th` = quantile(LWP, 0.5,na.rm = TRUE),
-         `60th` = quantile(LWP, 0.6,na.rm = TRUE),
-         `70th` = quantile(LWP, 0.7,na.rm = TRUE),
-         `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
-  ungroup() %>% 
-  pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
-  rename(`Drought quantile`=Drought) %>%
-  group_by(`Drought quantile`) %>%
-  do(get_partition_a_multiple(.)) %>%
-  # mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
-  #                                TRUE ~stomatal_r2),
-  #        species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
-  #                              TRUE ~species_r2)
-  # ) %>%
-  pivot_longer(2:5) %>%
-  mutate(pattern_1 = case_when(value<0~"stripe",
-                               TRUE ~ "none"),
-         value = case_when(value<0~ -1*value,
-                           TRUE ~ value)) %>%
-  mutate(Partition = factor(name,
-                            levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
-                            labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
-         `Drought quantile` = factor(`Drought quantile`,
-                                     levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
-  ggplot()+
-  geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
-                   pattern_color = NA,
-                   pattern_fill = "black",
-                   pattern_angle = 45,
-                   pattern_density = 0.5,
-                   pattern_spacing = 0.025,
-                   pattern_key_scale_factor = 1,
-                   show.legend = FALSE)+
-  scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
-  ylab(expression(R^2~"PMAX2"))+
-  xlab(psi[s]~" quantile")+
-  mytheme7()+
-  ylim(0,1)+
-  scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
-  theme(legend.title = element_blank())
-
-
-partition_SOX <- df_kmaxww_a %>% 
-  filter(scheme == "SOX") %>% 
-  group_by(calibration_type,Species,source) %>% 
-  mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
-         `30th` = quantile(LWP, 0.3,na.rm = TRUE),
-         `40th` = quantile(LWP, 0.4,na.rm = TRUE),
-         `50th` = quantile(LWP, 0.5,na.rm = TRUE),
-         `60th` = quantile(LWP, 0.6,na.rm = TRUE),
-         `70th` = quantile(LWP, 0.7,na.rm = TRUE),
-         `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
-  ungroup() %>% 
-  pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
-  rename(`Drought quantile`=Drought) %>%
-  group_by(`Drought quantile`) %>%
-  do(get_partition_a_multiple(.)) %>%
-  mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
-                                 TRUE ~stomatal_r2),
-         species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
-                               TRUE ~species_r2)
-  ) %>%
-  pivot_longer(2:5) %>%
-  mutate(pattern_1 = case_when(value<0~"stripe",
-                               TRUE ~ "none"),
-         value = case_when(value<0~ -1*value,
-                           TRUE ~ value)) %>%
-  mutate(Partition = factor(name,
-                            levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
-                            labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
-         `Drought quantile` = factor(`Drought quantile`,
-                                     levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
-  ggplot()+
-  geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
-                   pattern_color = NA,
-                   pattern_fill = "black",
-                   pattern_angle = 45,
-                   pattern_density = 0.5,
-                   pattern_spacing = 0.025,
-                   pattern_key_scale_factor = 1,
-                   show.legend = FALSE)+
-  scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
-  ylab(expression(R^2~"SOX"))+
-  xlab(psi[s]~" quantile")+
-  mytheme7()+
-  ylim(0,1)+
-  scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
-  theme(legend.title = element_blank())
-
-
-partition_SOX2 <- df_kmaxww_a %>% 
-  filter(scheme == "SOX2") %>% 
-  group_by(calibration_type,Species,source) %>% 
-  mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
-         `30th` = quantile(LWP, 0.3,na.rm = TRUE),
-         `40th` = quantile(LWP, 0.4,na.rm = TRUE),
-         `50th` = quantile(LWP, 0.5,na.rm = TRUE),
-         `60th` = quantile(LWP, 0.6,na.rm = TRUE),
-         `70th` = quantile(LWP, 0.7,na.rm = TRUE),
-         `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
-  ungroup() %>% 
-  pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
-  rename(`Drought quantile`=Drought) %>%
-  group_by(`Drought quantile`) %>%
-  do(get_partition_a_multiple(.)) %>%
-  mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
-                                 TRUE ~stomatal_r2),
-         species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
-                               TRUE ~species_r2)
-  ) %>%
-  pivot_longer(2:5) %>%
-  mutate(pattern_1 = case_when(value<0~"stripe",
-                               TRUE ~ "none"),
-         value = case_when(value<0~ -1*value,
-                           TRUE ~ value)) %>%
-  mutate(Partition = factor(name,
-                            levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
-                            labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
-         `Drought quantile` = factor(`Drought quantile`,
-                                     levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
-  ggplot()+
-  geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
-                   pattern_color = NA,
-                   pattern_fill = "black",
-                   pattern_angle = 45,
-                   pattern_density = 0.5,
-                   pattern_spacing = 0.025,
-                   pattern_key_scale_factor = 1,
-                   show.legend = FALSE)+
-  scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
-  ylab(expression(R^2~"SOX2"))+
-  xlab(psi[s]~" quantile")+
-  mytheme7()+
-  ylim(0,1)+
-  scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
-  theme(legend.title = element_blank())
-
-
-partition_CGAIN <- df_kmaxww_a %>% 
-  filter(scheme == "CGAIN") %>% 
-  group_by(calibration_type,Species,source) %>% 
-  mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
-         `30th` = quantile(LWP, 0.3,na.rm = TRUE),
-         `40th` = quantile(LWP, 0.4,na.rm = TRUE),
-         `50th` = quantile(LWP, 0.5,na.rm = TRUE),
-         `60th` = quantile(LWP, 0.6,na.rm = TRUE),
-         `70th` = quantile(LWP, 0.7,na.rm = TRUE),
-         `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
-  ungroup() %>% 
-  pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
-  rename(`Drought quantile`=Drought) %>%
-  group_by(`Drought quantile`) %>%
-  do(get_partition_a_multiple(.)) %>%
-  # mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
-  #                                TRUE ~stomatal_r2),
-  #        species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
-  #                              TRUE ~species_r2)
-  # ) %>%
-  pivot_longer(2:5) %>%
-  mutate(pattern_1 = case_when(value<0~"stripe",
-                               TRUE ~ "none"),
-         value = case_when(value<0~ -1*value,
-                           TRUE ~ value)) %>%
-  mutate(Partition = factor(name,
-                            levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
-                            labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
-         `Drought quantile` = factor(`Drought quantile`,
-                                     levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
-  ggplot()+
-  geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
-                   pattern_color = NA,
-                   pattern_fill = "black",
-                   pattern_angle = 45,
-                   pattern_density = 0.5,
-                   pattern_spacing = 0.025,
-                   pattern_key_scale_factor = 1,
-                   show.legend = FALSE)+
-  scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
-  ylab(expression(R^2~"CGAIN"))+
-  xlab(psi[s]~" quantile")+
-  mytheme7()+
-  ylim(0,1)+
-  scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
-  theme(legend.title = element_blank())
-
-partition_PHYDRO <- df_kmaxww_a %>% 
-  filter(scheme == "PHYDRO") %>% 
-  group_by(calibration_type,Species,source) %>%
-  mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
-         `30th` = quantile(LWP, 0.3,na.rm = TRUE),
-         `40th` = quantile(LWP, 0.4,na.rm = TRUE),
-         `50th` = quantile(LWP, 0.5,na.rm = TRUE),
-         `60th` = quantile(LWP, 0.6,na.rm = TRUE),
-         `70th` = quantile(LWP, 0.7,na.rm = TRUE),
-         `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
-  ungroup() %>%
-  pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
-  rename(`Drought quantile`=Drought) %>%
-  group_by(`Drought quantile`) %>%
-  do(get_partition_a_multiple(.)) %>%
-  # mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
-  #                                TRUE ~stomatal_r2),
-  #        species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
-  #                              TRUE ~species_r2)
-  # ) %>%
-  pivot_longer(2:5) %>%
-  mutate(pattern_1 = case_when(value<0~"stripe",
-                               TRUE ~ "none"),
-         value = case_when(value<0~ -1*value,
-                           TRUE ~ value)) %>%
-  mutate(Partition = factor(name,
-                            levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
-                            labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
-         `Drought quantile` = factor(`Drought quantile`,
-                                     levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
-  ggplot()+
-  # geom_col(aes(x = `Drought quantile`,y=value,fill=Partition))+
-  geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
-                   pattern_color = NA,
-                   pattern_fill = "black",
-                   pattern_angle = 45,
-                   pattern_density = 0.5,
-                   pattern_spacing = 0.025,
-                   pattern_key_scale_factor = 1,
-                   show.legend = FALSE)+
-  scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
-  ylab(expression(R^2~"PHYDRO"))+
-  xlab(psi[s]~" quantile")+
-  mytheme7()+
-  ylim(0,1)+
-  scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
-  theme(legend.title = element_blank())
-
-partition_CMAX <- df_kmaxww_a %>% 
-  filter(scheme == "CMAX") %>% 
-  group_by(calibration_type,Species,source) %>% 
-  mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
-         `30th` = quantile(LWP, 0.3,na.rm = TRUE),
-         `40th` = quantile(LWP, 0.4,na.rm = TRUE),
-         `50th` = quantile(LWP, 0.5,na.rm = TRUE),
-         `60th` = quantile(LWP, 0.6,na.rm = TRUE),
-         `70th` = quantile(LWP, 0.7,na.rm = TRUE),
-         `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
-  ungroup() %>% 
-  pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
-  rename(`Drought quantile`=Drought) %>%
-  group_by(`Drought quantile`) %>%
-  do(get_partition_a_multiple(.)) %>%
-  mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
-                                 TRUE ~stomatal_r2),
-         species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
-                               TRUE ~species_r2)
-  ) %>%
-  pivot_longer(2:5) %>%
-  mutate(pattern_1 = case_when(value<0~"stripe",
-                               TRUE ~ "none"),
-         value = case_when(value<0~ -1*value,
-                           TRUE ~ value)) %>%
-  mutate(Partition = factor(name,
-                            levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
-                            labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
-         `Drought quantile` = factor(`Drought quantile`,
-                                     levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
-  ggplot()+
-  geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
-                   pattern_color = NA,
-                   pattern_fill = "black",
-                   pattern_angle = 45,
-                   pattern_density = 0.5,
-                   pattern_spacing = 0.025,
-                   pattern_key_scale_factor = 1,
-                   show.legend = FALSE)+
-  scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
-  ylab(expression(R^2~"CMAX"))+
-  xlab(psi[s]~" quantile")+
-  mytheme7()+
-  ylim(0,1)+
-  scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
-  theme(legend.title = element_blank())
-
-leg <- get_legend(partition_PMAX)
-
-partition_PMAX <- partition_PMAX+ theme(legend.position = "none")
-
-ggarrange(partition_PHYDRO,partition_CMAX,partition_CGAIN,
-          partition_PMAX,partition_PMAX2,partition_SOX,partition_SOX2,leg,
-          align='hv', labels=c('a', 'b','c','d','e','f',"g",""),
-          common.legend = FALSE,ncol=4, nrow = 2)
-
-ggsave("PLOTS/partition_multiple_model.png", width = 40, height = 24, units = "cm")
-
+# 
+# partition_PMAX <- df_kmaxww_a %>% 
+#   filter(scheme == "PMAX") %>% 
+#   group_by(calibration_type,Species,source) %>% 
+#   mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
+#          `30th` = quantile(LWP, 0.3,na.rm = TRUE),
+#          `40th` = quantile(LWP, 0.4,na.rm = TRUE),
+#          `50th` = quantile(LWP, 0.5,na.rm = TRUE),
+#          `60th` = quantile(LWP, 0.6,na.rm = TRUE),
+#          `70th` = quantile(LWP, 0.7,na.rm = TRUE),
+#          `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
+#   ungroup() %>% 
+#   pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
+#   rename(`Drought quantile`=Drought) %>%
+#   group_by(`Drought quantile`) %>%
+#   do(get_partition_a_multiple(.)) %>%
+#   # mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+#   #                                TRUE ~stomatal_r2),
+#   #        species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+#   #                              TRUE ~species_r2)
+#   # ) %>%
+#   pivot_longer(2:5) %>%
+#   mutate(pattern_1 = case_when(value<0~"stripe",
+#                                TRUE ~ "none"),
+#          value = case_when(value<0~ -1*value,
+#                            TRUE ~ value)) %>%
+#   mutate(Partition = factor(name,
+#                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+#                             labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
+#          `Drought quantile` = factor(`Drought quantile`,
+#                                      levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
+#   ggplot()+
+#   geom_col(aes(x = `Drought quantile`,y=value,fill=Partition))+
+#   # geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
+#   #                  pattern_color = NA,
+#   #                  pattern_fill = "black",
+#   #                  pattern_angle = 45,
+#   #                  pattern_density = 0.5,
+#   #                  pattern_spacing = 0.025,
+#   #                  pattern_key_scale_factor = 1,
+#   #                  show.legend = TRUE)+
+#   # scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+#   ylab(expression(R^2~"PMAX"))+
+#   xlab(psi[s]~" quantile")+
+#   mytheme7()+
+#   ylim(0,1)+
+#   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+# 
+# 
+# 
+# partition_PMAX2 <- df_kmaxww_a %>% 
+#   filter(scheme == "PMAX2") %>% 
+#   group_by(calibration_type,Species,source) %>%
+#   mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
+#          `30th` = quantile(LWP, 0.3,na.rm = TRUE),
+#          `40th` = quantile(LWP, 0.4,na.rm = TRUE),
+#          `50th` = quantile(LWP, 0.5,na.rm = TRUE),
+#          `60th` = quantile(LWP, 0.6,na.rm = TRUE),
+#          `70th` = quantile(LWP, 0.7,na.rm = TRUE),
+#          `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
+#   ungroup() %>% 
+#   pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
+#   rename(`Drought quantile`=Drought) %>%
+#   group_by(`Drought quantile`) %>%
+#   do(get_partition_a_multiple(.)) %>%
+#   # mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+#   #                                TRUE ~stomatal_r2),
+#   #        species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+#   #                              TRUE ~species_r2)
+#   # ) %>%
+#   pivot_longer(2:5) %>%
+#   mutate(pattern_1 = case_when(value<0~"stripe",
+#                                TRUE ~ "none"),
+#          value = case_when(value<0~ -1*value,
+#                            TRUE ~ value)) %>%
+#   mutate(Partition = factor(name,
+#                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+#                             labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
+#          `Drought quantile` = factor(`Drought quantile`,
+#                                      levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
+#   ggplot()+
+#   geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
+#                    pattern_color = NA,
+#                    pattern_fill = "black",
+#                    pattern_angle = 45,
+#                    pattern_density = 0.5,
+#                    pattern_spacing = 0.025,
+#                    pattern_key_scale_factor = 1,
+#                    show.legend = FALSE)+
+#   scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+#   ylab(expression(R^2~"PMAX2"))+
+#   xlab(psi[s]~" quantile")+
+#   mytheme7()+
+#   ylim(0,1)+
+#   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+# 
+# 
+# partition_SOX <- df_kmaxww_a %>% 
+#   filter(scheme == "SOX") %>% 
+#   group_by(calibration_type,Species,source) %>% 
+#   mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
+#          `30th` = quantile(LWP, 0.3,na.rm = TRUE),
+#          `40th` = quantile(LWP, 0.4,na.rm = TRUE),
+#          `50th` = quantile(LWP, 0.5,na.rm = TRUE),
+#          `60th` = quantile(LWP, 0.6,na.rm = TRUE),
+#          `70th` = quantile(LWP, 0.7,na.rm = TRUE),
+#          `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
+#   ungroup() %>% 
+#   pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
+#   rename(`Drought quantile`=Drought) %>%
+#   group_by(`Drought quantile`) %>%
+#   do(get_partition_a_multiple(.)) %>%
+#   mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+#                                  TRUE ~stomatal_r2),
+#          species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+#                                TRUE ~species_r2)
+#   ) %>%
+#   pivot_longer(2:5) %>%
+#   mutate(pattern_1 = case_when(value<0~"stripe",
+#                                TRUE ~ "none"),
+#          value = case_when(value<0~ -1*value,
+#                            TRUE ~ value)) %>%
+#   mutate(Partition = factor(name,
+#                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+#                             labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
+#          `Drought quantile` = factor(`Drought quantile`,
+#                                      levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
+#   ggplot()+
+#   geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
+#                    pattern_color = NA,
+#                    pattern_fill = "black",
+#                    pattern_angle = 45,
+#                    pattern_density = 0.5,
+#                    pattern_spacing = 0.025,
+#                    pattern_key_scale_factor = 1,
+#                    show.legend = FALSE)+
+#   scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+#   ylab(expression(R^2~"SOX"))+
+#   xlab(psi[s]~" quantile")+
+#   mytheme7()+
+#   ylim(0,1)+
+#   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+# 
+# 
+# partition_SOX2 <- df_kmaxww_a %>% 
+#   filter(scheme == "SOX2") %>% 
+#   group_by(calibration_type,Species,source) %>% 
+#   mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
+#          `30th` = quantile(LWP, 0.3,na.rm = TRUE),
+#          `40th` = quantile(LWP, 0.4,na.rm = TRUE),
+#          `50th` = quantile(LWP, 0.5,na.rm = TRUE),
+#          `60th` = quantile(LWP, 0.6,na.rm = TRUE),
+#          `70th` = quantile(LWP, 0.7,na.rm = TRUE),
+#          `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
+#   ungroup() %>% 
+#   pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
+#   rename(`Drought quantile`=Drought) %>%
+#   group_by(`Drought quantile`) %>%
+#   do(get_partition_a_multiple(.)) %>%
+#   mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+#                                  TRUE ~stomatal_r2),
+#          species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+#                                TRUE ~species_r2)
+#   ) %>%
+#   pivot_longer(2:5) %>%
+#   mutate(pattern_1 = case_when(value<0~"stripe",
+#                                TRUE ~ "none"),
+#          value = case_when(value<0~ -1*value,
+#                            TRUE ~ value)) %>%
+#   mutate(Partition = factor(name,
+#                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+#                             labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
+#          `Drought quantile` = factor(`Drought quantile`,
+#                                      levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
+#   ggplot()+
+#   geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
+#                    pattern_color = NA,
+#                    pattern_fill = "black",
+#                    pattern_angle = 45,
+#                    pattern_density = 0.5,
+#                    pattern_spacing = 0.025,
+#                    pattern_key_scale_factor = 1,
+#                    show.legend = FALSE)+
+#   scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+#   ylab(expression(R^2~"SOX2"))+
+#   xlab(psi[s]~" quantile")+
+#   mytheme7()+
+#   ylim(0,1)+
+#   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+# 
+# 
+# partition_CGAIN <- df_kmaxww_a %>% 
+#   filter(scheme == "CGAIN") %>% 
+#   group_by(calibration_type,Species,source) %>% 
+#   mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
+#          `30th` = quantile(LWP, 0.3,na.rm = TRUE),
+#          `40th` = quantile(LWP, 0.4,na.rm = TRUE),
+#          `50th` = quantile(LWP, 0.5,na.rm = TRUE),
+#          `60th` = quantile(LWP, 0.6,na.rm = TRUE),
+#          `70th` = quantile(LWP, 0.7,na.rm = TRUE),
+#          `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
+#   ungroup() %>% 
+#   pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
+#   rename(`Drought quantile`=Drought) %>%
+#   group_by(`Drought quantile`) %>%
+#   do(get_partition_a_multiple(.)) %>%
+#   # mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+#   #                                TRUE ~stomatal_r2),
+#   #        species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+#   #                              TRUE ~species_r2)
+#   # ) %>%
+#   pivot_longer(2:5) %>%
+#   mutate(pattern_1 = case_when(value<0~"stripe",
+#                                TRUE ~ "none"),
+#          value = case_when(value<0~ -1*value,
+#                            TRUE ~ value)) %>%
+#   mutate(Partition = factor(name,
+#                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+#                             labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
+#          `Drought quantile` = factor(`Drought quantile`,
+#                                      levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
+#   ggplot()+
+#   geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
+#                    pattern_color = NA,
+#                    pattern_fill = "black",
+#                    pattern_angle = 45,
+#                    pattern_density = 0.5,
+#                    pattern_spacing = 0.025,
+#                    pattern_key_scale_factor = 1,
+#                    show.legend = FALSE)+
+#   scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+#   ylab(expression(R^2~"CGAIN"))+
+#   xlab(psi[s]~" quantile")+
+#   mytheme7()+
+#   ylim(0,1)+
+#   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+# 
+# partition_PHYDRO <- df_kmaxww_a %>% 
+#   filter(scheme == "PHYDRO") %>% 
+#   group_by(calibration_type,Species,source) %>%
+#   mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
+#          `30th` = quantile(LWP, 0.3,na.rm = TRUE),
+#          `40th` = quantile(LWP, 0.4,na.rm = TRUE),
+#          `50th` = quantile(LWP, 0.5,na.rm = TRUE),
+#          `60th` = quantile(LWP, 0.6,na.rm = TRUE),
+#          `70th` = quantile(LWP, 0.7,na.rm = TRUE),
+#          `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
+#   ungroup() %>%
+#   pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
+#   rename(`Drought quantile`=Drought) %>%
+#   group_by(`Drought quantile`) %>%
+#   do(get_partition_a_multiple(.)) %>%
+#   # mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+#   #                                TRUE ~stomatal_r2),
+#   #        species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+#   #                              TRUE ~species_r2)
+#   # ) %>%
+#   pivot_longer(2:5) %>%
+#   mutate(pattern_1 = case_when(value<0~"stripe",
+#                                TRUE ~ "none"),
+#          value = case_when(value<0~ -1*value,
+#                            TRUE ~ value)) %>%
+#   mutate(Partition = factor(name,
+#                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+#                             labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
+#          `Drought quantile` = factor(`Drought quantile`,
+#                                      levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
+#   ggplot()+
+#   # geom_col(aes(x = `Drought quantile`,y=value,fill=Partition))+
+#   geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
+#                    pattern_color = NA,
+#                    pattern_fill = "black",
+#                    pattern_angle = 45,
+#                    pattern_density = 0.5,
+#                    pattern_spacing = 0.025,
+#                    pattern_key_scale_factor = 1,
+#                    show.legend = FALSE)+
+#   scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+#   ylab(expression(R^2~"PHYDRO"))+
+#   xlab(psi[s]~" quantile")+
+#   mytheme7()+
+#   ylim(0,1)+
+#   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+# 
+# partition_CMAX <- df_kmaxww_a %>% 
+#   filter(scheme == "CMAX") %>% 
+#   group_by(calibration_type,Species,source) %>% 
+#   mutate(`20th` = quantile(LWP, 0.2,na.rm = TRUE),
+#          `30th` = quantile(LWP, 0.3,na.rm = TRUE),
+#          `40th` = quantile(LWP, 0.4,na.rm = TRUE),
+#          `50th` = quantile(LWP, 0.5,na.rm = TRUE),
+#          `60th` = quantile(LWP, 0.6,na.rm = TRUE),
+#          `70th` = quantile(LWP, 0.7,na.rm = TRUE),
+#          `80th` = quantile(LWP, 0.8,na.rm = TRUE)) %>%
+#   ungroup() %>% 
+#   pivot_longer(71:77, names_to = 'Drought', values_to = 'value_quantile') %>% 
+#   rename(`Drought quantile`=Drought) %>%
+#   group_by(`Drought quantile`) %>%
+#   do(get_partition_a_multiple(.)) %>%
+#   mutate(stomatal_r2 = case_when(non_stomatal_r2<0~(stomatal_r2+non_stomatal_r2),
+#                                  TRUE ~stomatal_r2),
+#          species_r2= case_when(non_stomatal_r2<0~(species_r2+non_stomatal_r2),
+#                                TRUE ~species_r2)
+#   ) %>%
+#   pivot_longer(2:5) %>%
+#   mutate(pattern_1 = case_when(value<0~"stripe",
+#                                TRUE ~ "none"),
+#          value = case_when(value<0~ -1*value,
+#                            TRUE ~ value)) %>%
+#   mutate(Partition = factor(name,
+#                             levels = c("Residuals","species_r2","non_stomatal_r2","stomatal_r2" ),
+#                             labels = c("Residuals","Species", "Non-stomatal","Stomatal")),
+#          `Drought quantile` = factor(`Drought quantile`,
+#                                      levels = c("80th","70th","60th","50th","40th","30th","20th"))) %>%
+#   ggplot()+
+#   geom_col_pattern(aes(x = `Drought quantile`,y=value,fill=Partition,pattern = pattern_1),
+#                    pattern_color = NA,
+#                    pattern_fill = "black",
+#                    pattern_angle = 45,
+#                    pattern_density = 0.5,
+#                    pattern_spacing = 0.025,
+#                    pattern_key_scale_factor = 1,
+#                    show.legend = FALSE)+
+#   scale_pattern_manual(values = c(stripe = "stripe", none = "none"))+
+#   ylab(expression(R^2~"CMAX"))+
+#   xlab(psi[s]~" quantile")+
+#   mytheme7()+
+#   ylim(0,1)+
+#   scale_fill_manual(values = c("#7DA5BB","#E7934C","#6448AC","#329587"))+
+#   theme(legend.title = element_blank())
+# 
+# leg <- get_legend(partition_PMAX)
+# 
+# partition_PMAX <- partition_PMAX+ theme(legend.position = "none")
+# 
+# ggarrange(partition_PHYDRO,partition_CMAX,partition_CGAIN,
+#           partition_PMAX,partition_PMAX2,partition_SOX,partition_SOX2,leg,
+#           align='hv', labels=c('a', 'b','c','d','e','f',"g",""),
+#           common.legend = FALSE,ncol=4, nrow = 2)
+# 
+# ggsave("PLOTS/partition_multiple_model.png", width = 40, height = 24, units = "cm")
+# 
 
 
 # 
@@ -2914,7 +2851,18 @@ ggsave("PLOTS/partition_multiple_model.png", width = 40, height = 24, units = "c
 
 library(gridExtra)
 library(grid)
-df_a <- df_kmaxww_a %>% 
+df_a <- df_kmaxww_a  %>% filter(scheme != "PHYDRO") %>% 
+  bind_rows(df_kmaxww_a_1_3 %>% filter(scheme == "PHYDRO")) %>%  
+  mutate(scheme = factor(scheme, 
+                         levels = rev(c("SOX2",
+                                        "SOX",
+                                        "PMAX3",
+                                        "PMAX2",
+                                        "PMAX",
+                                        "CGAIN2",
+                                        "CGAIN",
+                                        "PHYDRO"))),
+         calibration_type = as_factor(calibration_type)) %>% 
   group_by(scheme,calibration_type,Species,source) %>% 
   filter(!is.na(A)) %>% 
   mutate(diff_a = A - a_pred) %>% 
@@ -3021,7 +2969,7 @@ df_kmax_alpha %>%
 
 
 
-#### Supplementary row data ####
+#### Supplementary raw data ####
 df_kmaxww_a %>%
   dplyr::filter(scheme == "PMAX", calibration_type == "Calibrated α") %>% 
   dplyr::group_by(Source,Species) %>% 
@@ -3150,7 +3098,18 @@ ggsave("PLOTS/param_distri.png", width = 30, height = 30, units = "cm")
 #### Optimal parameters boxplots ####
 
   
-df_param_kmaxww <- df_kmaxww_a %>% 
+df_param_kmaxww <- df_kmaxww_a  %>% filter(scheme != "PHYDRO") %>% 
+  bind_rows(df_kmaxww_a_1_3 %>% filter(scheme == "PHYDRO")) %>%  
+  mutate(scheme = factor(scheme, 
+                         levels = rev(c("SOX2",
+                                        "SOX",
+                                        "PMAX3",
+                                        "PMAX2",
+                                        "PMAX",
+                                        "CGAIN2",
+                                        "CGAIN",
+                                        "PHYDRO"))),
+         calibration_type = as_factor(calibration_type)) %>% 
     filter(calibration_type == "Calibrated α",
            !is.na(Iabs_growth)) %>% 
     rowwise() %>%
@@ -3168,6 +3127,15 @@ df_param_kmaxww <- df_kmaxww_a %>%
     summarise_all(mean)
 
 df_param_kmax_no_alpha_comp <- df_param_kmax_no_alpha %>% 
+  mutate(scheme = factor(scheme, 
+                         levels = rev(c("SOX2",
+                                        "SOX",
+                                        "PMAX3",
+                                        "PMAX2",
+                                        "PMAX",
+                                        "CGAIN2",
+                                        "CGAIN",
+                                        "PHYDRO")))) %>% 
   filter(!is.na(Iabs_growth)) %>% 
   rowwise() %>% 
   mutate(Ta = mean(T),
@@ -3187,6 +3155,15 @@ df_param_kmax_no_alpha_comp <- df_param_kmax_no_alpha %>%
          b_opt.cal3 = b_opt)
 
 df_param_compar <- df_param_kmax_alpha %>% 
+  mutate(scheme = factor(scheme, 
+                         levels = rev(c("SOX2",
+                                        "SOX",
+                                        "PMAX3",
+                                        "PMAX2",
+                                        "PMAX",
+                                        "CGAIN2",
+                                        "CGAIN",
+                                        "PHYDRO")))) %>% 
   filter(!is.na(Iabs_growth)) %>% 
   rowwise() %>% 
   mutate(Ta = mean(T),
@@ -3399,7 +3376,7 @@ p3 <- df_foo %>%
  
   
 #alpha
-  df_foo <- df_param_compar %>%
+df_foo <- df_param_compar %>%
     pivot_longer(cols = c(alpha.cal1,alpha.cal2), names_to = "cal_type") %>%
     dplyr::select(scheme, value, cal_type,Species) %>%
     rowwise() %>% 
@@ -3561,8 +3538,8 @@ df_param_compar %>%
   ggplot(aes(Species, value, color = name))+
   geom_abline(slope=0,intercept=0,linetype=2)+
   # geom_violin(width = 1,position=position_dodge(.9))+
-  geom_boxplot(width = 0.3,position=position_dodge(.4))+
-  geom_point(aes(Species,P50), shape=3, color="black")+
+  stat_summary(,geom="pointrange",width = 0.3,position=position_dodge(.4))+
+  stat_summary(aes(Species,P50),geom="point",fun = "mean", shape=3, color="black")+
   # # ggpubr::stat_pvalue_manual(stat.test,  label = "{p.adj.signif}",
   # #                             tip.length = 0, hide.ns = TRUE)+
   # ggpubr:: stat_pvalue_manual(stat.test,  label = "{p.adj.signif}", 
@@ -3611,8 +3588,8 @@ df_param_compar %>%
   ggplot(aes(Species, value, color = name))+
   geom_abline(slope=0,intercept=0,linetype=2)+
   # geom_violin(width = 1,position=position_dodge(.9))+
-  geom_boxplot(width = 0.3,position=position_dodge(.4))+
-  geom_point(aes(Species,b), shape=3, color="black")+
+  stat_summary(,geom="pointrange",width = 0.3,position=position_dodge(.4))+
+  stat_summary(aes(Species,b),geom="point",fun = "mean", shape=3, color="black")+
   # # ggpubr::stat_pvalue_manual(stat.test,  label = "{p.adj.signif}",
   # #                             tip.length = 0, hide.ns = TRUE)+
   # ggpubr:: stat_pvalue_manual(stat.test,  label = "{p.adj.signif}", 
@@ -3644,27 +3621,27 @@ df_param_compar %>%
 
 #### Example plots ####
   
-par_plant1 = list(
-    conductivity = 1e-16,
-    psi50 = -1,                   #
-    b=2
-  )
-  
-par_plant2 = list(
-    conductivity = 1e-16,
-    psi50 = -1.5,                   #
-    b=2
-  )
+# par_plant1 = list(
+#     conductivity = 1e-16,
+#     psi50 = -1,                   #
+#     b=2
+#   )
+#   
+# par_plant2 = list(
+#     conductivity = 1e-16,
+#     psi50 = -1.5,                   #
+#     b=2
+#   )
   
   
 
     
-calc_examples <- function(scheme,par_cost){
+calc_examples <- function(scheme,par_cost,par_plant,par_plant_1_3){
   df1 <- tibble(var=seq(-3,0,length.out=20)) %>% 
     mutate(out_hydraulics_1 = purrr::map(var, ~model_numerical(tc = 25, ppfd = 600,
                                                                vpd = 1000, co2 = 400, elv = 0,
                                                                fapar = 0.99, kphio = 0.087, 
-                                                               psi_soil = ., par_plant = par_plant1, rdark = 0.02,
+                                                               psi_soil = ., par_plant = par_plant, rdark = 0.015,
                                                                par_cost = list(alpha=par_cost[[1]]+0.02, gamma = par_cost[[2]]),
                                                                stomatal_model = scheme
                                                                ))) %>% 
@@ -3674,7 +3651,7 @@ calc_examples <- function(scheme,par_cost){
     mutate(out_hydraulics_1 = purrr::map(var, ~model_numerical(tc = 25, ppfd = 600,
                                                                vpd = 1000, co2 = 400, elv = 0,
                                                                fapar = 0.99, kphio = 0.087, 
-                                                               psi_soil = ., par_plant = par_plant1, rdark = 0.02,
+                                                               psi_soil = ., par_plant = par_plant, rdark = 0.015,
                                                                par_cost = list(alpha=par_cost[[1]]-0.02, gamma = par_cost[[2]]),
                                                                stomatal_model = scheme
     ))) %>% 
@@ -3684,7 +3661,7 @@ calc_examples <- function(scheme,par_cost){
     mutate(out_hydraulics_1 = purrr::map(var, ~model_numerical(tc = 25, ppfd = 600,
                                                                vpd = 1000, co2 = 400, elv = 0,
                                                                fapar = 0.99, kphio = 0.087, 
-                                                               psi_soil = ., par_plant = par_plant2, rdark = 0.02,
+                                                               psi_soil = ., par_plant = par_plant_1_3, rdark = 0.015,
                                                                par_cost = list(alpha=par_cost[[1]]+0.02, gamma = par_cost[[2]]),
                                                                stomatal_model = scheme
     ))) %>% 
@@ -3694,7 +3671,7 @@ calc_examples <- function(scheme,par_cost){
     mutate(out_hydraulics_1 = purrr::map(var, ~model_numerical(tc = 25, ppfd = 600,
                                                                vpd = 1000, co2 = 400, elv = 0,
                                                                fapar = 0.99, kphio = 0.087, 
-                                                               psi_soil = ., par_plant = par_plant2, rdark = 0.02,
+                                                               psi_soil = ., par_plant = par_plant_1_3, rdark = 0.015,
                                                                par_cost = list(alpha=par_cost[[1]]-0.02, gamma = par_cost[[2]]),
                                                                stomatal_model = scheme
     ))) %>% 
@@ -3705,15 +3682,32 @@ calc_examples <- function(scheme,par_cost){
 }
   
   
-PMAX <- calc_examples("PROFITMAX", list(0.1,NA))
-PMAX2 <- calc_examples("PROFITMAX2", list(0.1,NA))
-SOX <- calc_examples("SOX", list(0.1,NA))
-SOX2 <- calc_examples("SOX2", list(0.1,4))
-PHYDRO <- calc_examples("PHYDRO", list(0.1,1.2))
+PMAX <- calc_examples("PROFITMAX", list(0.0945,NA),list(conductivity =1e-16,psi50 =-1.58,b=3.12),
+                      list(conductivity =1e-16,psi50 =-1.58/3,b=1))
+PMAX2 <- calc_examples("PROFITMAX2", list(0.0945,NA),list(conductivity =1e-16,psi50 =-1.58,b=3.12),
+                       list(conductivity =1e-16,psi50 =-1.58/3,b=1))
+PMAX3 <- calc_examples("PMAX3", list(0.0945,NA),list(conductivity =1e-16,psi50 =-1.58,b=3.12),
+                       list(conductivity =1e-16,psi50 =-1.58/3,b=1))
+SOX <- calc_examples("SOX", list(0.0945,NA),list(conductivity =1e-16,psi50 =-1.58,b=3.12),
+                     list(conductivity =1e-16,psi50 =-1.58/3,b=1))
+SOX2 <- calc_examples("SOX2", list(0.0945,2),list(conductivity =1e-16,psi50 =-1.58,b=3.12),
+                      list(conductivity =1e-16,psi50 =-1.58/3,b=1))
+PHYDRO <- calc_examples("PHYDRO", list(0.0945,1),list(conductivity =1e-16,psi50 =-1.58,b=3.12),
+                        list(conductivity =1e-16,psi50 =-1.58/3,b=1))
 # CMAX <- calc_examples("CMAX", list(0.1,1.2))
-CGAIN <- calc_examples("CGAIN", list(0.1,7))
+CGAIN <- calc_examples("CGAIN", list(0.0945,5),list(conductivity =1e-16,psi50 =-1.58,b=3.12),
+                       list(conductivity =1e-16,psi50 =-1.58/3,b=1))
   
-DF_example <- bind_rows(PMAX,PMAX2,SOX,SOX2,PHYDRO,CGAIN)  
+DF_example <- bind_rows(PMAX,PMAX2,PMAX3,SOX,SOX2,PHYDRO,CGAIN) %>% 
+  mutate(scheme = factor(stomatal_model, 
+                         levels = rev(c("SOX2",
+                                        "SOX",
+                                        "PMAX3",
+                                        "PMAX2",
+                                        "PMAX",
+                                        "CGAIN2",
+                                        "CGAIN",
+                                        "PHYDRO"))))
 
 DF_example <- DF_example %>% 
   dplyr::select(var, jmax25, vcmax25, gs, a, stomatal_model, alpha_mod, p50_mod) %>% 
@@ -3727,7 +3721,16 @@ DF_example <- DF_example %>%
                            `J["max,25"]~"("*mu*"mol"~m^{-2}~s^{-1}~MPa^{-1}*")"`="jmax25",
                            `V["max,25"]~"("*mu*"mol"~m^{-2}~s^{-1}~MPa^{-1}*")"`="vcmax25"),
          stomatal_model = as.factor(stomatal_model),
-         stomatal_model = fct_recode(stomatal_model, "PMAX" = "PROFITMAX","PMAX2"="PROFITMAX2")) 
+         stomatal_model = fct_recode(stomatal_model, "PMAX" = "PROFITMAX","PMAX2"="PROFITMAX2")) %>% 
+  mutate(stomatal_model = factor(stomatal_model, 
+                         levels = rev(c("SOX2",
+                                        "SOX",
+                                        "PMAX3",
+                                        "PMAX2",
+                                        "PMAX",
+                                        "CGAIN2",
+                                        "CGAIN",
+                                        "PHYDRO"))))
 
 # viscosity_water = calc_viscosity_h2o(25, 101325)
 # density_water = calc_density_h2o(25,101325)

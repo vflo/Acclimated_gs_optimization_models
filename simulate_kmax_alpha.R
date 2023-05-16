@@ -73,7 +73,7 @@ fun_no_accl = function(data, dpsi_calib=T,  k=7,
                        Species_now = species){
 
   data = data %>% 
-    mutate(  patm = calc_patm(0,T),
+    mutate(  patm = calc_patm(0),
              ca_pa = ca*1e-6 * patm,
              Ciest = ca_pa-(A*1e-6)/(gC/patm))
   dpsi_data = dpsi_df %>% filter(Species == Species_now)
@@ -187,7 +187,7 @@ fun_accl = function(data, dpsi_calib=T, inst=F, k=7,
                     Species_now = species){
 
   data = data %>% 
-    mutate(  patm = calc_patm(0,T),
+    mutate(  patm = calc_patm(0),
              ca_pa = ca*1e-6 * patm,
              Ciest = ca_pa-(A*1e-6)/(gC/patm))
   dpsi_data = dpsi_df %>% filter(Species == Species_now)
@@ -364,7 +364,7 @@ get_simulations <- function(x){
   data_ww <- data1 %>% 
     filter(!is.na(gC)) %>% 
     mutate(LWP_q90 = quantile(LWP, 0.8, na.rm = TRUE),
-           patm = calc_patm(0,T),
+           patm = calc_patm(0),
            ca_pa = ca*1e-6 * patm,
            ci = ca_pa-(A*1e-6)/(gC/patm)) %>% 
     filter(LWP >= LWP_q90) 
@@ -372,7 +372,7 @@ get_simulations <- function(x){
   vcmax <- calc_vcmax_no_acclimated_ww(A = data_ww$A,
                                        ci = data_ww$ci,
                                        tc = data_ww$T,
-                                       patm = calc_patm(0,data_ww$T),
+                                       patm = calc_patm(0),
                                        rdark = 0.020
   )
   
@@ -385,7 +385,7 @@ get_simulations <- function(x){
                                      ci = data_ww$ci,
                                      I = data_ww$Iabs_growth,
                                      tc = data_ww$T,
-                                     patm = calc_patm(0,data_ww$T),
+                                     patm = calc_patm(0),
                                      kphio = 0.087
   )
   jmax25 = calc_jmax_arrhenius(jmaxT1 = jmax, T1 = (273.15+data_ww$T),

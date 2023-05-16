@@ -209,7 +209,7 @@ error_fun_kmax_no_alpha = function(x,
   }else{
     
     data = data %>% 
-      mutate(  patm = calc_patm(0,T),
+      mutate(  patm = calc_patm(0),
                ca_pa = ca*1e-6 * patm,
                Ciest = ca_pa-(A*1e-6)/(gC/patm))
     
@@ -287,7 +287,7 @@ error_fun_kmax_no_alpha_gamma = function(x,
   }else{
     
     data = data %>% 
-      mutate(  patm = calc_patm(0,T),
+      mutate(  patm = calc_patm(0),
                ca_pa = ca*1e-6 * patm,
                Ciest = ca_pa-(A*1e-6)/(gC/patm))
     
@@ -345,7 +345,7 @@ error_fun_kmax_no_alpha_gamma = function(x,
 }
 
 par_scheme_gamma <- list("PHYDRO","CGAIN", "CMAX", "SOX2")
-par_scheme_no_gamma <- list("PROFITMAX2","SOX","PROFITMAX")
+par_scheme_no_gamma <- list("PROFITMAX2","SOX","PROFITMAX","PMAX3")
 
 ##### PARAMETERIZATION #####
 get_parameters_kmax_no_alpha <- function(x){
@@ -361,7 +361,7 @@ get_parameters_kmax_no_alpha <- function(x){
     data_ww <- data1 %>% 
       filter(!is.na(gC)) %>% 
       mutate(LWP_q90 = quantile(LWP, 0.8, na.rm = TRUE),
-             patm = calc_patm(0,T),
+             patm = calc_patm(0),
              ca_pa = ca*1e-6 * patm,
              ci = ca_pa-(A*1e-6)/(gC/patm)) %>% 
       filter(LWP >= LWP_q90) 
@@ -369,7 +369,7 @@ get_parameters_kmax_no_alpha <- function(x){
     vcmax <- calc_vcmax_no_acclimated_ww(A = data_ww$A,
                                          ci = data_ww$ci,
                                          tc = data_ww$T,
-                                         patm = calc_patm(0,data_ww$T),
+                                         patm = calc_patm(0),
                                          rdark = 0.0150
     )
     
@@ -382,7 +382,7 @@ get_parameters_kmax_no_alpha <- function(x){
                                        ci = data_ww$ci,
                                        I = data_ww$Iabs_growth,
                                        tc = data_ww$T,
-                                       patm = calc_patm(0,data_ww$T),
+                                       patm = calc_patm(0),
                                        kphio = 0.087
     )
     jmax25 = calc_jmax_arrhenius(jmaxT1 = jmax, T1 = (273.15+data_ww$T),
@@ -465,7 +465,7 @@ get_parameters_kmax_no_alpha <- function(x){
 
 ##### CALIBRATE PARAMETERS #####
 template %>% 
-  filter(scheme %in% c("CMAX")#scheme %in% c("CGAIN2") #scheme == "CGAIN",Species == "Diplotaxis ibicensis"
+  filter(scheme %in% c("PMAX3") #scheme == "CGAIN",Species == "Diplotaxis ibicensis"
   #        Species %in% c( "Diplotaxis ibicensis",
   #                        'Helianthus annuus',
   #                        "Malva subovata"

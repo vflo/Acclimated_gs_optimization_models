@@ -203,7 +203,7 @@ error_fun_kmax_alpha = function(x,
   }else{
     
     data = data %>% 
-      mutate(patm = calc_patm(0,T),
+      mutate(patm = calc_patm(0),
              ca_pa = ca*1e-6 * patm,
              Ciest = ca_pa-(A*1e-6)/(gC/patm))
 
@@ -320,7 +320,7 @@ error_fun_kmax_alpha_gamma = function(x,
   }else{
     
     data = data %>% 
-      mutate(  patm = calc_patm(0,T),
+      mutate(  patm = calc_patm(0),
                ca_pa = ca*1e-6 * patm,
                Ciest = ca_pa-(A*1e-6)/(gC/patm))
 
@@ -423,7 +423,7 @@ error_fun_kmax_alpha_gamma = function(x,
 
 
 par_scheme_gamma <- list("PHYDRO","CGAIN", "CMAX", "SOX2")
-par_scheme_no_gamma <- list("PROFITMAX2","SOX","PROFITMAX")
+par_scheme_no_gamma <- list("PROFITMAX2","SOX","PROFITMAX","PMAX3")
 
 ##### PARAMETERIZATION #####
 get_parameters_kmax_alpha <- function(x){
@@ -505,7 +505,7 @@ get_parameters_kmax_alpha <- function(x){
 ##### CALIBRATE PARAMETERS #####
 
 template %>% 
-  # filter(scheme %in% c("CMAX")
+  filter(scheme %in% c("PMAX3")
   # #        # Species %in% c(
   # #        #   # "Rosa cymosa",
   # #        #   # "Broussonetia papyrifera",
@@ -517,7 +517,7 @@ template %>%
   # #        #   # "Pinus sylvestris",
   # #        #   # "Populus tremula"
   # #        # )
-         # ) %>%
+         ) %>%
   # slice(32:39) %>% 
   # filter(scheme %in% c("CGAIN")) %>%
   # filter(Species == "Quercus ilex", source == "Epron and Dreyer (1990)") %>%

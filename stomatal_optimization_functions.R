@@ -32,6 +32,19 @@ fn_profit <- function(par, psi_soil, par_cost, e_crit, p_crit, par_photosynth,
     out = exp(a - out_e - cost) #exp is used to optimize only in the positive space
   }
   
+  ## PROFITMAX3
+  if(stomatal_model == "PMAX3"){
+    K = scale_conductivity(par_plant$conductivity, par_env)  #mol m-2 (ground) s-1 MPa-1
+    g = e_crit/(1.6*(par_env$vpd/par_env$patm)) #mol m-2 (ground) s-1
+    c_a = calc_assimilation_limiting(vcmax, jmax, g, par_photosynth) #calculate maximum assimilation at e_crit
+    amax =  c_a$a
+    cost = (par_cost$alpha*jmax25) #umolco2 umolh2o m-2 s-1
+    e_e_crit = -integral_P_e_ecrit(dpsi, psi_soil, par_plant$psi50,par_plant$b) #Calculate e over e_crit
+    if(is.na(e_e_crit)){e_e_crit = 1}
+    out_e = amax * e_e_crit
+    out = exp(a - out_e - cost) #exp is used to optimize only in the positive space
+  }
+  
   # # LEAST_COST
   # if(stomatal_model == "LEAST_COST"){
   #   out = exp((a)/(par_cost$gamma*e*1e3+vcmax)-(par_cost$alpha*jmax25)) #umolco2 umolh2o-1 m-2 s-1
@@ -59,33 +72,33 @@ fn_profit <- function(par, psi_soil, par_cost, e_crit, p_crit, par_photosynth,
   # CMAX
   if(stomatal_model == "CMAX"){
     bb = 0
-    out <- exp(a-(1/2*par_cost$gamma*psi_leaf^2)-bb*abs(psi_leaf)-par_cost$alpha*jmax25)
+    # out <- exp(a-(1/2*par_cost$gamma*psi_leaf^2)-bb*abs(psi_leaf)-par_cost$alpha*jmax25)
     # foo <- pracma::grad(f=A_grad,x0=c(psi_leaf,jmax25),
     #                    heps = .Machine$double.eps^(1/3),
     #                    psi_soil, par_cost, par_plant, par_env, par_photosynth)
     # dpsi_grad <- foo[1]
     # jmax_grad <- foo[2]
-    
-    # dpsi_grad <- (pracma::grad(f=A_grad_dpsi,x0=c(dpsi),
-    #               heps = .Machine$double.eps^(1/3),
-    #               jmax,psi_soil, par_cost, par_plant,
-    #               par_env, par_photosynth))- par_cost$gamma*abs(psi_leaf) - bb
-    # jmax_grad <- (pracma::grad(f=A_grad_jmax,x0=c(jmax25),
-    #               heps = .Machine$double.eps^(1/3),
-    #               dpsi,psi_soil, par_cost, par_plant,
-    #               par_env, par_photosynth) )- par_cost$alpha
+
+    dpsi_grad <- (pracma::grad(f=A_grad_dpsi,x0=c(dpsi),
+                  heps = .Machine$double.eps^(1/3),
+                  jmax,psi_soil, par_cost, par_plant,
+                  par_env, par_photosynth)) - par_cost$gamma*abs(psi_leaf)
+    jmax_grad <- (pracma::grad(f=A_grad_jmax,x0=c(jmax25),
+                  heps = .Machine$double.eps^(1/3),
+                  dpsi,psi_soil, par_cost, par_plant,
+                  par_env, par_photosynth)) - par_cost$alpha
     # dpsi_dp = dpsi+0.00001
     # gs_dp = calc_gs_phydro(dpsi_dp, psi_soil, par_plant, par_env)+1e-270   # gs in mol/m2ground/s (include residual gs to avoid A calculation error)
     # a_dp = calc_assim_light_limited(gs_dp, jmax, par_photosynth)$a
     # dpsi_grad = (a_dp-a)/0.00001 - par_cost$gamma*abs(psi_leaf) - bb
-    # 
+    #
     # jmax_dp = jmax + 0.00001
     # # gs_dp = calc_gs_phydro(dpsi, psi_soil, par_plant, par_env)+1e-270   # gs in mol/m2ground/s (include residual gs to avoid A calculation error)
     # a_dp = calc_assim_light_limited(gs, jmax_dp, par_photosynth)$a
     # jmax_grad = (a_dp-a)/0.00001 - par_cost$alpha
 
-    # out <- abs(jmax_grad) * abs(dpsi_grad)
-    # out <- -out
+    out <- abs(jmax_grad) + abs(dpsi_grad)
+    out <- -out
     # print(paste("dpsi:",dpsi,'jmax25:',jmax25,"dpsi_grad:",abs(dpsi_grad),"jmax_grad:",abs(jmax_grad),'out:',out))
   }
 
@@ -144,6 +157,18 @@ fn_profit_inst_schemes <- function(par, jmax, vcmax, psi_soil, e_crit, p_crit, p
     e_e_crit = -integral_P_e_ecrit(dpsi, psi_soil, par_plant$psi50,par_plant$b)
     if(is.na(e_e_crit)){e_e_crit = 1} #avoid errors when e is close to e_crit
     profit = exp(A*(1-e_e_crit))
+  }
+  
+  
+  ## PROFITMAX3
+  if(stomatal_model == "PMAX3"){
+    K = scale_conductivity(par_plant$conductivity, par_env) #mol m-2 (ground) s-1 MPa-1
+    g = e_crit/(1.6*(par_env$vpd/par_env$patm)) #mol m-2 (ground) s-1
+    c_a = calc_assimilation_limiting(vcmax, jmax, g, par_photosynth)
+    amax =c_a$a
+    e_e_crit = -integral_P_e_ecrit(dpsi, psi_soil, par_plant$psi50,par_plant$b)
+    if(is.na(e_e_crit)){e_e_crit = 1} #avoid errors when e is close to e_crit
+    profit = exp(A-amax*e_e_crit)
   }
   
   # ## LEAST_COST 
@@ -244,6 +269,17 @@ fn_profit_schemes_cost_calc <- function(par, psi_soil, par_cost, e_crit, p_crit,
     e_e_crit = -integral_P_e_ecrit(dpsi, psi_soil, par_plant$psi50,par_plant$b) #Calculate e over e_crit
     if(is.na(e_e_crit)){e_e_crit = 1}
     out = tibble(jmax25_cost = par_cost$alpha * jmax25, h_cost = a * e_e_crit)
+  }
+  
+  ## PROFITMAX3
+  if(stomatal_model == "PMAX3"){
+    K = scale_conductivity(par_plant$conductivity, par_env)  #mol m-2 (ground) s-1 MPa-1
+    g = e_crit/(1.6*(par_env$vpd/par_env$patm)) #mol m-2 (ground) s-1
+    c_a = calc_assimilation_limiting(vcmax, jmax, g, par_photosynth)
+    amax = c_a$a
+    e_e_crit = -integral_P_e_ecrit(dpsi, psi_soil, par_plant$psi50,par_plant$b) #Calculate e over e_crit
+    if(is.na(e_e_crit)){e_e_crit = 1}
+    out = tibble(jmax25_cost = par_cost$alpha * jmax25, h_cost = amax * e_e_crit)
   }
   
   ## CGAIN
@@ -398,11 +434,11 @@ optimise_shortterm_schemes <- function(fn_profit_inst, jmax, vcmax, psi_soil, e_
 model_numerical <- function(tc, ppfd, vpd, co2, elv, fapar, kphio, psi_soil, 
                             rdark, par_plant, par_cost, stomatal_model){
   # 1. input preparation
-  patm = rpmodel::calc_patm(elv) 
+  patm = calc_patm(elv) 
   par_photosynth <- list(
-    kmm       = rpmodel::calc_kmm(tc, patm),
-    gammastar = rpmodel::calc_gammastar(tc, patm),
-    phi0      = kphio * rpmodel::calc_ftemp_kphio(tc),
+    kmm       = calc_kmm(tc, patm),
+    gammastar = calc_gammastar(tc, patm),
+    phi0      = kphio * calc_ftemp_kphio(tc),
     Iabs      = ppfd * fapar,
     ca        = co2 * patm * 1e-6,  # Convert to partial pressure
     patm      = patm,
@@ -410,9 +446,9 @@ model_numerical <- function(tc, ppfd, vpd, co2, elv, fapar, kphio, psi_soil,
   )
   
   par_env = list(
-    viscosity_water = rpmodel::calc_viscosity_h2o(tc, patm),  # Needs to be imported from rpmodel.R
-    visco_star      = rpmodel::calc_viscosity_h2o(tc, patm)/rpmodel::calc_viscosity_h2o(25, patm),
-    density_water   = rpmodel::calc_density_h2o(tc, patm),  # Needs to be imported from rpmodel.R
+    viscosity_water = calc_viscosity_h2o(tc, patm),  # Needs to be imported from rpmodel.R
+    visco_star      = calc_viscosity_h2o(tc, patm)/calc_viscosity_h2o(25, patm),
+    density_water   = calc_density_h2o(tc, patm),  # Needs to be imported from rpmodel.R
     patm            = patm,
     tc              = tc,
     vpd             = vpd
@@ -532,19 +568,19 @@ model_numerical_instantaneous <- function(vcmax25, jmax25, tc, ppfd, vpd, co2, e
                                           par_cost, stomatal_model){
   
   # 1. input preparation
-  patm = rpmodel::calc_patm(elv)
+  patm = calc_patm(elv)
   par_photosynth <- list(
-    kmm       = rpmodel::calc_kmm(tc, patm),
-    gammastar = rpmodel::calc_gammastar(tc, patm),
-    phi0      = kphio * rpmodel::calc_ftemp_kphio(tc),
+    kmm       = calc_kmm(tc, patm),
+    gammastar = calc_gammastar(tc, patm),
+    phi0      = kphio * calc_ftemp_kphio(tc),
     Iabs      = ppfd * fapar,
     ca        = co2 * patm * 1e-6,  # Convert to partial pressure
     patm      = patm,
     delta     = rdark
   )
   par_env = list(
-    viscosity_water = rpmodel::calc_viscosity_h2o(tc, patm),  # Needs to be imported from rpmodel.R
-    density_water   = rpmodel::calc_density_h2o(tc, patm),  # Needs to be imported from rpmodel.R
+    viscosity_water = calc_viscosity_h2o(tc, patm),  # Needs to be imported from rpmodel.R
+    density_water   = calc_density_h2o(tc, patm),  # Needs to be imported from rpmodel.R
     patm            = patm,
     tc              = tc,
     vpd             = vpd
@@ -616,11 +652,11 @@ A_grad <- function(u, psi_soil, par_cost, par_plant, par_env, par_photosynth){
   gs = calc_gs_phydro(dpsi, psi_soil, par_plant, par_env)+1e-270   # gs in mol/m2ground/s (include residual gs to avoid A calculation error)
   jmax = calc_jmax_arrhenius(jmaxT1 = y, T1 = 298.15, T2 = (par_env$tc + 273.15))
   a = calc_assim_light_limited(gs, jmax, par_photosynth)$a
-  # b = 1 # as for Sabot et al. 2022
-  # C = 0
-  # gamma = par_cost$gamma
-  # alpha = par_cost$alpha
-  a
+  b = 1 # as for Sabot et al. 2022
+  C = 0
+  gamma = par_cost$gamma
+  alpha = par_cost$alpha
+  a-1/2*gamma*x^2-alpha*y
 }
 
 A_grad_dpsi <- function(u, jmax, psi_soil, par_cost, par_plant, par_env, par_photosynth){

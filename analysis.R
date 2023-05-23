@@ -544,8 +544,65 @@ df_param_kmax_no_alpha <- df_kmax_alpha %>%
 
 
 #### Alpha multivariate analysis ####
-
+# Customize upper panel
+# upper.panel<-function(x, y){
+#   points(x,y, pch=19, col=c("red", "green3", "blue")[iris$Species])
+#   r <- round(cor(x, y), digits=2)
+#   txt <- paste0("R = ", r)
+#   usr <- par("usr"); on.exit(par(usr))
+#   par(usr = c(0, 1, 0, 1))
+#   text(0.5, 0.9, txt)
+# }
+# pairs(df_param_kmax_alpha %>%
+#         mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
+#                hv = Huber.value*1e4,
+#                lk.scale =log(K.scale),
+#                Height.max..m. = log(Height.max..m.),
+#                l_b = log(b),
+#                l_b_opt = log(b_opt),
+#                l_p50_opt = log(-p50_opt),
+#                D = D*101325/1000,
+#                jmax_ww = log(jmaxww25),
+#                Ta = T) %>%
+#         ungroup() %>% 
+#         dplyr::select(#alpha,SLA..cm2.g.1.,jmax_ww, KL,ca_pa,
+#           Ta,
+#           Iabs_growth,D #, l_b , lk.scale,
+#           # P50,
+#           # hv, #l_b_opt, l_p50_opt,
+#           # Height.max..m.
+#         ) %>% 
+#         as.data.frame(), lower.panel = NULL, 
+#       upper.panel = upper.panel)
 library(psych)
+pairs.panels(df_param_kmax_alpha %>%
+               mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
+                      hv = Huber.value*1e4,
+                      lk.scale =log(K.scale),
+                      Height.max..m. = log(Height.max..m.),
+                      l_b = log(b),
+                      l_b_opt = log(b_opt),
+                      l_p50_opt = log(-p50_opt),
+                      D = D*101325/1000,
+                      jmax_ww = log(jmaxww25),
+                      Ta = T) %>%
+               ungroup() %>% 
+        dplyr::select(#alpha,SLA..cm2.g.1.,jmax_ww, KL,ca_pa,
+                      Ta,
+                      Iabs_growth,D , l_b ,# lk.scale,
+                      P50,
+                      # hv, #l_b_opt, l_p50_opt,
+                      # Height.max..m.
+                      ) %>% 
+          rename(`Tair` = Ta,
+                 Iabs = Iabs_growth,
+                 VPD = D) %>% 
+          as.data.frame(),
+        ellipses = FALSE,
+        hist.col = "grey40",
+        smooth = FALSE
+        )
+
 # pairs.panels(df_param_kmax_alpha %>%
 #                mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
 #                       # hv = Huber.value*1e4,
@@ -555,56 +612,40 @@ library(psych)
 #                       l_b_opt = log(b_opt),
 #                       l_p50_opt = log(-p50_opt),
 #                       D = D*101325/1000,
-#                       jmax_ww = log(jmax_ww),
-#                       Ta = T) %>% 
-#         dplyr::select(alpha,SLA..cm2.g.1.,jmax_ww, KL,ca,Ta,
-#                       Iabs_growth,D, l_b , lk.scale,P50,
-#                       hv, l_b_opt, l_p50_opt,
-#                       Height.max..m.))
-
-pairs.panels(df_param_kmax_alpha %>%
-               mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
-                      # hv = Huber.value*1e4,
-                      lk.scale =log(K.scale),
-                      Height.max..m. = log(Height.max..m.),
-                      l_b = log(b),
-                      l_b_opt = log(b_opt),
-                      l_p50_opt = log(-p50_opt),
-                      D = D*101325/1000,
-                      jmax_ww = log(jmaxww25),
-                      # Ta = T
-                      ) %>%
-               ungroup() %>% 
-               filter(scheme=="PMAX") %>%
-               dplyr::select(#alpha,
-                      # SLA..cm2.g.1.,
-                      # jmax_ww,
-                      # KL,
-                      # ca_pa,
-                      # T,
-                      # Iabs_growth,
-                      # D,
-                      alpha,
-                      l_b ,
-                      P50,
-                      # lk.scale,P50,
-                      # hv, 
-                      l_b_opt, l_p50_opt,
-                      Height.max..m.
-                      ))
+#                       jmax_ww = log(jmaxww25),
+#                       # Ta = T
+#                       ) %>%
+#                ungroup() %>% 
+#                filter(scheme=="PMAX") %>%
+#                dplyr::select(#alpha,
+#                       # SLA..cm2.g.1.,
+#                       # jmax_ww,
+#                       # KL,
+#                       # ca_pa,
+#                       # T,
+#                       # Iabs_growth,
+#                       # D,
+#                       alpha,
+#                       l_b ,
+#                       P50,
+#                       # lk.scale,P50,
+#                       # hv, 
+#                       l_b_opt, l_p50_opt,
+#                       Height.max..m.
+#                       ))
 ## FINAL alpha-traits ANALYSIS ##
 #l_b and P50 are moderately-strongly correlated (we use only P50)
 # df_param_kmax_alpha[is.na(df_param_kmax_alpha$lifeform),"lifeform"] <- "Evergreen needleleaf gymnosperm"
 # df_param_kmax_alpha[is.na(df_param_kmax_alpha$lifeform_comp),"lifeform_comp"] <- "Evergreen"
 df_param_kmax_alpha_lifeform <- df_param_kmax_alpha %>%left_join(lifeform)
 alpha_mod <- lmerTest::lmer(alpha ~ SLA..cm2.g.1.+ KL+
-                              # Iabs_growth +
-                              D +
+                              Iabs_growth +
+                              # D +
                               jmax_ww +# p50_opt + l_b_opt +
                               # Ta +
                               ca_pa+ 
                               P50+  
-                              l_b+
+                              # l_b+
                               hv+
                               Height.max..m.+
                               # (1|source)+
@@ -625,9 +666,13 @@ alpha_mod <- lmerTest::lmer(alpha ~ SLA..cm2.g.1.+ KL+
 summary(alpha_mod)
 step(alpha_mod)
 alpha_mod <- lmerTest::lmer(
-  alpha ~ SLA..cm2.g.1. + 
-    D + jmax_ww + P50 + 
-    l_b + Height.max..m. + (1 | scheme),
+  alpha ~ #SLA..cm2.g.1. + 
+    # D + 
+    Iabs_growth +
+    jmax_ww + 
+    # P50 + 
+    # l_b + 
+    Height.max..m. + (1 | scheme),
   data = df_param_kmax_alpha_lifeform %>%
     mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
            hv = log(Huber.value*1e4),
@@ -670,22 +715,23 @@ library(effects)
 closest <- function(x, x0) apply(outer(x, x0, FUN=function(x, x0) abs(x - x0)), 1, which.min)
 
 # 
-eff<-effect("SLA..cm2.g.1.", partial.residuals=T, alpha_mod)
-x.fit <- unlist(eff$x.all)
-trans <- I
-x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, SLA..cm2.g.1. = eff$x$SLA..cm2.g.1.)
-xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$SLA..cm2.g.1.)] + eff$residuals)
-
-g_eff1 <- ggplot(x, aes(x = SLA..cm2.g.1., y = fit)) +
-  geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
-  geom_line(size = 1) +
-  geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
-  geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
-  geom_smooth(data = xy, aes(x = trans(x), y = y),
-              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
-  mytheme3()+
-  ylab(expression(alpha))+
-  xlab(expression("SLA  [cm"^2~"g"^-1*"]"))
+# eff<-effect("SLA..cm2.g.1.", partial.residuals=T, alpha_mod)
+# x.fit <- unlist(eff$x.all)
+# trans <- I
+# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, SLA..cm2.g.1. = eff$x$SLA..cm2.g.1.)
+# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$SLA..cm2.g.1.)] + eff$residuals)
+# 
+# g_eff1 <- ggplot(x, aes(x = SLA..cm2.g.1., y = fit)) +
+#   geom_point(data = xy, aes(x = x, y = y, size = alpha_mod@frame$`(weights)`), 
+#              col = "grey60", shape = 1, show.legend = FALSE) +
+#   geom_line(size = 1) +
+#   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+#   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+#   # geom_smooth(data = xy, aes(x = trans(x), y = y),
+#   #             method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+#   mytheme3()+
+#   ylab(expression(alpha))+
+#   xlab(expression("SLA  [cm"^2~"g"^-1*"]"))
 
 eff<-effect("Height.max..m.", partial.residuals=T, alpha_mod)
 x.fit <- unlist(eff$x.all)
@@ -694,33 +740,35 @@ x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, Height.max.
 xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$Height.max..m.)] + eff$residuals)
 
 g_eff10 <- ggplot(x, aes(x = Height.max..m., y = fit)) +
-  geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+  geom_point(data = xy, aes(x = x, y = y, size = alpha_mod@frame$`(weights)`), 
+             col = "grey60", shape = 1, show.legend = FALSE) +
   geom_line(linewidth = 1) +
   geom_line(aes(y= lower), linetype=2) +
   geom_line(aes(y= upper), linetype=2) +
-  geom_smooth(data = xy, aes(x = trans(x), y = y),
-              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+  # geom_smooth(data = xy, aes(x = trans(x), y = y),
+  #             method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
   mytheme3()+
   ylab(expression(alpha))+
-  xlab(expression("Max height [ln(m)]"))
+  xlab(expression("Max height ["*log[e]*"(m)]"))
 
-# eff<-effect("Iabs_growth", partial.residuals=T, alpha_mod)
-# # plot(eff)
-# x.fit <- unlist(eff$x.all)
-# trans <- I
-# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, Iabs_growth = eff$x$Iabs_growth)
-# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$Iabs_growth)] + eff$residuals)
-# 
-# g_eff2 <- ggplot(x, aes(x = Iabs_growth, y = fit)) +
-#   geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
-#   geom_line(linewidth = 1) +
-#   geom_line(aes(y= lower), linetype=2) +
-#   geom_line(aes(y= upper), linetype=2) +
-#   geom_smooth(data = xy, aes(x = trans(x), y = y),
-#               method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
-#   mytheme3()+
-#   ylab(expression(alpha))+
-#   xlab(expression(I[abs]~"["*mu*"mol"~m^-2~s^-1*"]"))
+eff<-effect("Iabs_growth", partial.residuals=T, alpha_mod)
+# plot(eff)
+x.fit <- unlist(eff$x.all)
+trans <- I
+x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, Iabs_growth = eff$x$Iabs_growth)
+xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$Iabs_growth)] + eff$residuals)
+
+g_eff2 <- ggplot(x, aes(x = Iabs_growth, y = fit)) +
+  geom_point(data = xy, aes(x = x, y = y, size = alpha_mod@frame$`(weights)`), 
+             col = "grey60", shape = 1, show.legend = FALSE) +
+  geom_line(linewidth = 1) +
+  geom_line(aes(y= lower), linetype=2) +
+  geom_line(aes(y= upper), linetype=2) +
+  # geom_smooth(data = xy, aes(x = trans(x), y = y),
+  #             method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+  mytheme3()+
+  ylab(expression(alpha))+
+  xlab(expression(I[abs]~"["*mu*"mol"~m^-2~s^-1*"]"))
 
 
 # eff<-effect("hv", partial.residuals=T, alpha_mod)
@@ -740,26 +788,25 @@ g_eff10 <- ggplot(x, aes(x = Height.max..m., y = fit)) +
 #   mytheme3()+
 #   ylab(expression(alpha))+
 #   xlab(expression("Huber value [ln("*cm[sw]^2~m[leaf]^-2*")]"))
-
-eff<-effect("D", partial.residuals=T, alpha_mod)
-# plot(eff)
-x.fit <- unlist(eff$x.all)
-trans <- I
-x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, D = eff$x$D)
-xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$D)] + eff$residuals)
-
-g_eff4 <- ggplot(x, aes(x = D, y = fit)) +
-  geom_point(data = xy, aes(x = x, y = y, 
-                            size = log(df_param_kmax_alpha_lifeform$n_dist)), 
-             col = "grey60", size = 2) +
-  geom_line(size = 1) +
-  geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
-  geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
-  geom_smooth(data = xy, aes(x = trans(x), y = y),
-              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
-  mytheme3()+
-  ylab(expression(alpha))+
-  xlab(expression("VPD [kPa]"))
+# 
+# eff<-effect("D", partial.residuals=T, alpha_mod)
+# # plot(eff)
+# x.fit <- unlist(eff$x.all)
+# trans <- I
+# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, D = eff$x$D)
+# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$D)] + eff$residuals)
+# 
+# g_eff4 <- ggplot(x, aes(x = D, y = fit)) +
+#   geom_point(data = xy, aes(x = x, y = y, size = alpha_mod@frame$`(weights)`), 
+#              col = "grey60", shape = 1, show.legend = FALSE) +
+#   geom_line(size = 1) +
+#   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+#   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+#   # geom_smooth(data = xy, aes(x = trans(x), y = y),
+#   #             method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+#   mytheme3()+
+#   ylab(expression(alpha))+
+#   xlab(expression("VPD [kPa]"))
 
 # eff<-effect("Ta", partial.residuals=T, alpha_mod)
 # # plot(eff)
@@ -780,41 +827,43 @@ g_eff4 <- ggplot(x, aes(x = D, y = fit)) +
 #   xlab(expression(T[a]~"[ºC]"))
 # 
 # 
-eff<-effect("P50", partial.residuals=T, alpha_mod)
-# plot(eff)
-x.fit <- unlist(eff$x.all)
-trans <- I
-x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, P50 = eff$x$P50)
-xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$P50)] + eff$residuals)
+# eff<-effect("P50", partial.residuals=T, alpha_mod)
+# # plot(eff)
+# x.fit <- unlist(eff$x.all)
+# trans <- I
+# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, P50 = eff$x$P50)
+# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$P50)] + eff$residuals)
+# 
+# g_eff7 <- ggplot(x, aes(x = P50, y = fit)) +
+#   geom_point(data = xy, aes(x = x, y = y, size = alpha_mod@frame$`(weights)`), 
+#              col = "grey60", shape = 1, show.legend = FALSE) +
+#   geom_line(size = 1) +
+#   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+#   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+#   # geom_smooth(data = xy, aes(x = trans(x), y = y),
+#   #             method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+#   mytheme3()+
+#   ylab(expression(alpha))+
+#   xlab(expression(psi[50]~"[MPa]"))
 
-g_eff7 <- ggplot(x, aes(x = P50, y = fit)) +
-  geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
-  geom_line(size = 1) +
-  geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
-  geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
-  geom_smooth(data = xy, aes(x = trans(x), y = y),
-              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
-  mytheme3()+
-  ylab(expression(alpha))+
-  xlab(expression(psi[50]~"[MPa]"))
-
-eff<-effect("l_b", partial.residuals=T, alpha_mod)
-# plot(eff)
-x.fit <- unlist(eff$x.all)
-trans <- I
-x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, l_b = eff$x$l_b)
-xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$l_b)] + eff$residuals)
-
-g_eff11 <- ggplot(x, aes(x = l_b, y = fit)) +
-  geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
-  geom_line(size = 1) +
-  geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
-  geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
-  geom_smooth(data = xy, aes(x = trans(x), y = y),
-              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
-  mytheme3()+
-  ylab(expression(alpha))+
-  xlab(expression("ln(b)"))
+# eff<-effect("l_b", partial.residuals=T, alpha_mod)
+# # plot(eff)
+# x.fit <- unlist(eff$x.all)
+# trans <- I
+# x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, l_b = eff$x$l_b)
+# xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$l_b)] + eff$residuals)
+# 
+# g_eff11 <- ggplot(x, aes(x = l_b, y = fit)) +
+#   geom_point(data = xy, aes(x = x, y = y, size = alpha_mod@frame$`(weights)`), 
+#              col = "grey60", shape = 1, show.legend = FALSE) +
+#   geom_line(size = 1) +
+#   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+#   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+#   # geom_smooth(data = xy, aes(x = trans(x), y = y),
+#   #             method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+#   mytheme3()+
+#   ylab(expression(alpha))+
+#   xlab(expression(log[e]*"(b)"))
 
 # eff<-effect("KL", partial.residuals=T, alpha_mod)
 # # plot(eff)
@@ -842,31 +891,32 @@ x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, jmax_ww = e
 xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$jmax_ww)] + eff$residuals)
 
 g_eff6 <- ggplot(x, aes(x = jmax_ww, y = fit)) +
-  geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+  geom_point(data = xy, aes(x = x, y = y, size = alpha_mod@frame$`(weights)`), 
+             col = "grey60", shape = 1, show.legend = FALSE) +
   geom_line(linewidth = 1) +
   geom_line(aes(y= lower), linetype=2) +
   geom_line(aes(y= upper), linetype=2) +
-  geom_smooth(data = xy, aes(x = trans(x), y = y), 
-              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+  # geom_smooth(data = xy, aes(x = trans(x), y = y), 
+  #             method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
   mytheme3()+
   ylab(expression(alpha))+
-  xlab(expression(J["maxWW,25"]~"[ln("*mu*"mol"~m^-2~s^-1*")]"))
+  xlab(expression(J["maxWW,25"]~"["*log[e]*"("*mu*"mol"~m^-2~s^-1*")]"))
 
-alpha_mod_plot <- ggarrange(g_eff4,g_eff6,g_eff1,
-                            g_eff7,g_eff11,
+alpha_mod_plot <- ggarrange(g_eff2,g_eff6,
                             g_eff10,
-          align='hv', labels=c('a', 'b','c','d','e','f'),
-          ncol=3, nrow = 2)
+          align='hv', labels=c('a', 'b','c'),
+          ncol=3, nrow = 1)+
+  theme(plot.margin = margin(0.3,0.3,0.3,0.3, "cm"))
 
 # ggsave("PLOTS/alpha_model.png", plot = alpha_mod_plot, width = 30, height = 20, units = "cm")
-ggsave("PLOTS/alpha_model_5.png", plot = alpha_mod_plot, width = 30, height = 20, units = "cm")
+ggsave("PLOTS/alpha_model_5.pdf", plot = alpha_mod_plot, width = 32, height = 11, units = "cm")
 
 
 
 
 #### Alpha - scheme ####
 alpha_scheme <- lmerTest::lmer(alpha~ scheme + (1|Species)+ (1|source), 
-                              data = df_param_kmax_alpha %>% 
+                               data = df_param_kmax_alpha %>% 
                                 mutate(scheme = factor(scheme, 
                                                        levels = c("SOX2",
                                                                   "SOX",
@@ -888,6 +938,7 @@ model_means <- emmeans(alpha_scheme, "scheme")
                          alpha = 0.05)
 
   test(model_means, null = alpha_scheme_mean@beta )
+  test(model_means, null = 0.1)
 
 ggplot(data = model_means_cld) +
   geom_pointrange(mapping=aes(scheme, emmean, ymin=emmean - SE, ymax= emmean + SE)) +
@@ -911,13 +962,13 @@ ggsave("PLOTS/alpha_scheme.png", width = 14, height = 10, units = "cm")
 
 df_param_kmax_alpha_lifeform <- df_param_kmax_alpha %>%left_join(lifeform)
 alpha_mod <- lmerTest::lmer(alpha*jmaxww25 ~ SLA..cm2.g.1.+ KL+
-                              # Iabs_growth +
-                              D +
+                              Iabs_growth +
+                              # D +
                               # jmax_ww +# p50_opt + l_b_opt +
                               # Ta +
                               ca_pa+ 
                               P50+  
-                              l_b+
+                              # l_b+
                               hv+
                               Height.max..m.+
                               (1|source)+
@@ -938,10 +989,10 @@ alpha_mod <- lmerTest::lmer(alpha*jmaxww25 ~ SLA..cm2.g.1.+ KL+
 summary(alpha_mod)
 step(alpha_mod,reduce.random = FALSE)
 alpha_mod <- lmerTest::lmer(
-  alpha * jmaxww25 ~ SLA..cm2.g.1. + KL + P50 + #l_b + hv + 
-    Height.max..m. + (1 | source) + (1 | scheme),
-  # alpha * jmaxww25 ~ SLA..cm2.g.1. + KL + ca_pa + l_b + 
-  #   hv + Height.max..m. + (1 | scheme),
+  # alpha * jmaxww25 ~ SLA..cm2.g.1. + KL + P50 + #l_b + hv + 
+  #   Height.max..m. + (1 | source) + (1 | scheme),
+  alpha * jmaxww25 ~ SLA..cm2.g.1. + KL + Iabs_growth + P50 + #l_b + 
+    hv + Height.max..m. + (1 | source) + (1 | scheme),
   data = df_param_kmax_alpha_lifeform %>%
     mutate(KL = log(KL..kg.m.1.MPa.1.s.1.*55.5),
            hv = log(Huber.value*1e4),
@@ -974,14 +1025,15 @@ x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, SLA..cm2.g.
 xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$SLA..cm2.g.1.)] + eff$residuals)
 
 g_eff1 <- ggplot(x, aes(x = SLA..cm2.g.1., y = fit)) +
-  geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+  geom_point(data = xy, aes(x = x, y = y, size = alpha_mod@frame$`(weights)`), 
+             col = "grey60", shape = 1, show.legend = FALSE) +
   geom_line(size = 1) +
   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
-  geom_smooth(data = xy, aes(x = trans(x), y = y),
-              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+  # geom_smooth(data = xy, aes(x = trans(x), y = y),
+  #             method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
   mytheme3()+
-  ylab(expression(R[dark]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+  ylab(expression(R[photo]~"["*mu*"mol"~m^-2~s^-1*"]"))+
   xlab(expression("SLA  [cm"^2~"g"^-1*"]"))
 
 eff<-effect("Height.max..m.", partial.residuals=T, alpha_mod)
@@ -991,15 +1043,16 @@ x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, Height.max.
 xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$Height.max..m.)] + eff$residuals)
 
 g_eff10 <- ggplot(x, aes(x = Height.max..m., y = fit)) +
-  geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+  geom_point(data = xy, aes(x = x, y = y, size = alpha_mod@frame$`(weights)`), 
+             col = "grey60", shape = 1, show.legend = FALSE) +
   geom_line(linewidth = 1) +
   geom_line(aes(y= lower), linetype=2) +
   geom_line(aes(y= upper), linetype=2) +
-  geom_smooth(data = xy, aes(x = trans(x), y = y),
-              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+  # geom_smooth(data = xy, aes(x = trans(x), y = y),
+  #             method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
   mytheme3()+
-  ylab(expression(R[dark]~"["*mu*"mol"~m^-2~s^-1*"]"))+
-  xlab(expression("Max height [ln(m)]"))
+  ylab(expression(R[photo]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+  xlab(expression("Max height ["*log[e]*"(m)]"))
 
 
 eff<-effect("P50", partial.residuals=T, alpha_mod)
@@ -1010,14 +1063,15 @@ x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, P50 = eff$x
 xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$P50)] + eff$residuals)
 
 g_eff7 <- ggplot(x, aes(x = P50, y = fit)) +
-  geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+  geom_point(data = xy, aes(x = x, y = y, size = alpha_mod@frame$`(weights)`), 
+             col = "grey60", shape = 1, show.legend = FALSE) +
   geom_line(size = 1) +
   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
-  geom_smooth(data = xy, aes(x = trans(x), y = y),
-              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+  # geom_smooth(data = xy, aes(x = trans(x), y = y),
+  #             method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
   mytheme3()+
-  ylab(expression(R[dark]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+  ylab(expression(R[photo]~"["*mu*"mol"~m^-2~s^-1*"]"))+
   xlab(expression(psi[50]~"[MPa]"))
 
 
@@ -1029,23 +1083,64 @@ x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, KL = eff$x$
 xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$KL)] + eff$residuals)
 
 g_eff5 <- ggplot(x, aes(x = KL, y = fit)) +
-  geom_point(data = xy, aes(x = x, y = y), col = "grey60", size = 2) +
+  geom_point(data = xy, aes(x = x, y = y, size = alpha_mod@frame$`(weights)`), 
+             col = "grey60", shape = 1, show.legend = FALSE) +
   geom_line(size = 1) +
   geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
   geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
-  geom_smooth(data = xy, aes(x = trans(x), y = y),
-              method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+  # geom_smooth(data = xy, aes(x = trans(x), y = y),
+  #             method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
   mytheme3()+
-  ylab(expression(R[dark]~"["*mu*"mol"~m^-2~s^-1*"]"))+
-  xlab(expression(K[L]~"[ln(mol "~m^{-1}~MPa^{-1}~s^{-1}~")]"))
+  ylab(expression(R[photo]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+  xlab(expression(K[L]~"["*log[e]*"(mol "~m^{-1}~MPa^{-1}~s^{-1}~")]"))
 
 
-alpha_mod_plot <- ggarrange(g_eff1,g_eff10,g_eff5,g_eff7,
-                            align='hv', labels=c('a', 'b','c','d'),
-                            ncol=2, nrow = 2)
+eff<-effect("Iabs_growth", partial.residuals=T, alpha_mod)
+# plot(eff)
+x.fit <- unlist(eff$x.all)
+trans <- I
+x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, Iabs_growth = eff$x$Iabs_growth)
+xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$Iabs_growth)] + eff$residuals)
+
+g_eff2 <- ggplot(x, aes(x = Iabs_growth, y = fit)) +
+  geom_point(data = xy, aes(x = x, y = y, size = alpha_mod@frame$`(weights)`), 
+             col = "grey60", shape = 1, show.legend = FALSE) +
+  geom_line(linewidth = 1) +
+  geom_line(aes(y= lower), linetype=2) +
+  geom_line(aes(y= upper), linetype=2) +
+  # geom_smooth(data = xy, aes(x = trans(x), y = y),
+  #             method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+  mytheme3()+
+  ylab(expression(R[photo]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+  xlab(expression(I[abs]~"["*mu*"mol"~m^-2~s^-1*"]"))
+
+
+eff<-effect("hv", partial.residuals=T, alpha_mod)
+# plot(eff)
+x.fit <- unlist(eff$x.all)
+trans <- I
+x <- data.frame(lower = eff$lower, upper = eff$upper, fit = eff$fit, hv = eff$x$hv)
+xy <- data.frame(x = x.fit, y = x$fit[closest(trans(x.fit), x$hv)] + eff$residuals)
+
+g_eff3 <- ggplot(x, aes(x = hv, y = fit)) +
+  geom_point(data = xy, aes(x = x, y = y, size = alpha_mod@frame$`(weights)`), 
+             col = "grey60", shape = 1, show.legend = FALSE) +
+  geom_line(linewidth = 1) +
+  geom_line(aes(y= lower), alpha = 0.5,linetype=2) +
+  geom_line(aes(y= upper), alpha = 0.5,linetype=2) +
+  # geom_smooth(data = xy, aes(x = trans(x), y = y),
+  #             method = "loess", span = 2/3, linetype = "dashed", se = FALSE)+
+  mytheme3()+
+  ylab(expression(R[photo]~"["*mu*"mol"~m^-2~s^-1*"]"))+
+  xlab(expression("Huber value [ln("*cm[sw]^2~m[leaf]^-2*")]"))
+
+
+alpha_mod_plot <- ggarrange(g_eff2,g_eff5,g_eff7,g_eff3,g_eff1,g_eff10,
+                            align='hv', labels=c('a', 'b','c','d','e','f'),
+                            ncol=3, nrow = 2)
 
 # ggsave("PLOTS/alpha_model.png", plot = alpha_mod_plot, width = 30, height = 20, units = "cm")
-ggsave("PLOTS/rdark_model.png", plot = alpha_mod_plot, width = 30, height = 20, units = "cm")
+ggsave("PLOTS/rdark_model.pdf", plot = alpha_mod_plot, width = 32, height = 20, units = "cm")
 
 
 
@@ -1191,16 +1286,24 @@ r_a_p <- pairs(emmeans(r_a, "calibration_type",by='scheme'), simple = "each")$`s
          calibration_type = as_factor(calibration_type)) %>% 
   dplyr::select(scheme, calibration_type,adj.p.value)
 r_a <- emmeans(r_a,~calibration_type*scheme) %>% 
-  broom::tidy(conf.int = TRUE)%>% 
+  broom::tidy(conf.int = TRUE)%>%
   mutate(calibration_type = as_factor(calibration_type)) %>% 
   left_join(r_a_p) %>% 
   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
                          TRUE~"YES")) 
-p1 <- df_a %>%
+p1 <- df_a %>% 
+  mutate(calibration_type = fct_recode(calibration_type,
+                                       "Calibrated \u03B1  "="Calibrated α",
+                                       "Average \u03B1  " = "Average α", 
+                                       "Not acclimated  " = "Not acclimated"))%>%
   ggplot(aes(scheme,r,fill = calibration_type, color = calibration_type, group = calibration_type))+
   geom_point(shape= 21,position=position_dodge(width = 0.5))+
   geom_abline(intercept = 0, slope = 0, color = "grey20")+
-  geom_pointrange(data = r_a, 
+  geom_pointrange(data = r_a%>% 
+                    mutate(calibration_type = fct_recode(calibration_type,
+                                                         "Calibrated \u03B1  "="Calibrated α",
+                                                         "Average \u03B1  " = "Average α", 
+                                                         "Not acclimated  " = "Not acclimated")), 
                   aes(scheme,estimate,color = calibration_type,
                       ymin = conf.low,ymax = conf.high,
                       shape = sig),size = 0.8,
@@ -1241,12 +1344,20 @@ beta_a <- emmeans(beta_a,~calibration_type*scheme) %>%
                          TRUE~"YES")) 
 
 p2 <- df_a%>% 
+  mutate(calibration_type = fct_recode(calibration_type,
+                                       "Calibrated \u03B1  "="Calibrated α",
+                                       "Average \u03B1  " = "Average α", 
+                                       "Not acclimated  " = "Not acclimated")) %>% 
   filter(beta<= 15)%>% 
   ggplot(aes(scheme,beta, fill = calibration_type, color = calibration_type,
              group = calibration_type))+
   geom_point(shape= 21,position=position_dodge(width = 0.5))+
   geom_abline(intercept = 1, slope = 0, color = "grey20", linetype=3)+
-  geom_pointrange(data = beta_a, 
+  geom_pointrange(data = beta_a%>% 
+                    mutate(calibration_type = fct_recode(calibration_type,
+                                                         "Calibrated \u03B1  "="Calibrated α",
+                                                         "Average \u03B1  " = "Average α", 
+                                                         "Not acclimated  " = "Not acclimated")), 
                   aes(scheme,estimate,color = calibration_type,
                       ymin = conf.low,ymax = conf.high,
                       shape = sig),size = 0.8,
@@ -1295,11 +1406,20 @@ rmse_a <- emmeans(rmse_a,~calibration_type*scheme) %>%
 # summary(rmse_a_accl)
 # rmse_a_p_accl <- emmeans(rmse_a_accl, "scheme")
 
-p3 <- df_a %>%
+p3 <- df_a %>% 
+  mutate(calibration_type = fct_recode(calibration_type,
+                                       "Calibrated \u03B1  "="Calibrated α",
+                                       "Average \u03B1  " = "Average α", 
+                                       "Not acclimated  " = "Not acclimated"))%>%
   ggplot(aes(scheme,rmse,fill = calibration_type, color = calibration_type,
              group = calibration_type))+
   geom_point(shape= 21,position=position_dodge(width = 0.5))+
-  geom_pointrange(data = rmse_a, 
+  geom_abline(intercept = 0, slope = 0, color = "grey20", linetype=3)+
+  geom_pointrange(data = rmse_a%>% 
+                    mutate(calibration_type = fct_recode(calibration_type,
+                                                         "Calibrated \u03B1  "="Calibrated α",
+                                                         "Average \u03B1  " = "Average α", 
+                                                         "Not acclimated  " = "Not acclimated")), 
                   aes(scheme,estimate,color = calibration_type,
                       ymin = conf.low,ymax = conf.high,
                       shape = sig),size = 0.8,
@@ -1333,12 +1453,20 @@ bias_a <- emmeans(bias_a,~calibration_type*scheme) %>%
   left_join(bias_a_p) %>% 
   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
                          TRUE~"YES")) 
-p4 <- df_a %>%
+p4 <- df_a %>% 
+  mutate(calibration_type = fct_recode(calibration_type,
+                                       "Calibrated \u03B1  "="Calibrated α",
+                                       "Average \u03B1  " = "Average α", 
+                                       "Not acclimated  " = "Not acclimated"))%>%
   ggplot(aes(scheme,bias,fill = calibration_type, color = calibration_type, 
              group = calibration_type))+
   geom_point(shape= 21,position=position_dodge(width = 0.5))+
   geom_abline(intercept = 0, slope = 0, color = "grey20", linetype=3)+
-  geom_pointrange(data = bias_a, 
+  geom_pointrange(data = bias_a%>% 
+                    mutate(calibration_type = fct_recode(calibration_type,
+                                                         "Calibrated \u03B1  "="Calibrated α",
+                                                         "Average \u03B1  " = "Average α", 
+                                                         "Not acclimated  " = "Not acclimated")), 
                   aes(scheme,estimate,color = calibration_type,
                       ymin = conf.low,ymax = conf.high,
                       shape = sig), size = 0.8,
@@ -1547,11 +1675,19 @@ r_a <- emmeans(r_a,~calibration_type*scheme) %>%
   left_join(r_a_p) %>% 
   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
                          TRUE~"YES")) 
-p1 <- df_g %>%
+p1 <- df_g %>% 
+  mutate(calibration_type = fct_recode(calibration_type,
+                                       "Calibrated \u03B1  "="Calibrated α",
+                                       "Average \u03B1  " = "Average α", 
+                                       "Not acclimated  " = "Not acclimated"))%>%
   ggplot(aes(scheme,r,fill = calibration_type, color = calibration_type, group = calibration_type))+
   geom_point(shape= 21,position=position_dodge(width = 0.5))+
   geom_abline(intercept = 0, slope = 0, color = "grey20")+
-  geom_pointrange(data = r_a, 
+  geom_pointrange(data = r_a%>% 
+                    mutate(calibration_type = fct_recode(calibration_type,
+                                                         "Calibrated \u03B1  "="Calibrated α",
+                                                         "Average \u03B1  " = "Average α", 
+                                                         "Not acclimated  " = "Not acclimated")), 
                   aes(scheme,estimate,color = calibration_type,
                       ymin = conf.low,ymax = conf.high,
                       shape = sig),size = 0.8,
@@ -1592,12 +1728,20 @@ beta_a <- emmeans(beta_a,~calibration_type*scheme) %>%
                          TRUE~"YES")) 
 
 p2 <- df_g%>% 
+  mutate(calibration_type = fct_recode(calibration_type,
+                                       "Calibrated \u03B1  "="Calibrated α",
+                                       "Average \u03B1  " = "Average α", 
+                                       "Not acclimated  " = "Not acclimated"))%>% 
   filter(beta<= 15)%>% 
   ggplot(aes(scheme,beta, fill = calibration_type, color = calibration_type,
              group = calibration_type))+
   geom_point(shape= 21,position=position_dodge(width = 0.5))+
   geom_abline(intercept = 1, slope = 0, color = "grey20", linetype=3)+
-  geom_pointrange(data = beta_a, 
+  geom_pointrange(data = beta_a%>% 
+                    mutate(calibration_type = fct_recode(calibration_type,
+                                                         "Calibrated \u03B1  "="Calibrated α",
+                                                         "Average \u03B1  " = "Average α", 
+                                                         "Not acclimated  " = "Not acclimated")), 
                   aes(scheme,estimate,color = calibration_type,
                       ymin = conf.low,ymax = conf.high,
                       shape = sig),size = 0.8,
@@ -1646,11 +1790,20 @@ rmse_a <- emmeans(rmse_a,~calibration_type*scheme) %>%
 # summary(rmse_a_accl)
 # rmse_a_p_accl <- emmeans(rmse_a_accl, "scheme")
 
-p3 <- df_g %>%
+p3 <- df_g %>% 
+  mutate(calibration_type = fct_recode(calibration_type,
+                                       "Calibrated \u03B1  "="Calibrated α",
+                                       "Average \u03B1  " = "Average α", 
+                                       "Not acclimated  " = "Not acclimated"))%>%
   ggplot(aes(scheme,rmse,fill = calibration_type, color = calibration_type,
              group = calibration_type))+
   geom_point(shape= 21,position=position_dodge(width = 0.5))+
-  geom_pointrange(data = rmse_a, 
+  geom_abline(intercept = 0, slope = 0, color = "grey20", linetype=3)+
+  geom_pointrange(data = rmse_a%>% 
+                    mutate(calibration_type = fct_recode(calibration_type,
+                                                         "Calibrated \u03B1  "="Calibrated α",
+                                                         "Average \u03B1  " = "Average α", 
+                                                         "Not acclimated  " = "Not acclimated")), 
                   aes(scheme,estimate,color = calibration_type,
                       ymin = conf.low,ymax = conf.high,
                       shape = sig),size = 0.8,
@@ -1683,12 +1836,20 @@ bias_a <- emmeans(bias_a,~calibration_type*scheme) %>%
   left_join(bias_a_p) %>% 
   mutate(sig = case_when(adj.p.value >= 0.05~"NO",
                          TRUE~"YES")) 
-p4 <- df_g %>%
+p4 <- df_g %>% 
+  mutate(calibration_type = fct_recode(calibration_type,
+                                       "Calibrated \u03B1  "="Calibrated α",
+                                       "Average \u03B1  " = "Average α", 
+                                       "Not acclimated  " = "Not acclimated"))%>%
   ggplot(aes(scheme,bias,fill = calibration_type, color = calibration_type, 
              group = calibration_type))+
   geom_point(shape= 21,position=position_dodge(width = 0.5))+
   geom_abline(intercept = 0, slope = 0, color = "grey20", linetype=3)+
-  geom_pointrange(data = bias_a, 
+  geom_pointrange(data = bias_a%>% 
+                    mutate(calibration_type = fct_recode(calibration_type,
+                                                         "Calibrated \u03B1  "="Calibrated α",
+                                                         "Average \u03B1  " = "Average α", 
+                                                         "Not acclimated  " = "Not acclimated")), 
                   aes(scheme,estimate,color = calibration_type,
                       ymin = conf.low,ymax = conf.high,
                       shape = sig), size = 0.8,
@@ -1809,6 +1970,288 @@ ggsave("PLOTS/gs_metrics.png", width = 20, height = 14, units = "cm")
 #   ylab(expression("Observed g"[s]))+
 #   ggtitle(expression(atop("CMAX Stomatal conductance,","g"[s]~"(mol m"^-2~"s"^-1*")")))
 # 
+
+
+#### A P50 1/3 #####
+df_a <- df_kmaxww_a %>%
+  # df_a <- df_kmaxww_a_1_3 %>%
+  group_by(scheme,Species,source,calibration_type) %>% 
+  filter(!is.na(A))  %>% 
+  mutate(scheme = factor(scheme, 
+                         levels = c("SOX2",
+                                    "SOX",
+                                    "PMAX3",
+                                    "PMAX2",
+                                    "PMAX",
+                                    "CGAIN2",
+                                    "CGAIN",
+                                    "PHYDRO")),
+         calibration_type = as_factor(calibration_type))%>% 
+  mutate(diff_a = a_pred - A) %>% 
+  summarise(n_dist = n(),
+            r = cor(A, a_pred, use = "pairwise.complete.obs"),
+            bias = mean(diff_a,na.rm = TRUE)/mean(A,na.rm = TRUE),
+            rmse = Metrics::rmse(A,a_pred),
+            beta = lm(A~a_pred)$coefficients[2]) %>% 
+  filter(beta> -10)
+
+df_a_1_3 <- df_kmaxww_a_1_3 %>%
+  group_by(scheme,Species,source,calibration_type) %>% 
+  filter(!is.na(A))  %>% 
+  mutate(scheme = factor(scheme, 
+                         levels = c("SOX2",
+                                    "SOX",
+                                    "PMAX3",
+                                    "PMAX2",
+                                    "PMAX",
+                                    "CGAIN2",
+                                    "CGAIN",
+                                    "PHYDRO")),
+         calibration_type = as_factor(calibration_type))%>% 
+  mutate(diff_a = a_pred - A) %>% 
+  summarise(n_dist = n(),
+            r = cor(A, a_pred, use = "pairwise.complete.obs"),
+            bias = mean(diff_a,na.rm = TRUE)/mean(A,na.rm = TRUE),
+            rmse = Metrics::rmse(A,a_pred),
+            beta = lm(A~a_pred)$coefficients[2]) %>% 
+  filter(beta> -10)
+
+df_a <- df_a %>% filter(scheme == "PHYDRO") %>% 
+  bind_rows(df_a_1_3 %>% filter(scheme != "PHYDRO"))
+
+df_a %>% 
+  group_by(scheme,calibration_type) %>% 
+  dplyr::select(r,bias,rmse,beta) %>% 
+  summarise(r_median = median(r),
+            bias_median = median(bias),
+            rmse_median = median(rmse),
+            beta_median = median(beta),
+            r_mean = mean(r),
+            bias_mean = mean(bias),
+            rmse_mean = mean(rmse),
+            beta_mean = mean(beta)) ->foo
+
+r_a <- lmerTest::lmer(r~scheme*calibration_type + (1|source)+ (1|Species), data = df_a, weights = log(n_dist)
+)
+
+r_a_p <- pairs(emmeans(r_a, "calibration_type",by='scheme'), simple = "each")$`simple contrasts for calibration_type`%>% 
+  broom::tidy() %>% 
+  separate(contrast,into = c('calibration_type',"contrast"),sep = " - ") %>% 
+  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Average α"~ "Not acclimated",
+                                      TRUE~calibration_type),
+         adj.p.value = case_when(calibration_type == "Not acclimated"~1,
+                                 TRUE~adj.p.value),
+         calibration_type = as_factor(calibration_type)) %>% 
+  dplyr::select(scheme, calibration_type,adj.p.value)
+r_a <- emmeans(r_a,~calibration_type*scheme) %>% 
+  broom::tidy(conf.int = TRUE)%>%
+  mutate(calibration_type = as_factor(calibration_type)) %>% 
+  left_join(r_a_p) %>% 
+  mutate(sig = case_when(adj.p.value >= 0.05~"NO",
+                         TRUE~"YES")) 
+p1 <- df_a %>% 
+  mutate(calibration_type = fct_recode(calibration_type,
+                                       "Calibrated \u03B1  "="Calibrated α",
+                                       "Average \u03B1  " = "Average α", 
+                                       "Not acclimated  " = "Not acclimated"))%>%
+  ggplot(aes(scheme,r,fill = calibration_type, color = calibration_type, group = calibration_type))+
+  geom_point(shape= 21,position=position_dodge(width = 0.5), alpha = 0.5)+
+  geom_abline(intercept = 0, slope = 0, color = "grey20")+
+  geom_pointrange(data = r_a%>% 
+                    mutate(calibration_type = fct_recode(calibration_type,
+                                                         "Calibrated \u03B1  "="Calibrated α",
+                                                         "Average \u03B1  " = "Average α", 
+                                                         "Not acclimated  " = "Not acclimated")), 
+                  aes(scheme,estimate,color = calibration_type,
+                      ymin = conf.low,ymax = conf.high,
+                      shape = sig),size = 0.8,
+                  position=position_dodge(width = 0.5),
+                  show.legend = FALSE)+
+  geom_abline(intercept = 1, slope = 0, color = "grey20", linetype=3)+
+  mytheme()+
+  theme(legend.title = element_blank())+
+  xlab("")+
+  ylab(expression(A[net]~" r Pearson's correlation"))+
+  scale_color_manual(values = c("#FFC20A","#0C7BDC","#A2B56F"))+
+  scale_fill_manual(values =c("#FFC20A","#0C7BDC","#A2B56F"))+
+  scale_shape_manual(values = c(1, 19))+
+  guides(colour = guide_legend(override.aes = list(size=4)))+
+  coord_flip()
+
+
+##BETA
+beta_a <- lmerTest::lmer(beta~scheme*calibration_type + (1|Species), data = df_a%>% 
+                           filter(beta<= 40), weights = log(n_dist)
+)
+test(emmeans::emmeans(beta_a, "calibration_type",by='scheme'),1)
+
+beta_a_p <- pairs(emmeans(beta_a, "calibration_type",by='scheme'), simple = "each")$`simple contrasts for calibration_type`%>% 
+  broom::tidy() %>% 
+  separate(contrast,into = c('calibration_type',"contrast"),sep = " - ") %>% 
+  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Average α"~ "Not acclimated",
+                                      TRUE~calibration_type),
+         adj.p.value = case_when(calibration_type == "Not acclimated"~1,
+                                 TRUE~adj.p.value)) %>%
+  mutate(calibration_type = as_factor(calibration_type)) %>%
+  dplyr::select(scheme, calibration_type,adj.p.value)
+beta_a <- emmeans(beta_a,~calibration_type*scheme) %>% 
+  broom::tidy(conf.int = TRUE)%>% 
+  mutate(calibration_type = as_factor(calibration_type)) %>%
+  left_join(beta_a_p) %>% 
+  mutate(sig = case_when(adj.p.value >= 0.05~"NO",
+                         TRUE~"YES")) 
+
+p2 <- df_a%>% 
+  mutate(calibration_type = fct_recode(calibration_type,
+                                       "Calibrated \u03B1  "="Calibrated α",
+                                       "Average \u03B1  " = "Average α", 
+                                       "Not acclimated  " = "Not acclimated")) %>% 
+  filter(beta<= 15)%>% 
+  ggplot(aes(scheme,beta, fill = calibration_type, color = calibration_type,
+             group = calibration_type))+
+  geom_point(shape= 21,position=position_dodge(width = 0.5), alpha = 0.5)+
+  geom_abline(intercept = 1, slope = 0, color = "grey20", linetype=3)+
+  geom_pointrange(data = beta_a%>% 
+                    mutate(calibration_type = fct_recode(calibration_type,
+                                                         "Calibrated \u03B1  "="Calibrated α",
+                                                         "Average \u03B1  " = "Average α", 
+                                                         "Not acclimated  " = "Not acclimated")), 
+                  aes(scheme,estimate,color = calibration_type,
+                      ymin = conf.low,ymax = conf.high,
+                      shape = sig),size = 0.8,
+                  position=position_dodge(width = 0.5),
+                  show.legend = FALSE)+
+  mytheme()+
+  theme(legend.title = element_blank())+
+  xlab("")+
+  # ylim(-10,30)+
+  ylab(expression(A[net]~italic(m)))+
+  scale_color_manual(values = c("#FFC20A","#0C7BDC","#A2B56F"))+
+  scale_fill_manual(values =c("#FFC20A","#0C7BDC","#A2B56F"))+
+  scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
+  guides(colour = guide_legend(override.aes = list(size=4)))+
+  coord_flip()+
+  # scale_y_log10()+
+  NULL
+
+
+##RMSE
+rmse_a <- lmerTest::lmer(rmse~scheme*calibration_type + (1|source)+ (1|Species), data = df_a, weights = log(n_dist)
+)
+# emmeans(rmse_a, "calibration_type",by='scheme')
+model_rmse <- emmeans::emmeans(rmse_a, "scheme",by='calibration_type')
+cld(object = model_rmse,
+    adjust = "sidak",
+    Letters = letters,
+    alpha = 0.05) %>% broom::tidy()
+rmse_a_p <- pairs(emmeans(rmse_a, "calibration_type",by='scheme'), simple = "each")$`simple contrasts for calibration_type`%>% 
+  broom::tidy() %>% 
+  separate(contrast,into = c('calibration_type',"contrast"),sep = " - ") %>% 
+  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Average α"~ "Not acclimated",
+                                      TRUE~calibration_type),
+         adj.p.value = case_when(calibration_type == "Not acclimated"~1,
+                                 TRUE~adj.p.value)) %>% 
+  mutate(calibration_type = as_factor(calibration_type)) %>%
+  dplyr::select(scheme, calibration_type,adj.p.value)
+rmse_a <- emmeans(rmse_a,~calibration_type*scheme) %>% 
+  broom::tidy(conf.int = TRUE)%>% 
+  mutate(calibration_type = as_factor(calibration_type)) %>%
+  left_join(rmse_a_p) %>% 
+  mutate(sig = case_when(adj.p.value >= 0.05~"NO",
+                         TRUE~"YES")) 
+
+# rmse_a_accl <- lmerTest::lmer(rmse~scheme + (1|Species), data = df_a %>% filter(acclimation=="Acclimated"), weights = log(n_dist))
+# summary(rmse_a_accl)
+# rmse_a_p_accl <- emmeans(rmse_a_accl, "scheme")
+
+p3 <- df_a %>% 
+  mutate(calibration_type = fct_recode(calibration_type,
+                                       "Calibrated \u03B1  "="Calibrated α",
+                                       "Average \u03B1  " = "Average α", 
+                                       "Not acclimated  " = "Not acclimated"))%>%
+  ggplot(aes(scheme,rmse,fill = calibration_type, color = calibration_type,
+             group = calibration_type))+
+  geom_point(shape= 21,position=position_dodge(width = 0.5), alpha = 0.5)+
+  geom_abline(intercept = 0, slope = 0, color = "grey20", linetype=3)+
+  geom_pointrange(data = rmse_a%>% 
+                    mutate(calibration_type = fct_recode(calibration_type,
+                                                         "Calibrated \u03B1  "="Calibrated α",
+                                                         "Average \u03B1  " = "Average α", 
+                                                         "Not acclimated  " = "Not acclimated")), 
+                  aes(scheme,estimate,color = calibration_type,
+                      ymin = conf.low,ymax = conf.high,
+                      shape = sig),size = 0.8,
+                  position=position_dodge(width = 0.5),
+                  show.legend = FALSE)+
+  mytheme()+
+  theme(legend.title = element_blank())+
+  xlab("")+
+  ylab(expression(A[net]~" RMSE  ("*mu*"mol m"^{-2}~"s"^{-1}*")"))+
+  scale_color_manual(values = c("#FFC20A","#0C7BDC","#A2B56F"))+
+  scale_fill_manual(values =c("#FFC20A","#0C7BDC","#A2B56F"))+
+  scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
+  guides(colour = guide_legend(override.aes = list(size=4)))+
+  coord_flip()
+
+bias_a <- lmerTest::lmer(bias~scheme*calibration_type + (1|source)+ (1|Species), data = df_a, weights = log(n_dist)
+)
+test(emmeans(bias_a, "calibration_type",by='scheme'))
+bias_a_p <- pairs(emmeans(bias_a, "calibration_type",by='scheme'), simple = "each")$`simple contrasts for calibration_type`%>% 
+  broom::tidy() %>% 
+  separate(contrast,into = c('calibration_type',"contrast"),sep = " - ") %>% 
+  mutate(calibration_type = case_when(calibration_type == "Calibrated α" & contrast == "Average α"~ "Not acclimated",
+                                      TRUE~calibration_type),
+         adj.p.value = case_when(calibration_type == "Not acclimated"~1,
+                                 TRUE~adj.p.value)) %>% 
+  mutate(calibration_type = as_factor(calibration_type)) %>%
+  dplyr::select(scheme, calibration_type,adj.p.value)
+bias_a <- emmeans(bias_a,~calibration_type*scheme) %>% 
+  broom::tidy(conf.int = TRUE)%>% 
+  mutate(calibration_type = as_factor(calibration_type)) %>%
+  left_join(bias_a_p) %>% 
+  mutate(sig = case_when(adj.p.value >= 0.05~"NO",
+                         TRUE~"YES")) 
+p4 <- df_a %>% 
+  mutate(calibration_type = fct_recode(calibration_type,
+                                       "Calibrated \u03B1  "="Calibrated α",
+                                       "Average \u03B1  " = "Average α", 
+                                       "Not acclimated  " = "Not acclimated"))%>%
+  ggplot(aes(scheme,bias,fill = calibration_type, color = calibration_type, 
+             group = calibration_type))+
+  geom_point(shape= 21,position=position_dodge(width = 0.5), alpha = 0.5)+
+  geom_abline(intercept = 0, slope = 0, color = "grey20", linetype=3)+
+  geom_pointrange(data = bias_a%>% 
+                    mutate(calibration_type = fct_recode(calibration_type,
+                                                         "Calibrated \u03B1  "="Calibrated α",
+                                                         "Average \u03B1  " = "Average α", 
+                                                         "Not acclimated  " = "Not acclimated")), 
+                  aes(scheme,estimate,color = calibration_type,
+                      ymin = conf.low,ymax = conf.high,
+                      shape = sig), size = 0.8,
+                  position=position_dodge(width = 0.5),
+                  show.legend = FALSE)+
+  mytheme()+
+  theme(legend.title = element_blank())+
+  xlab("")+
+  ylab(expression(A[net]~" Bias"))+
+  scale_color_manual(values = c("#FFC20A","#0C7BDC","#A2B56F"))+
+  scale_fill_manual(values =c("#FFC20A","#0C7BDC","#A2B56F"))+
+  scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
+  guides(colour = guide_legend(override.aes = list(size=4)))+
+  coord_flip()
+
+
+ggarrange(p1,
+          p2,p3,p4, 
+          align='hv', labels=c('a', 'b','c','d'
+          ),
+          common.legend = T,ncol=2, nrow = 2)
+
+
+
+ggsave("PLOTS/A_metrics_combined_1_3.png", width = 20, height = 14, units = "cm")
+
+
 
 
 # STOMATAL NON-STOMATAL PARTITION ----------------------------------------------
@@ -2889,13 +3332,15 @@ ggpubr::ggballoonplot(
   # scale_y_discrete(name = "")+
   # mytheme2()
 x = "scheme", y = "Species",
-size = "r", fill = "r") +
+size = "r", fill = "r",
+size.range = c(1, 10)) +
   # scale_fill_viridis_c(name = "r Pearson's") +
   scale_fill_gradient(low = '#FFC20A', high = '#0C7BDC', name = "r Pearson's")+
   guides(size = "none")+scale_y_discrete(limits=rev)+
-  theme(axis.text.y = element_text(face = "italic"))
+  theme(axis.text.y = element_text(face = "italic"))+
+  theme(plot.margin = margin(0.3,0.3,0.3,0.3, "cm"))
     
-ggsave("PLOTS/species_scheme_A.png", width = 16, height = 22, units = "cm")
+ggsave("PLOTS/species_scheme_A.png", width = 16, height = 26, units = "cm")
 
 
 
@@ -3019,85 +3464,83 @@ ggsave("PLOTS/gs_raw.png", width = 32, height = 40, units = "cm")
 
 
 
-
-
-#### Optimal parameters distributions ####
-df_kmax_alpha %>% 
-  group_by(scheme,acclimation,Species,source) %>% 
+# 
+# 
+# #### Optimal parameters distributions ####
+df_kmax_alpha %>%
+  group_by(scheme,acclimation,Species,source) %>%
   # mutate(n_dist = n())%>%
-  ungroup() %>% 
+  ungroup() %>%
   rename(`Stomatal model`=scheme) %>%
-  group_by(`Stomatal model`) %>% 
-  do(get_partition_a_accl(.)) %>% 
+  group_by(`Stomatal model`) %>%
+  do(get_partition_a_accl(.)) %>%
   mutate(total_A_r2 = stomatal_r2+non_stomatal_r2)
-
-df_kmax_alpha %>% 
-  group_by(scheme,acclimation,Species,source) %>% 
+# 
+df_kmax_alpha %>%
+  group_by(scheme,acclimation,Species,source) %>%
   # mutate(n_dist = n())%>%
-  ungroup() %>% 
+  ungroup() %>%
   rename(`Stomatal model`=scheme) %>%
-  group_by(`Stomatal model`) %>% 
-  do(get_partition_g_accl(.)) %>% 
+  group_by(`Stomatal model`) %>%
+  do(get_partition_g_accl(.)) %>%
   mutate(total_g_r2 = stomatal_r2+non_stomatal_r2)
-
-
-library(ggh4x)
-actual_dist <- df_param_kmax_alpha %>% 
-  bind_rows(df_param_kmax_no_alpha) %>%
-  mutate(Kmax1 = KL..kg.m.1.MPa.1.s.1.*55.5,
-         Kmax = case_when(Kmax1>0.5~NA_real_,
-                          TRUE~Kmax1)) %>%
-  group_by(scheme,acclimation) %>% 
-  dplyr::select(P50,Kmax,b) %>% 
-  pivot_longer(c(P50,Kmax,b)) %>% 
-  mutate(name = factor(name, levels = c("Kmax","P50","b","alpha","gamma")),
-         name = fct_recode(name,`italic(b)`="b",
-                           `gamma*"/"*omega1*"/"*beta[1]`='gamma',
-                           `K[max]~"(mol"~m^{-2}~s^{-1}~MPa^{-1}*")"`="Kmax",
-                           `psi[50]~"(MPa)"`='P50')) 
-
-data_opt <- df_param_kmax_alpha %>%
-  bind_rows(df_param_kmax_no_alpha %>% left_join(df_param_kmax_alpha %>% dplyr::select(source,Species, scheme,`T`)))%>%
-  dplyr::select(scheme,acclimation,K.scale,gamma,alpha,p50_opt,b_opt,T) %>% 
-  rowwise() %>% 
-  mutate(Ta = T,
-         viscosity_water = calc_viscosity_h2o(Ta, 101325),
-         density_water = calc_density_h2o(Ta,101325),
-         Kmax = K.scale*1e-16/viscosity_water,
-         Kmax = Kmax * density_water * 55.5,
-         Kmax = Kmax * 1e6,
-         b_opt = case_when(b_opt>10~NA_real_,
-                          TRUE~b_opt)
-         )%>% 
-  group_by(scheme,acclimation) %>%
-  pivot_longer(c(Kmax,gamma,alpha,p50_opt,b_opt)) %>% 
-  mutate(name = factor(name, levels = c("Kmax","p50_opt","b_opt","alpha","gamma")),
-         name = fct_recode(name,`italic(b)`="b_opt",
-                           `gamma*"/"*omega1*"/"*beta[1]`='gamma',
-                           `K[max]~"(mol"~m^{-2}~s^{-1}~MPa^{-1}*")"`="Kmax",
-                           `psi[50]~"(MPa)"`='p50_opt')) 
-
-ggplot()+
-  geom_density(data=actual_dist,aes(x=value), linewidth = 1,alpha=0.5)+
-  geom_density(data=data_opt,aes(x =value, color = acclimation),alpha=0.5,show.legend = TRUE, linewidth = 1)+
-  ggh4x::facet_grid2(c("scheme","name"), 
-              labeller = label_parsed, 
-              scales = "free", 
-              independent = "all")+
-  scale_color_manual(values = c("#FFC20A","#018571"))+
-  mytheme5()+
-  theme(legend.position="bottom",
-        axis.title.x = element_blank(),
-        legend.title = element_blank())
-  
-  
-ggsave("PLOTS/param_distri.png", width = 30, height = 30, units = "cm")
-  
-  
+# 
+# 
+# library(ggh4x)
+# actual_dist <- df_param_kmax_alpha %>% 
+#   bind_rows(df_param_kmax_no_alpha) %>%
+#   mutate(Kmax1 = KL..kg.m.1.MPa.1.s.1.*55.5,
+#          Kmax = case_when(Kmax1>0.5~NA_real_,
+#                           TRUE~Kmax1)) %>%
+#   group_by(scheme,acclimation) %>% 
+#   dplyr::select(P50,Kmax,b) %>% 
+#   pivot_longer(c(P50,Kmax,b)) %>% 
+#   mutate(name = factor(name, levels = c("Kmax","P50","b","alpha","gamma")),
+#          name = fct_recode(name,`italic(b)`="b",
+#                            `gamma*"/"*omega1*"/"*beta[1]`='gamma',
+#                            `K[max]~"(mol"~m^{-2}~s^{-1}~MPa^{-1}*")"`="Kmax",
+#                            `psi[50]~"(MPa)"`='P50')) 
+# 
+# data_opt <- df_param_kmax_alpha %>%
+#   bind_rows(df_param_kmax_no_alpha %>% left_join(df_param_kmax_alpha %>% dplyr::select(source,Species, scheme,`T`)))%>%
+#   dplyr::select(scheme,acclimation,K.scale,gamma,alpha,p50_opt,b_opt,T) %>% 
+#   rowwise() %>% 
+#   mutate(Ta = T,
+#          viscosity_water = calc_viscosity_h2o(Ta, 101325),
+#          density_water = calc_density_h2o(Ta,101325),
+#          Kmax = K.scale*1e-16/viscosity_water,
+#          Kmax = Kmax * density_water * 55.5,
+#          Kmax = Kmax * 1e6,
+#          b_opt = case_when(b_opt>10~NA_real_,
+#                           TRUE~b_opt)
+#          )%>% 
+#   group_by(scheme,acclimation) %>%
+#   pivot_longer(c(Kmax,gamma,alpha,p50_opt,b_opt)) %>% 
+#   mutate(name = factor(name, levels = c("Kmax","p50_opt","b_opt","alpha","gamma")),
+#          name = fct_recode(name,`italic(b)`="b_opt",
+#                            `gamma*"/"*omega1*"/"*beta[1]`='gamma',
+#                            `K[max]~"(mol"~m^{-2}~s^{-1}~MPa^{-1}*")"`="Kmax",
+#                            `psi[50]~"(MPa)"`='p50_opt')) 
+# 
+# ggplot()+
+#   geom_density(data=actual_dist,aes(x=value), linewidth = 1,alpha=0.5)+
+#   geom_density(data=data_opt,aes(x =value, color = acclimation),alpha=0.5,show.legend = TRUE, linewidth = 1)+
+#   ggh4x::facet_grid2(c("scheme","name"), 
+#               labeller = label_parsed, 
+#               scales = "free", 
+#               independent = "all")+
+#   scale_color_manual(values = c("#FFC20A","#018571"))+
+#   mytheme5()+
+#   theme(legend.position="bottom",
+#         axis.title.x = element_blank(),
+#         legend.title = element_blank())
+#   
+#   
+# ggsave("PLOTS/param_distri.png", width = 30, height = 30, units = "cm")
+#   
+#   
 
 #### Optimal parameters boxplots ####
-
-  
 df_param_kmaxww <- df_kmaxww_a  %>% filter(scheme != "PHYDRO") %>% 
   bind_rows(df_kmaxww_a_1_3 %>% filter(scheme == "PHYDRO")) %>%  
   mutate(scheme = factor(scheme, 
@@ -3244,7 +3687,7 @@ p1 <- df_foo %>%
   ggpubr:: stat_pvalue_manual(stat.test,  label = "{p.adj.signif}", 
                               tip.length = 0, hide.ns = FALSE)+
   mytheme5()+
-  ylab(expression("log("*K[max]*")"~"[log(mol"~m^{-2}~s^{-1}~MPa^{-1}*")]"))+
+  ylab(expression(log[e]*"("*K[max]*")"~"["*log[e]*"(mol"~m^{-1}~s^{-1}~MPa^{-1}*")]"))+
   xlab("Stomatal model")+
   scale_color_manual(values = c("#FFC20A","#A2B56F","#0C7BDC","#AD9E77"))+
   theme(legend.position="top")+
@@ -3256,7 +3699,7 @@ p1 <- df_foo %>%
   
 #P50
 df_foo <- df_param_compar %>%
-    mutate(P50 = P50/3) %>% 
+    mutate(P50 = P50) %>% 
     pivot_longer(cols = c(P50,p50_opt,p50_opt.cal3), names_to = "cal_type") %>%
     dplyr::select(scheme, value, cal_type,Species,source) %>%
     rowwise() %>% 
@@ -3329,8 +3772,7 @@ df_foo <- df_param_compar %>%
          cal_type = fct_recode(cal_type,
                                "Species"="b",
                                "Calibration 1"='b_opt',
-                               "Calibration 1 not acclimated"='b_opt.cal3'),
-         value = -value
+                               "Calibration 1 not acclimated"='b_opt.cal3')
   ) %>%
   dplyr::distinct() %>% 
   ungroup()
@@ -3419,7 +3861,7 @@ ggarrange(p1,p2,p3,p4,
           common.legend = T,ncol=2, nrow = 2)
   
 
-ggsave("PLOTS/par_comp.png", width = 34, height = 25, units = "cm")
+ggsave("PLOTS/par_comp.pdf", width = 36, height = 25, units = "cm")
 
 
 
@@ -3752,7 +4194,7 @@ DF_example %>%
         legend.title = element_blank())+
   labs(x=expression(psi[s]~"(MPa)"))
 
-ggsave("PLOTS/example_plot.png", width = 24, height = 30, units = "cm")
+ggsave("PLOTS/example_plot.pdf", width = 24, height = 30, units = "cm")
 
 
 

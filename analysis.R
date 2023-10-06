@@ -1297,7 +1297,7 @@ p1 <- df_a %>%
                                        "Average \u03B1  " = "Average α", 
                                        "Not acclimated  " = "Not acclimated"))%>%
   ggplot(aes(scheme,r,fill = calibration_type, color = calibration_type, group = calibration_type))+
-  geom_point(shape= 21,position=position_dodge(width = 0.5))+
+  geom_point(aes(alpha=n_dist),shape= 21,position=position_dodge(width = 0.5),show.legend=FALSE)+
   geom_abline(intercept = 0, slope = 0, color = "grey20")+
   geom_pointrange(data = r_a%>% 
                     mutate(calibration_type = fct_recode(calibration_type,
@@ -1351,7 +1351,7 @@ p2 <- df_a%>%
   filter(beta<= 15)%>% 
   ggplot(aes(scheme,beta, fill = calibration_type, color = calibration_type,
              group = calibration_type))+
-  geom_point(shape= 21,position=position_dodge(width = 0.5))+
+  geom_point(aes(alpha=n_dist),shape= 21,position=position_dodge(width = 0.5),show.legend=FALSE)+
   geom_abline(intercept = 1, slope = 0, color = "grey20", linetype=3)+
   geom_pointrange(data = beta_a%>% 
                     mutate(calibration_type = fct_recode(calibration_type,
@@ -1413,7 +1413,7 @@ p3 <- df_a %>%
                                        "Not acclimated  " = "Not acclimated"))%>%
   ggplot(aes(scheme,rmse,fill = calibration_type, color = calibration_type,
              group = calibration_type))+
-  geom_point(shape= 21,position=position_dodge(width = 0.5))+
+  geom_point(aes(alpha=n_dist),shape= 21,position=position_dodge(width = 0.5),show.legend=FALSE)+
   geom_abline(intercept = 0, slope = 0, color = "grey20", linetype=3)+
   geom_pointrange(data = rmse_a%>% 
                     mutate(calibration_type = fct_recode(calibration_type,
@@ -1460,7 +1460,7 @@ p4 <- df_a %>%
                                        "Not acclimated  " = "Not acclimated"))%>%
   ggplot(aes(scheme,bias,fill = calibration_type, color = calibration_type, 
              group = calibration_type))+
-  geom_point(shape= 21,position=position_dodge(width = 0.5))+
+  geom_point(aes(alpha=n_dist),shape= 21,position=position_dodge(width = 0.5),show.legend=FALSE)+
   geom_abline(intercept = 0, slope = 0, color = "grey20", linetype=3)+
   geom_pointrange(data = bias_a%>% 
                     mutate(calibration_type = fct_recode(calibration_type,
@@ -1681,7 +1681,7 @@ p1 <- df_g %>%
                                        "Average \u03B1  " = "Average α", 
                                        "Not acclimated  " = "Not acclimated"))%>%
   ggplot(aes(scheme,r,fill = calibration_type, color = calibration_type, group = calibration_type))+
-  geom_point(shape= 21,position=position_dodge(width = 0.5))+
+  geom_point(aes(alpha=n_dist),shape= 21,position=position_dodge(width = 0.5),show.legend=FALSE)+
   geom_abline(intercept = 0, slope = 0, color = "grey20")+
   geom_pointrange(data = r_a%>% 
                     mutate(calibration_type = fct_recode(calibration_type,
@@ -1735,7 +1735,7 @@ p2 <- df_g%>%
   filter(beta<= 15)%>% 
   ggplot(aes(scheme,beta, fill = calibration_type, color = calibration_type,
              group = calibration_type))+
-  geom_point(shape= 21,position=position_dodge(width = 0.5))+
+  geom_point(aes(alpha=n_dist),shape= 21,position=position_dodge(width = 0.5),show.legend=FALSE)+
   geom_abline(intercept = 1, slope = 0, color = "grey20", linetype=3)+
   geom_pointrange(data = beta_a%>% 
                     mutate(calibration_type = fct_recode(calibration_type,
@@ -1797,7 +1797,7 @@ p3 <- df_g %>%
                                        "Not acclimated  " = "Not acclimated"))%>%
   ggplot(aes(scheme,rmse,fill = calibration_type, color = calibration_type,
              group = calibration_type))+
-  geom_point(shape= 21,position=position_dodge(width = 0.5))+
+  geom_point(aes(alpha=n_dist),shape= 21,position=position_dodge(width = 0.5),show.legend=FALSE)+
   geom_abline(intercept = 0, slope = 0, color = "grey20", linetype=3)+
   geom_pointrange(data = rmse_a%>% 
                     mutate(calibration_type = fct_recode(calibration_type,
@@ -1843,7 +1843,7 @@ p4 <- df_g %>%
                                        "Not acclimated  " = "Not acclimated"))%>%
   ggplot(aes(scheme,bias,fill = calibration_type, color = calibration_type, 
              group = calibration_type))+
-  geom_point(shape= 21,position=position_dodge(width = 0.5))+
+  geom_point(aes(alpha=n_dist),shape= 21,position=position_dodge(width = 0.5),show.legend=FALSE)+
   geom_abline(intercept = 0, slope = 0, color = "grey20", linetype=3)+
   geom_pointrange(data = bias_a%>% 
                     mutate(calibration_type = fct_recode(calibration_type,
@@ -2055,7 +2055,7 @@ p1 <- df_a %>%
                                        "Average \u03B1  " = "Average α", 
                                        "Not acclimated  " = "Not acclimated"))%>%
   ggplot(aes(scheme,r,fill = calibration_type, color = calibration_type, group = calibration_type))+
-  geom_point(shape= 21,position=position_dodge(width = 0.5), alpha = 0.5)+
+  geom_point(aes(alpha=n_dist),shape= 21,position=position_dodge(width = 0.5),show.legend=FALSE)+
   geom_abline(intercept = 0, slope = 0, color = "grey20")+
   geom_pointrange(data = r_a%>% 
                     mutate(calibration_type = fct_recode(calibration_type,
@@ -2109,7 +2109,7 @@ p2 <- df_a%>%
   filter(beta<= 15)%>% 
   ggplot(aes(scheme,beta, fill = calibration_type, color = calibration_type,
              group = calibration_type))+
-  geom_point(shape= 21,position=position_dodge(width = 0.5), alpha = 0.5)+
+  geom_point(aes(alpha=n_dist),shape= 21,position=position_dodge(width = 0.5),show.legend=FALSE)+
   geom_abline(intercept = 1, slope = 0, color = "grey20", linetype=3)+
   geom_pointrange(data = beta_a%>% 
                     mutate(calibration_type = fct_recode(calibration_type,
@@ -2171,7 +2171,7 @@ p3 <- df_a %>%
                                        "Not acclimated  " = "Not acclimated"))%>%
   ggplot(aes(scheme,rmse,fill = calibration_type, color = calibration_type,
              group = calibration_type))+
-  geom_point(shape= 21,position=position_dodge(width = 0.5), alpha = 0.5)+
+  geom_point(aes(alpha=n_dist),shape= 21,position=position_dodge(width = 0.5),show.legend=FALSE)+
   geom_abline(intercept = 0, slope = 0, color = "grey20", linetype=3)+
   geom_pointrange(data = rmse_a%>% 
                     mutate(calibration_type = fct_recode(calibration_type,
@@ -2218,7 +2218,7 @@ p4 <- df_a %>%
                                        "Not acclimated  " = "Not acclimated"))%>%
   ggplot(aes(scheme,bias,fill = calibration_type, color = calibration_type, 
              group = calibration_type))+
-  geom_point(shape= 21,position=position_dodge(width = 0.5), alpha = 0.5)+
+  geom_point(aes(alpha=n_dist),shape= 21,position=position_dodge(width = 0.5),show.legend=FALSE)+
   geom_abline(intercept = 0, slope = 0, color = "grey20", linetype=3)+
   geom_pointrange(data = bias_a%>% 
                     mutate(calibration_type = fct_recode(calibration_type,
@@ -3313,7 +3313,9 @@ df_a <- df_kmaxww_a  %>% filter(scheme != "PHYDRO") %>%
             r = cor(A, a_pred, use = "pairwise.complete.obs"),
             bias = mean(diff_a,na.rm = TRUE)/mean(A,na.rm = TRUE),
             rmse = Metrics::rmse(A,a_pred),
-            beta = lm(A~a_pred)$coefficients[2])
+            beta = lm(A~a_pred)$coefficients[2]) %>% 
+  mutate(Species = paste0(Species," (",n_dist,")"))
+
 
 df_a %>% 
   ungroup() %>% 

@@ -1460,7 +1460,7 @@ p4 <- df_a %>%
                                        "Not acclimated  " = "Not acclimated"))%>%
   ggplot(aes(scheme,bias,fill = calibration_type, color = calibration_type, 
              group = calibration_type))+
-  geom_point(aes(alpha=n_dist),shape= 21,position=position_dodge(width = 0.5),show.legend=FALSE)+
+  geom_point(aes(alpha=n_dist),shape= 21,position=position_dodge(width = 0.5),show.legend=TRUE)+
   geom_abline(intercept = 0, slope = 0, color = "grey20", linetype=3)+
   geom_pointrange(data = bias_a%>% 
                     mutate(calibration_type = fct_recode(calibration_type,
@@ -1478,8 +1478,9 @@ p4 <- df_a %>%
   ylab(expression(A[net]~" Bias"))+
   scale_color_manual(values = c("#FFC20A","#0C7BDC","#A2B56F"))+
   scale_fill_manual(values =c("#FFC20A","#0C7BDC","#A2B56F"))+
-  scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
-  guides(colour = guide_legend(override.aes = list(size=4)))+
+  scale_shape_manual(values = c(1,19),guide = 'none')+ #since all the pairs have significant difference, select only sig shape
+  guides(colour = guide_legend(override.aes = list(size=4))) + 
+  scale_alpha(guide = 'none')+
   coord_flip()
 
 
@@ -1843,7 +1844,7 @@ p4 <- df_g %>%
                                        "Not acclimated  " = "Not acclimated"))%>%
   ggplot(aes(scheme,bias,fill = calibration_type, color = calibration_type, 
              group = calibration_type))+
-  geom_point(aes(alpha=n_dist),shape= 21,position=position_dodge(width = 0.5),show.legend=FALSE)+
+  geom_point(aes(alpha=n_dist),shape= 21,position=position_dodge(width = 0.5),show.legend=TRUE)+
   geom_abline(intercept = 0, slope = 0, color = "grey20", linetype=3)+
   geom_pointrange(data = bias_a%>% 
                     mutate(calibration_type = fct_recode(calibration_type,
@@ -1861,8 +1862,9 @@ p4 <- df_g %>%
   ylab(expression(g[s]~" Bias"))+
   scale_color_manual(values = c("#FFC20A","#0C7BDC","#A2B56F"))+
   scale_fill_manual(values =c("#FFC20A","#0C7BDC","#A2B56F"))+
-  scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
-  guides(colour = guide_legend(override.aes = list(size=4)))+
+  scale_shape_manual(values = c(1,19),guide = 'none')+ #since all the pairs have significant difference, select only sig shape
+  guides(colour = guide_legend(override.aes = list(size=4))) + 
+  scale_alpha(guide = 'none')+
   coord_flip()
 
 
@@ -2218,7 +2220,7 @@ p4 <- df_a %>%
                                        "Not acclimated  " = "Not acclimated"))%>%
   ggplot(aes(scheme,bias,fill = calibration_type, color = calibration_type, 
              group = calibration_type))+
-  geom_point(aes(alpha=n_dist),shape= 21,position=position_dodge(width = 0.5),show.legend=FALSE)+
+  geom_point(aes(alpha=n_dist),shape= 21,position=position_dodge(width = 0.5),show.legend=TRUE)+
   geom_abline(intercept = 0, slope = 0, color = "grey20", linetype=3)+
   geom_pointrange(data = bias_a%>% 
                     mutate(calibration_type = fct_recode(calibration_type,
@@ -2236,8 +2238,9 @@ p4 <- df_a %>%
   ylab(expression(A[net]~" Bias"))+
   scale_color_manual(values = c("#FFC20A","#0C7BDC","#A2B56F"))+
   scale_fill_manual(values =c("#FFC20A","#0C7BDC","#A2B56F"))+
-  scale_shape_manual(values = c(1,19))+ #since all the pairs have significant difference, select only sig shape
-  guides(colour = guide_legend(override.aes = list(size=4)))+
+  scale_shape_manual(values = c(1,19),guide = 'none')+ #since all the pairs have significant difference, select only sig shape
+  guides(colour = guide_legend(override.aes = list(size=4))) + 
+  scale_alpha(guide = 'none')+
   coord_flip()
 
 

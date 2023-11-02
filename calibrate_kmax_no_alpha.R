@@ -256,7 +256,7 @@ error_fun_kmax_no_alpha = function(x,
         mean((data$Ciest/data$ca_pa),na.rm  = TRUE)^2
 
       
-      y=y2+y1+y4
+      y=y2+y1#+y4
 
       cat(x, "|", y, "\n")
       
@@ -334,7 +334,7 @@ error_fun_kmax_no_alpha_gamma = function(x,
       y4 = mean((dat1$chi - (data$Ciest/data$ca_pa))^2,na.rm  = TRUE)/
         mean((data$Ciest/data$ca_pa),na.rm  = TRUE)^2
 
-      y=y2+y1+y4
+      y=y2+y1#+y4
       
       cat(x, "|", y, "\n")
       
@@ -457,7 +457,7 @@ get_parameters_kmax_no_alpha <- function(x){
     
   df <- res
   
-  readr::write_csv(df,file=paste0("DATA/parameters_kmax_no_alpha/",stomatal_model_now,"_",species,"_",x$source,".csv"))
+  readr::write_csv(df,file=paste0("DATA/parameters_kmax_no_alpha_no_chi/",stomatal_model_now,"_",species,"_",x$source,".csv"))
   # 
   # return(res)
 
@@ -465,7 +465,7 @@ get_parameters_kmax_no_alpha <- function(x){
 
 ##### CALIBRATE PARAMETERS #####
 template %>% 
-  filter(scheme %in% c("PMAX3") #scheme == "CGAIN",Species == "Diplotaxis ibicensis"
+  filter(!scheme %in% c("CMAX") #scheme == "CGAIN",Species == "Diplotaxis ibicensis"
   #        Species %in% c( "Diplotaxis ibicensis",
   #                        'Helianthus annuus',
   #                        "Malva subovata"

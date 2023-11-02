@@ -39,7 +39,7 @@ dpsi_df = read.csv(file = "DATA/drying_experiments_dpsi_extended.csv")
 
 # template = read.csv("DATA/fitted_params_template.csv")
 # path_par <- "DATA/parameters/"
-path_par <- "DATA/parameters_kmaxww_alpha/"
+path_par <- "DATA/parameters_kmaxww_alpha_no_chi/"
 par_data <- list.files(path_par) %>% 
   purrr::map_df(function(x){
     readr::read_csv(paste0(path_par,x))
@@ -466,7 +466,7 @@ df <- par_data %>%
   purrr::map(get_simulations) %>%
   bind_rows()
 # 
-save(df, file = "DATA/simulations_kmaxww_alpha.RData")
+save(df, file = "DATA/simulations_kmaxww_alpha_no_chi.RData")
 
 
 

@@ -300,7 +300,7 @@ error_fun_no_accl = function(x, data, data_template, plot=F,
   #   y3=0
   # }
   
-  y=y2+y1+y4
+  y=y2+y1#+y4
   
   cat(x, "|", y2, " / ", y1, " / ", y4, " / ",y, "\n")
   cat(x, "|", y, "\n")
@@ -424,7 +424,7 @@ error_fun_kmax_alpha = function(x, data_all, data_ww, data_template,  plot=F,
       y1 = mean((dat1$a - data_f$A)^2,na.rm  = TRUE)/mean(data_f$A,na.rm  = TRUE)^2
       y4 = mean((dat1$chi - (data_f$Ciest/data_f$ca_pa))^2,na.rm  = TRUE)/mean((data_f$Ciest/data_f$ca_pa),na.rm  = TRUE)^2
       
-      y=y2+y1+y4
+      y=y2+y1#+y4
       
       cat(x, "|", y2, " / ", y1, " / ", y4, " / ",y, "\n")
       cat(x, "|", y, "\n")
@@ -611,7 +611,7 @@ get_parameters_kmaxww_alpha <- function(x){
   
   df <- bind_rows(res_accl,res_no_accl)
   
-  readr::write_csv(df,file=paste0("DATA/parameters_kmaxww_alpha/",stomatal_model_now,"_",species,"_",x$source,".csv"))
+  readr::write_csv(df,file=paste0("DATA/parameters_kmaxww_alpha_no_chi/",stomatal_model_now,"_",species,"_",x$source,".csv"))
   
   return(bind_rows(res_accl,res_no_accl))
   
@@ -619,15 +619,15 @@ get_parameters_kmaxww_alpha <- function(x){
 
 ##### COMPUTE PARAMETERS #####
 #First compute PROFITMAX model to obtain Kmax for CMAX. CGAIN, WUE and PHYDRO models
-# K_PROFITMAX <- NULL
-# template %>% filter(scheme == "PROFITMAX"#,Species %in% c("Diplotaxis ibicensis")
-#                     ) %>%
-#   group_split(scheme, dpsi, Species,source) %>%
-#   purrr::map_df(get_parameters_kmaxww_alpha)->res
-# #
-# save(res,file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
+K_PROFITMAX <- NULL
+template %>% filter(scheme == "PROFITMAX"#,Species %in% c("Diplotaxis ibicensis")
+                    ) %>%
+  group_split(scheme, dpsi, Species,source) %>%
+  purrr::map_df(get_parameters_kmaxww_alpha)->res
+#
+save(res,file = "DATA/Kmax_PROFITMAX_kmaxww_alpha_no_chi.RData")
 # 
-load(file = "DATA/Kmax_PROFITMAX_kmaxww_alpha.RData")
+load(file = "DATA/Kmax_PROFITMAX_kmaxww_alpha_no_chi.RData")
 
 K_PROFITMAX <- res %>% 
   dplyr::select(Species,K_PROFITMAX = K.scale,dpsi,acclimation,source) %>% 
@@ -636,7 +636,7 @@ K_PROFITMAX <- res %>%
 
 #Compute the other models
 template %>% 
-  filter(!scheme %in% c("PROFITMAX","CMAX"),scheme %in% c("PMAX3")
+  filter(!scheme %in% c("PROFITMAX","CMAX")#,scheme %in% c("PMAX3")
          # Species %in% c("Ficus tikoua")
          #  
          # "Malva subovata"

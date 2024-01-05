@@ -417,7 +417,8 @@ get_simulations <- function(x){
 
 
 df <- par_data_full %>%
-  # filter(!scheme %in% c("CMAX")) %>%
+  filter(!(scheme %in% c("PMAX3","PROFITMAX")&
+             Species == "Helianthus annuus")) %>% 
   # rbind(par_data_extra) %>%
   group_split(Species,scheme,source) %>%
   purrr::map(get_simulations) %>%

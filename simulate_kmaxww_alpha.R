@@ -431,7 +431,7 @@ get_simulations <- function(x){
     b= x[1,"b"][[1]]
   ))
   par_cost_acclimation = as.list(data.frame(
-    alpha  = 0.0945, 
+    alpha  = 0.0962, 
     gamma = x[1,"gamma"][[1]]
   ))
   
@@ -448,7 +448,7 @@ get_simulations <- function(x){
     cbind(calibration_type = 'alpha_fix',
           jmaxww25 = jmax25,
           vcmaxww25 = vcmax25) %>% 
-    mutate(alpha = 0.0945)
+    mutate(alpha = 0.0962)
 
 
   

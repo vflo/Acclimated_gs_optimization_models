@@ -5,7 +5,7 @@
 Welcome to the GitHub repository for the study: "Incorporating Photosynthetic Acclimation Improves Stomatal Optimisation Models" by Victor Flo, Jaideep Joshi, Manon Sabot, David Sandoval, and Iain Colin Prentice (2024).
 
 ### Overview
-This repository is a comprehensive resource that includes a collection of R scripts and accompanying datasets.
+This repository includes a collection of R scripts and complementary datasets.
 
 ### Abstract
 Stomatal opening in plant leaves is regulated through a balance of carbon and water exchange under different environmental conditions. Accurate estimation of stomatal regulation is crucial for understanding how plants respond to changing environmental conditions, particularly under climate change. A new generation of optimality-based modelling schemes determines instantaneous stomatal responses from a balance of trade-offs between carbon gains and hydraulic costs, but most such schemes do not account for biochemical acclimation in response to drought. Here, we compare the performance of six instantaneous stomatal optimization models with and without accounting for photosynthetic acclimation. Using experimental data from 37 plant species, we found that accounting for photosynthetic acclimation improves the prediction of carbon assimilation in a majority of the tested models.  Photosynthetic acclimation contributed significantly to the reduction of photosynthesis under drought conditions in all tested models. Drought effects on photosynthesis could not accurately be explained by the hydraulic impairment functions embedded in the stomatal models alone, indicating that photosynthetic acclimation must be considered to improve estimates of carbon assimilation during drought.

@@ -19,16 +19,23 @@ Stomatal opening in plant leaves is regulated through a balance of carbon and wa
 
 This section guides you through the initial steps to get the repository up and running on your machine.
 
-### Installing
+### Cloning the project in RStudio
 
-#### Cloning the Repository
-To clone this repository, use the following command in your terminal or command prompt:
+#### Step 1: Install Git (if not already installed)
+Ensure Git is installed on your system. RStudio uses Git for version control and to clone repositories.
 
-```
-git clone https://github.com/vflo/Acclimated_gs_optimization_models.git
-```
+#### Step 2: Configure Git in RStudio
+1. Open RStudio.
+2. Go to `Tools` > `Global Options` > `Git/SVN`. Ensure that the path to the Git executable is correctly set, and configure your user name and email for Git.
 
-This command will create a copy of the repository on your local machine.
+#### Step 3: Start a New Project from Version Control
+1. In RStudio, go to `File` > `New Project`.
+2. Choose `Version Control` and then `Git`.
+3. In the “Repository URL” field, paste the URL of the repository you wish to clone: `https://github.com/vflo/Acclimated_gs_optimization_models.git`.
+4. Fill in the other fields such as the Project directory name and the location on your computer where you'd like the project to be saved.
+5. Click `Create Project`.
+
+RStudio will then clone the repository, and the project will be opened with the contents of the repository ready for use.
 
 #### Installing Dependencies
 The project relies on several R packages. You can install them using the following R command:

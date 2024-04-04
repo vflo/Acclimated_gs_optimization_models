@@ -2,7 +2,7 @@
 
 ## Description
 
-Welcome to the GitHub repository for the study: "Incorporating Photosynthetic Acclimation Improves Stomatal Optimisation Models" by Victor Flo, Jaideep Joshi, Manon Sabot, David Sandoval, and Iain Colin Prentice (2024).
+Welcome to the GitHub repository for the study: Victor Flo, Jaideep Joshi, Manon Sabot, David Sandoval, and Iain Colin Prentice (2024) Incorporating Photosynthetic Acclimation Improves Stomatal Optimisation Models, Plant, Cell & Environment. 10.1111/pce.14891
 
 ### Overview
 This repository includes a collection of R scripts and complementary datasets.
